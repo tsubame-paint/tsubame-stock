@@ -191,20 +191,11 @@
     
     .item-details {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      justify-content: flex-end;
+      align-items: center;
       background: #f8f9fa;
       padding: 8px 12px;
       border-radius: 8px;
-    }
-    .detail-price {
-      font-size: 0.85rem;
-      color: #5f6368;
-    }
-    .detail-price span {
-      font-weight: 700;
-      color: #202124;
-      font-size: 1rem;
     }
     
     .detail-stock { text-align: right; }
@@ -264,7 +255,7 @@
 
 <script>
   // GitHub Pages側の index.html
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u04tLQHsqYI_IoiG_xAmpbuooqy-upDdKDnClDli2A9U6TqQwOw/exec?api=true";
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u04tLQHsqYI_IoiG_xAmpbuooqy-upDdKDnClDli2A9U6TqQwOw/exec?api=true";
 
   let allItems = []; 
   let displayLimit = 100;         
@@ -310,7 +301,6 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u
     }, {passive: true});
   });
 
-  // 【修正】fetch を使ってGASのAPIから全データを取得する
   async function loadAllData() {
     const refreshBtn = document.getElementById('refresh-btn');
     refreshBtn.disabled = true;
@@ -433,10 +423,6 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u
       }
 
       const itemCode = item.code || item.id || '';
-      const priceText = (item.price !== undefined && item.price !== null && item.price !== '') 
-        ? Number(item.price).toLocaleString() + " 円" 
-        : "未設定";
-
       const badStockBadge = item.isBad ? '<span class="bad-stock-badge">⚠️ 不良在庫</span>' : '';
       const branchBadgeHtml = item.branch ? `<span class="branch-badge">🏢 ${escapeHtml(item.branch)}</span>` : '';
 
@@ -445,7 +431,6 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u
         <div class="item-name">${escapeHtml(item.name)}${badStockBadge}</div>
         <div class="item-code">コード: ${escapeHtml(itemCode)}</div>
         <div class="item-details">
-          <div class="detail-price">売価: <span>${priceText}</span></div>
           <div class="detail-stock">
             <span class="stock-label">現在在庫</span>
             <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
