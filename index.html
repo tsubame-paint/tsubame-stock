@@ -17,6 +17,7 @@
     
     .container { max-width: 500px; margin: 0 auto; padding: 12px; }
     
+    /* 🌟 タイトル、更新ボタン、検索・絞り込み、件数バーのすべてを上部にピタッと固定 */
     .sticky-header {
       position: sticky;
       top: 0;
@@ -27,63 +28,240 @@
       margin-bottom: 8px;
     }
 
-    .header-area { margin: 0 4px 12px 4px; }
-    .main-title-container { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .main-title { font-size: 1.40rem; font-weight: 800; color: #1a73e8; margin: 0; line-height: 1.3; }
+    /* ヘッダーエリア */
+    .header-area {
+      margin: 0 4px 12px 4px;
+    }
+
+    .main-title-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .main-title {
+      font-size: 1.40rem;
+      font-weight: 800;
+      color: #1a73e8;
+      margin: 0;
+      line-height: 1.3;
+      letter-spacing: -0.3px;
+      word-break: break-all;
+    }
 
     .refresh-btn {
-      background: #ffffff; border: 1px solid #dadce0; border-radius: 20px; padding: 8px 14px;
-      font-size: 0.85rem; font-weight: 600; color: #1a73e8; cursor: pointer; display: flex; align-items: center; gap: 4px;
+      background: #ffffff;
+      border: 1px solid #dadce0;
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1a73e8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .refresh-btn:active { background: #e8f0fe; transform: scale(0.96); }
+    .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    /* 絞り込み & 検索エリア */
+    .filter-box {
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .filter-box { margin-bottom: 8px; }
-    .search-wrapper { position: relative; display: flex; align-items: center; }
+    .branch-select {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1a73e8;
+      border: 1.5px solid #1a73e8;
+      border-radius: 12px;
+      background: #fff;
+      outline: none;
+      box-shadow: 0 2px 6px rgba(26, 115, 232, 0.1);
+    }
+
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
     .search-input {
-      width: 100%; padding: 12px 42px 12px 16px; font-size: 0.95rem; border: 2px solid #1a73e8;
-      border-radius: 24px; outline: none; background: #fff; box-shadow: 0 4px 12px rgba(26, 115, 232, 0.15);
+      width: 100%;
+      padding: 12px 42px 12px 16px;
+      font-size: 0.95rem;
+      border: 2px solid #1a73e8;
+      border-radius: 24px;
+      outline: none;
+      box-shadow: 0 4px 12px rgba(26, 115, 232, 0.15);
+      background: #fff;
+      transition: box-shadow 0.2s ease;
+    }
+    .search-input:focus {
+      box-shadow: 0 4px 16px rgba(26, 115, 232, 0.25);
     }
     .clear-btn {
-      position: absolute; right: 12px; background: #e4e6eb; border: none; color: #65676b;
-      font-size: 0.8rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: none;
-      align-items: center; justify-content: center;
+      position: absolute;
+      right: 12px;
+      background: #e4e6eb;
+      border: none;
+      color: #65676b;
+      font-size: 0.8rem;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .clear-btn:active { background: #d8dadf; }
+
+    /* ステータス・件数表示（固定エリアに含めて常に上部に表示） */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: #5f6368;
+      padding: 4px 6px 0 6px;
+      font-weight: 500;
+      background-color: #f0f2f5;
+    }
+    
+    #item-list {
+      margin-top: 4px;
     }
 
-    .status-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
+    /* 在庫カード */
+    .item-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border-left: 5px solid #1a73e8;
+      transition: transform 0.1s ease;
+    }
+    .item-card:active {
+      transform: scale(0.99);
     }
     
-    .item-card {
-      background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
     }
-    .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 4px; }
-    .item-code { font-size: 0.78rem; color: #70757a; margin-bottom: 10px; }
+
+    .branch-badge {
+      display: inline-block;
+      background-color: #e8f0fe;
+      color: #1a73e8;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+
+    .item-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #202124;
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+    .item-code {
+      font-size: 0.78rem;
+      color: #70757a;
+      margin-bottom: 10px;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bad-stock-badge {
+      display: inline-block;
+      background-color: #fce8e6;
+      color: #c5221f;
+      border: 1px solid #f82b27;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 12px;
+      vertical-align: middle;
+    }
     
     .item-details {
-      display: flex; justify-content: flex-end; align-items: flex-end;
-      background: #f8f9fa; padding: 8px 12px; border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      background: #f8f9fa;
+      padding: 8px 12px;
+      border-radius: 8px;
     }
+    .detail-price {
+      font-size: 0.85rem;
+      color: #5f6368;
+    }
+    .detail-price span {
+      font-weight: 700;
+      color: #202124;
+      font-size: 1rem;
+    }
+    
+    .detail-stock { text-align: right; }
+    .stock-label { font-size: 0.72rem; color: #70757a; display: block; margin-bottom: 2px; }
+    
     .stock-val { font-size: 1.25rem; font-weight: 700; color: #1e8e3e; }
     .stock-low { color: #e37400 !important; } 
     .stock-zero { color: #d93025 !important; } 
 
-    #loading { text-align: center; padding: 40px 0; color: #5f6368; display: none; }
-    #no-result { text-align: center; padding: 30px; color: #70757a; background: #fff; border-radius: 12px; display: none; }
+    #loading { text-align: center; padding: 40px 0; color: #5f6368; font-size: 0.95rem; display: none; }
+    #no-result {
+      text-align: center;
+      padding: 30px;
+      color: #70757a;
+      background: #fff;
+      border-radius: 12px;
+      display: none;
+      font-size: 0.9rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
+  <!-- 🌟 上部に固定されるエリア（タイトル、更新ボタン、セレクト、検索、件数バー） -->
   <div class="sticky-header">
     <div class="header-area">
       <div class="main-title-container">
         <h2 id="main-title" class="main-title">📦 在庫状況一覧</h2>
-        <button id="refresh-btn" class="refresh-btn" onclick="loadCustomerData()">🔄 更新</button>
+        <button id="refresh-btn" class="refresh-btn" onclick="loadAllData()">🔄 更新</button>
       </div>
     </div>
     
     <div class="filter-box">
+      <select id="branch-select" class="branch-select">
+        <option value="ALL">🏢 全営業所（合算）</option>
+      </select>
+
       <div class="search-wrapper">
         <input type="text" id="search-input" class="search-input" placeholder="🔍 商品名やコードで検索..." oninput="onSearchInput()">
         <button id="clear-btn" class="clear-btn" onclick="clearSearch()">✕</button>
@@ -95,66 +273,192 @@
       <span id="item-count">0 件</span>
     </div>
   </div>
+  <!-- 固定エリアここまで -->
 
   <div id="loading">データを読み込み中...</div>
   <div id="no-result">該当する商品が見つかりません</div>
+  
   <div id="item-list"></div>
 </div>
 
 <script>
-  // 🌟 ここをご自身のGASのデプロイURLに書き換えてください（末尾に &mode=customer を付与）
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwlP50e-fv1i5PXaRw5WRP5aJEeAyzaH7H6gGCVDEGAUCoJTBgMIQ41kGqSwHjECyF3YA/exec?api=true&mode=customer";
-  
-  let allItems = [];
-  let displayLimit = 100;
-  let currentDisplayCount = 100;
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u04tLQHsqYI_IoiG_xAmpbuooqy-upDdKDnClDli2A9U6TqQwOw/exec?api=true";
+  const CACHE_KEY = "tsubame_stock_cache_v5";
+  const CACHE_TIME_KEY = "tsubame_stock_cache_time_v5";
+  const CACHE_TTL = 5 * 60 * 1000;
+
+  let allItems = []; 
+  let displayLimit = 100;         
+  let currentDisplayCount = 100;  
   let searchTimer = null;
   let currentFilteredItems = [];
-  let lastLoadedTimestamp = 0;
+  let lastLoadedTimestamp = 0; // 最後にデータを読み込んだ正確な時刻
 
   window.addEventListener('DOMContentLoaded', () => {
-    loadCustomerData();
-    setInterval(updateTimeDisplay, 60000);
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    const cachedTime = Number(localStorage.getItem(CACHE_TIME_KEY)) || 0;
+    const isFresh = (Date.now() - cachedTime) < CACHE_TTL;
+    
+    let hasValidCache = false;
+    
+    if (cachedData) {
+      try {
+        const parsed = JSON.parse(cachedData);
+        if (parsed && (parsed.products || parsed.items)) {
+          lastLoadedTimestamp = cachedTime;
+          onDataLoaded(parsed, true);
+          hasValidCache = true;
+        }
+      } catch(e) {
+        console.log("キャッシュの読み込みに失敗しました");
+      }
+    }
+
+    if (!hasValidCache || !isFresh) {
+      loadAllData();
+    }
+    
+    const branchSelect = document.getElementById('branch-select');
+    branchSelect.addEventListener('change', () => {
+      currentDisplayCount = displayLimit; 
+      filterItems();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        searchInput.blur();
+      }
+    });
+
+    let touchStartY = 0;
+    window.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, {passive: true});
+
+    window.addEventListener('touchmove', (e) => {
+      const activeEl = document.activeElement;
+      if (activeEl && activeEl.id === 'search-input') {
+        const currentY = e.touches[0].clientY;
+        if (Math.abs(currentY - touchStartY) > 15) {
+          activeEl.blur();
+        }
+      }
+    }, {passive: true});
 
     window.addEventListener('scroll', () => {
       if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
         loadMoreItems();
       }
     }, {passive: true});
+
+    // 🌟 1分ごとに「〇分前」の表示を自動更新
+    setInterval(updateTimeDisplay, 60000);
   });
 
-  async function loadCustomerData() {
+  async function loadAllData() {
     const refreshBtn = document.getElementById('refresh-btn');
     refreshBtn.disabled = true;
-    refreshBtn.innerHTML = '🔄 ⏳ 読み込み中...';
-    document.getElementById('loading').style.display = 'block';
+    refreshBtn.innerHTML = '🔄 <span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> 同期中...';
+    
+    if (allItems.length === 0) {
+      document.getElementById('loading').style.display = 'block';
+    }
 
     try {
       const response = await fetch(GAS_API_URL);
       const data = await response.json();
       
       if (data && data.success) {
-        lastLoadedTimestamp = Date.now();
-        allItems = data.items || [];
-        updateTimeDisplay();
-        filterItems();
+        const nowTime = Date.now();
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        localStorage.setItem(CACHE_TIME_KEY, nowTime);
+        lastLoadedTimestamp = nowTime;
+        onDataLoaded(data, false);
       } else {
         throw new Error(data.error || "データの取得に失敗しました");
       }
     } catch (error) {
-      document.getElementById('loading').innerHTML = `⚠️ データの取得に失敗しました。`;
-    } finally {
-      refreshBtn.disabled = false;
-      refreshBtn.innerText = "🔄 更新";
-      document.getElementById('loading').style.display = 'none';
+      if (allItems.length === 0) {
+        onError(error);
+      } else {
+        refreshBtn.disabled = false;
+        refreshBtn.innerText = "🔄 更新";
+        console.warn("バックグラウンド同期に失敗しました（オフラインの可能性）");
+      }
     }
   }
 
+  // 🌟 「〇分前」表示を計算してリアルタイムに書き換える関数
   function updateTimeDisplay() {
     if (!lastLoadedTimestamp) return;
-    const diffMin = Math.floor((Date.now() - lastLoadedTimestamp) / 60000);
+    const diffMs = Date.now() - lastLoadedTimestamp;
+    const diffMin = Math.floor(diffMs / 60000);
     const timeFormatted = new Date(lastLoadedTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    document.getElementById('update-time').innerText = diffMin >= 1 ? `${timeFormatted} (${diffMin}分前)` : `${timeFormatted} (たった今)`;
+    
+    let timeText = `${timeFormatted}`;
+    if (diffMin >= 1) {
+      timeText += ` (${diffMin}分前)`;
+    } else {
+      timeText += ` (たった今)`;
+    }
+    document.getElementById('update-time').innerText = timeText;
+  }
+
+  function onDataLoaded(data, isCache = false) {
+    const refreshBtn = document.getElementById('refresh-btn');
+    refreshBtn.disabled = false;
+    refreshBtn.innerText = "🔄 更新";
+    
+    document.getElementById('loading').style.display = 'none';
+    
+    const titleElem = document.getElementById('main-title');
+    if (data && data.officeName) {
+      titleElem.innerText = `📦 ${data.officeName}営業所 在庫状況一覧`;
+    } else {
+      titleElem.innerText = `📦 在庫状況一覧`;
+    }
+
+    const rawBranches = (data && data.branches) ? data.branches : [];
+    const rawItems = (data && (data.products || data.items)) ? (data.products || data.items) : [];
+    
+    const validItems = rawItems.filter(item => item && item.name !== undefined && item.name !== null && String(item.name).trim() !== '');
+
+    const itemBranches = [...new Set(validItems.map(i => i.branch).filter(Boolean))];
+    const availableBranches = rawBranches.length > 0 ? rawBranches : itemBranches;
+
+    const branchSelect = document.getElementById('branch-select');
+    const currentSelectedBranch = branchSelect.value;
+
+    if (availableBranches.length > 0) {
+      branchSelect.style.display = 'block';
+      branchSelect.innerHTML = '<option value="ALL">🏢 全営業所（合算）</option>';
+      availableBranches.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        opt.textContent = `🏢 ${b}`;
+        branchSelect.appendChild(opt);
+      });
+      if (availableBranches.includes(currentSelectedBranch)) {
+        branchSelect.value = currentSelectedBranch;
+      }
+    } else {
+      branchSelect.style.display = 'none';
+    }
+
+    if (validItems.length > 0) {
+      allItems = validItems.sort((a, b) => {
+        const codeA = String(a.code || a.id || '');
+        const codeB = String(b.code || b.id || '');
+        return codeA.localeCompare(codeB, undefined, { numeric: true });
+      });
+
+      updateTimeDisplay();
+      filterItems();
+    } else if (!isCache) {
+      document.getElementById('loading').innerText = "データが見つかりませんでした。";
+    }
   }
 
   function renderList(items, isAppend = false) {
@@ -163,6 +467,7 @@
     const countDisp = document.getElementById('item-count');
     
     currentFilteredItems = items; 
+
     if (!isAppend) {
       listContainer.innerHTML = '';
       currentDisplayCount = displayLimit; 
@@ -177,6 +482,7 @@
 
     const endIdx = Math.min(currentDisplayCount, items.length);
     const renderItems = items.slice(0, endIdx);
+    
     countDisp.innerText = `表示中: ${renderItems.length} / ${items.length} 件`;
 
     const targetItems = isAppend ? items.slice(currentDisplayCount - displayLimit, endIdx) : renderItems;
@@ -185,18 +491,32 @@
     targetItems.forEach(item => {
       const card = document.createElement('div');
       card.className = 'item-card';
+      
       const stockNum = Number(item.stock) || 0;
       
       let stockClass = 'stock-val';
-      if (stockNum <= 0) stockClass += ' stock-zero';
-      else if (stockNum <= 5) stockClass += ' stock-low';
+      if (stockNum <= 0) {
+        stockClass += ' stock-zero';
+      } else if (stockNum <= 5) {
+        stockClass += ' stock-low';
+      }
+
+      const itemCode = item.code || item.id || '';
+      const priceText = (item.price !== undefined && item.price !== null && item.price !== '') 
+        ? Number(item.price).toLocaleString() + " 円" 
+        : "未設定";
+
+      const badStockBadge = item.isBad ? '<span class="bad-stock-badge">⚠️ 不良在庫</span>' : '';
+      const branchBadgeHtml = item.branch ? `<span class="branch-badge">🏢 ${escapeHtml(item.branch)}</span>` : '';
 
       card.innerHTML = `
+        ${branchBadgeHtml ? `<div class="item-header">${branchBadgeHtml}</div>` : ''}
         <div class="item-name">${escapeHtml(item.name)}</div>
-        <div class="item-code">コード: ${escapeHtml(item.code)}</div>
+        <div class="item-code">コード: ${escapeHtml(itemCode)} ${badStockBadge}</div>
         <div class="item-details">
+          <div class="detail-price">売価: <span>${priceText}</span></div>
           <div class="detail-stock">
-            <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px;">現在在庫</span>
+            <span class="stock-label">現在在庫</span>
             <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
           </div>
         </div>
@@ -215,7 +535,9 @@
 
   function onSearchInput() {
     const query = document.getElementById('search-input').value;
-    document.getElementById('clear-btn').style.display = query ? 'flex' : 'none';
+    const clearBtn = document.getElementById('clear-btn');
+    clearBtn.style.display = query ? 'flex' : 'none';
+    
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       currentDisplayCount = displayLimit; 
@@ -235,24 +557,77 @@
 
   function normalizeStr(str) {
     if (!str) return '';
+    
+    const dakuMap = {
+      'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ',
+      'ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
+      'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド',
+      'ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
+      'ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ',
+      'ｳﾞ':'ヴ','ﾜﾞ':'ヷ','ｦﾞ':'ヺ'
+    };
+    const singleMap = {
+      'ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ',
+      'ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ',
+      'ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ',
+      'ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト',
+      'ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ',
+      'ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ',
+      'ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ',
+      'ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ',
+      'ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ',
+      'ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン',
+      'ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ',
+      'ｯ':'ッ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ',
+      'ｰ':'ー','･':'・'
+    };
+
     let s = String(str);
+    s = s.replace(/[ｶ-ﾎ]ﾞ|[ﾊ-ﾎ]ﾟ|ｳﾞ|ﾜﾞ|ｦﾞ/g, ch => dakuMap[ch] || ch);
+    s = s.replace(/[\uFF61-\uFF9F]/g, ch => singleMap[ch] || ch);
     s = s.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
     s = s.replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    s = s.replace(/ /g, ' ');
+
     return s.toLowerCase().trim();
   }
 
   function filterItems() {
+    const selectElem = document.getElementById('branch-select');
+    const selectedBranch = selectElem ? selectElem.value : 'ALL';
     const rawQuery = document.getElementById('search-input').value;
     const normalizedQuery = normalizeStr(rawQuery);
-    const keywords = normalizedQuery ? normalizedQuery.split(/\s+/) : [];
+
+    const keywords = normalizedQuery ? normalizedQuery.split(/\s+/).filter(k => k.length > 0) : [];
 
     const filtered = allItems.filter(item => {
+      const matchBranch = (selectedBranch === 'ALL') || (item.branch === selectedBranch);
+
       const name = normalizeStr(item.name);
-      const code = normalizeStr(item.code);
-      return keywords.every(kw => name.includes(kw) || code.includes(kw));
+      const code = normalizeStr(item.code || item.id);
+      const branch = normalizeStr(item.branch);
+      const badStockStr = item.isBad ? normalizeStr("不良在庫") : "";
+
+      const matchKeywords = keywords.every(kw => 
+        name.includes(kw) || code.includes(kw) || branch.includes(kw) || badStockStr.includes(kw)
+      );
+
+      return matchBranch && matchKeywords;
     });
 
     renderList(filtered, false);
+  }
+
+  function onError(err) {
+    const refreshBtn = document.getElementById('refresh-btn');
+    refreshBtn.disabled = false;
+    refreshBtn.innerText = "🔄 更新";
+    
+    document.getElementById('loading').innerHTML = `
+      ⚠️ データの取得に失敗しました。<br>
+      <span style="font-size: 0.8rem; color: #888;">${escapeHtml(err.message || err)}</span><br>
+      <button onclick="loadAllData()" style="margin-top:10px; padding:8px 16px; background:#1a73e8; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">再試行する</button>
+    `;
   }
 
   function escapeHtml(str) {
@@ -260,5 +635,6 @@
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 </script>
+
 </body>
 </html>
