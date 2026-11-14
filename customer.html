@@ -57,7 +57,9 @@
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
     }
+    .item-maker { font-size: 0.78rem; color: #1a73e8; font-weight: 700; margin-bottom: 2px; }
     .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 4px; }
+    .item-sub-info { font-size: 0.83rem; color: #5f6368; margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
     .item-code { font-size: 0.78rem; color: #70757a; margin-bottom: 10px; }
     
     .item-details {
@@ -85,7 +87,7 @@
     
     <div class="filter-box">
       <div class="search-wrapper">
-        <input type="text" id="search-input" class="search-input" placeholder="🔍 商品名やコードで検索..." oninput="onSearchInput()">
+        <input type="text" id="search-input" class="search-input" placeholder="🔍 メーカー、商品名、色などで検索..." oninput="onSearchInput()">
         <button id="clear-btn" class="clear-btn" onclick="clearSearch()">✕</button>
       </div>
     </div>
@@ -190,13 +192,24 @@
       if (stockNum <= 0) stockClass += ' stock-zero';
       else if (stockNum <= 5) stockClass += ' stock-low';
 
+      // 色・その他、容量・その他が存在する場合のみ表示用のタグを作成
+      let subInfoHtml = '';
+      if (item.colorEtc || item.capacityEtc) {
+        subInfoHtml = `<div class="item-sub-info">`;
+        if (item.colorEtc) subInfoHtml += `<span>🎨 ${escapeHtml(item.colorEtc)}</span>`;
+        if (item.capacityEtc) subInfoHtml += `<span>📦 ${escapeHtml(item.capacityEtc)}</span>`;
+        subInfoHtml += `</div>`;
+      }
+
       card.innerHTML = `
+        ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
         <div class="item-name">${escapeHtml(item.name)}</div>
+        ${subInfoHtml}
         <div class="item-code">コード: ${escapeHtml(item.code)}</div>
         <div class="item-details">
           <div class="detail-stock">
             <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px;">現在在庫</span>
-            <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
+            <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '')}</small></span>
           </div>
         </div>
       `;
@@ -246,9 +259,9 @@
     const keywords = normalizedQuery ? normalizedQuery.split(/\s+/) : [];
 
     const filtered = allItems.filter(item => {
-      const name = normalizeStr(item.name);
-      const code = normalizeStr(item.code);
-      return keywords.every(kw => name.includes(kw) || code.includes(kw));
+      // メーカー、商品名、色・その他、容量・その他、コードすべてを結合して検索対象にする
+      const searchTarget = normalizeStr(`${item.maker} ${item.name} ${item.colorEtc} ${item.capacityEtc} ${item.code}`);
+      return keywords.every(kw => searchTarget.includes(kw));
     });
 
     renderList(filtered, false);
