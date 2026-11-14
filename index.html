@@ -545,6 +545,8 @@
       }
 
       const itemCode = item.code || item.id || '';
+      
+      // 🌟 売価の表示処理を復元
       const priceText = (item.price !== undefined && item.price !== null && item.price !== '') 
         ? Number(item.price).toLocaleString() + " 円" 
         : "未設定";
@@ -552,7 +554,6 @@
       const badStockBadge = item.isBad ? '<span class="bad-stock-badge">⚠️ 不良在庫</span>' : '';
       const branchBadgeHtml = item.branch ? `<span class="branch-badge">🏢 ${escapeHtml(item.branch)}</span>` : '';
 
-      // 🌟 色のみ上部に残し、容量は下部（売価のそば）へ移動
       const colorText = item.colorEtc ? escapeHtml(item.colorEtc) : "";
       const capacityText = item.capacityEtc ? escapeHtml(item.capacityEtc) : "";
 
