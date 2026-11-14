@@ -58,14 +58,39 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
     }
     .item-maker { font-size: 0.78rem; color: #1a73e8; font-weight: 700; margin-bottom: 2px; }
-    .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 4px; }
-    .item-sub-info { font-size: 0.83rem; color: #5f6368; margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 6px; }
+    
+    /* 🌟 画像のような薄黄色の色バッジ */
+    .item-sub-info {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #78350f;
+      background-color: #fef3c7;
+      padding: 4px 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: inline-block;
+      border: 1px solid #fcd34d;
+    }
+
     .item-code { font-size: 0.78rem; color: #70757a; margin-bottom: 10px; }
     
+    /* 🌟 下部エリア（売価なし、容量バッジと在庫を配置） */
     .item-details {
-      display: flex; justify-content: flex-end; align-items: flex-end;
+      display: flex; justify-content: space-between; align-items: flex-end;
       background: #f8f9fa; padding: 8px 12px; border-radius: 8px;
     }
+    .detail-capacity {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #78350f;
+      background: #fef3c7;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #fcd34d;
+      display: inline-block;
+    }
+    
     .stock-val { font-size: 1.25rem; font-weight: 700; color: #1e8e3e; }
     .stock-low { color: #e37400 !important; } 
     .stock-zero { color: #d93025 !important; } 
@@ -192,26 +217,29 @@
       if (stockNum <= 0) stockClass += ' stock-zero';
       else if (stockNum <= 5) stockClass += ' stock-low';
 
-      // 🌟 ここで色・その他、容量・その他を表示用のHTMLにする処理（これを追加）
+      // 🌟 色のみを上部の薄黄色バッジに設定
       let subInfoHtml = '';
-      if (item.colorEtc || item.capacityEtc) {
-        subInfoHtml = `<div class="item-sub-info">`;
-        if (item.colorEtc) subInfoHtml += `<span>🎨 ${escapeHtml(item.colorEtc)}</span>`;
-        if (item.capacityEtc) subInfoHtml += `<span>📦 ${escapeHtml(item.capacityEtc)}</span>`;
-        subInfoHtml += `</div>`;
+      if (item.colorEtc) {
+        subInfoHtml = `<div class="item-sub-info">${escapeHtml(item.colorEtc)}</div>`;
+      }
+
+      // 🌟 容量のみを下部（売価の場所）に設定
+      let capacityHtml = '';
+      if (item.capacityEtc) {
+        capacityHtml = `<div class="detail-capacity">${escapeHtml(item.capacityEtc)}</div>`;
       }
 
       const itemCode = item.code || item.id || '';
-      const badStockBadge = item.isBad ? '<span class="bad-stock-badge">⚠️ 不良在庫</span>' : '';
 
       card.innerHTML = `
         ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
         <div class="item-name">${escapeHtml(item.name)}</div>
-        ${subInfoHtml} <!-- 🌟 ここに色・容量の情報を挿入 -->
-        <div class="item-code">コード: ${escapeHtml(itemCode)} ${badStockBadge}</div>
+        ${subInfoHtml}
+        <div class="item-code">コード: ${escapeHtml(itemCode)}</div>
         <div class="item-details">
+          <div>${capacityHtml}</div>
           <div class="detail-stock">
-            <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px;">現在在庫</span>
+            <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px; text-align:right;">現在在庫</span>
             <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
           </div>
         </div>
@@ -262,7 +290,6 @@
     const keywords = normalizedQuery ? normalizedQuery.split(/\s+/) : [];
 
     const filtered = allItems.filter(item => {
-      // メーカー、商品名、色・その他、容量・その他、コードすべてを結合して検索対象にする
       const searchTarget = normalizeStr(`${item.maker} ${item.name} ${item.colorEtc} ${item.capacityEtc} ${item.code}`);
       return keywords.every(kw => searchTarget.includes(kw));
     });
