@@ -192,7 +192,7 @@
       if (stockNum <= 0) stockClass += ' stock-zero';
       else if (stockNum <= 5) stockClass += ' stock-low';
 
-      // 色・その他、容量・その他が存在する場合のみ表示用のタグを作成
+      // 🌟 ここで色・その他、容量・その他を表示用のHTMLにする処理（これを追加）
       let subInfoHtml = '';
       if (item.colorEtc || item.capacityEtc) {
         subInfoHtml = `<div class="item-sub-info">`;
@@ -201,15 +201,18 @@
         subInfoHtml += `</div>`;
       }
 
+      const itemCode = item.code || item.id || '';
+      const badStockBadge = item.isBad ? '<span class="bad-stock-badge">⚠️ 不良在庫</span>' : '';
+
       card.innerHTML = `
         ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
         <div class="item-name">${escapeHtml(item.name)}</div>
-        ${subInfoHtml}
-        <div class="item-code">コード: ${escapeHtml(item.code)}</div>
+        ${subInfoHtml} <!-- 🌟 ここに色・容量の情報を挿入 -->
+        <div class="item-code">コード: ${escapeHtml(itemCode)} ${badStockBadge}</div>
         <div class="item-details">
           <div class="detail-stock">
             <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px;">現在在庫</span>
-            <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '')}</small></span>
+            <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
           </div>
         </div>
       `;
