@@ -15,7 +15,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     
-    .container { max-width: 500px; margin: 0 auto; padding: 12px; }
+    .container { max-width: 600px; margin: 0 auto; padding: 12px; }
     
     /* 🌟 タイトル、更新ボタン、検索・絞り込み、件数バーのすべてを上部にピタッと固定 */
     .sticky-header {
@@ -182,7 +182,20 @@
       margin-bottom: 4px;
       line-height: 1.35;
     }
-    .item-sub-info { font-size: 0.83rem; color: #5f6368; margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* 🌟 色（ある場合のみ）を表示する薄黄色のブロック */
+    .item-sub-info {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #78350f;
+      background-color: #fef3c7;
+      padding: 6px 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #fcd34d;
+    }
 
     .item-code {
       font-size: 0.78rem;
@@ -206,6 +219,7 @@
       vertical-align: middle;
     }
     
+    /* 🌟 売価・容量・在庫をまとめた下部エリア */
     .item-details {
       display: flex;
       justify-content: space-between;
@@ -213,6 +227,22 @@
       background: #f8f9fa;
       padding: 8px 12px;
       border-radius: 8px;
+    }
+    .detail-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .detail-capacity {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #78350f;
+      background: #fef3c7;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #fcd34d;
+      display: inline-block;
+      width: fit-content;
     }
     .detail-price {
       font-size: 0.85rem;
@@ -251,7 +281,7 @@
 <body>
 
 <div class="container">
-  <!-- 🌟 上部に固定されるエリア（タイトル、更新ボタン、セレクト、検索、件数バー） -->
+  <!-- 🌟 上部に固定されるエリア（タイトル、更新ボタン、検索・絞り込み、件数バー） -->
   <div class="sticky-header">
     <div class="header-area">
       <div class="main-title-container">
@@ -286,8 +316,8 @@
 
 <script>
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u04tLQHsqYI_IoiG_xAmpbuooqy-upDdKDnClDli2A9U6TqQwOw/exec?api=true";
-  const CACHE_KEY = "tsubame_stock_cache_v7";
-  const CACHE_TIME_KEY = "tsubame_stock_cache_time_v7";
+  const CACHE_KEY = "tsubame_stock_cache_v18";
+  const CACHE_TIME_KEY = "tsubame_stock_cache_time_v18";
   const CACHE_TTL = 5 * 60 * 1000;
 
   let allItems = []; 
@@ -512,13 +542,18 @@
       const badStockBadge = item.isBad ? '<span class="bad-stock-badge">⚠️ 不良在庫</span>' : '';
       const branchBadgeHtml = item.branch ? `<span class="branch-badge">🏢 ${escapeHtml(item.branch)}</span>` : '';
 
-      // 🌟 色・その他、容量・その他が存在する場合のサブ情報タグ生成
+      // 🌟 色のみ上部に残し、容量は下部（売価のそば）へ移動
+      const colorText = item.colorEtc ? escapeHtml(item.colorEtc) : "";
+      const capacityText = item.capacityEtc ? escapeHtml(item.capacityEtc) : "";
+
       let subInfoHtml = '';
-      if (item.colorEtc || item.capacityEtc) {
-        subInfoHtml = `<div class="item-sub-info">`;
-        if (item.colorEtc) subInfoHtml += `<span>🎨 ${escapeHtml(item.colorEtc)}</span>`;
-        if (item.capacityEtc) subInfoHtml += `<span>📦 ${escapeHtml(item.capacityEtc)}</span>`;
-        subInfoHtml += `</div>`;
+      if (colorText) {
+        subInfoHtml = `<div class="item-sub-info"><span>${colorText}</span></div>`;
+      }
+
+      let capacityHtml = '';
+      if (capacityText) {
+        capacityHtml = `<div class="detail-capacity">${capacityText}</div>`;
       }
 
       card.innerHTML = `
@@ -528,7 +563,10 @@
         ${subInfoHtml}
         <div class="item-code">コード: ${escapeHtml(itemCode)} ${badStockBadge}</div>
         <div class="item-details">
-          <div class="detail-price">売価: <span>${priceText}</span></div>
+          <div class="detail-left">
+            ${capacityHtml}
+            <div class="detail-price">売価: <span>${priceText}</span></div>
+          </div>
           <div class="detail-stock">
             <span class="stock-label">現在在庫</span>
             <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
@@ -617,9 +655,7 @@
     const filtered = allItems.filter(item => {
       const matchBranch = (selectedBranch === 'ALL') || (item.branch === selectedBranch);
 
-      // 🌟 メーカー、商品名、色・その他、容量・その他、コードすべてを検索対象にする
       const searchTarget = normalizeStr(`${item.maker || ''} ${item.name || ''} ${item.colorEtc || ''} ${item.capacityEtc || ''} ${item.code || item.id || ''} ${item.branch || ''} ${item.isBad ? "不良在庫" : ""}`);
-
       const matchKeywords = keywords.every(kw => searchTarget.includes(kw));
 
       return matchBranch && matchKeywords;
