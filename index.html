@@ -6,11 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
  <!-- 🔐 社内用：厳密な合言葉認証（8888のみ許可） -->
-  <script>
-    const pass = prompt("社内用パスワードを入力してください:");
-    // 文字列として完全に一致（"8888"）しているか、数値として 8888 かを厳密にチェック
-    if (String(pass).trim() !== "8888") {
-      document.body.innerHTML = "<div style='padding:40px; text-align:center; font-family:sans-serif;'><h2>⚠️ アクセス権限がありません</h2><p>正しい合言葉が入力されなかったため、閲覧できません。</p></div>";
+ <script>
+    // 正しいパスワードが入力されるまでダイアログを出し続ける、または即座に隠す
+    let pass = prompt("社内用パスワードを入力してください:");
+    if (String(pass || "").trim() !== "8888") {
+      // 認証失敗時は即座にHTML全体を完全に消去してエラー表示にする
+      document.documentElement.innerHTML = "<body style='background:#111; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;'><div style='text-align:center;'><h2>⛔ アクセス拒否</h2><p>パスワードが違うためアクセスできません。</p></div></body>";
       throw new Error("Unauthorized");
     }
   </script>
