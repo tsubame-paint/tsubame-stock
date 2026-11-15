@@ -55,38 +55,12 @@
       font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
     }
     
-    /* 🌟 カード全体を基準（relative）にする */
+    /* 🌟 カードデザイン */
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
-      position: relative; 
     }
-    
-    /* 🌟 テキスト部分の右側に画像分の余白をしっかり空ける */
-    .item-card-content {
-      padding-right: 76px;
-      min-width: 0;
-    }
-
-    /* 🌟 サムネイル画像をカード内の「右上」にピタッと配置 */
-    .item-thumb-wrapper {
-      position: absolute;
-      top: 14px;
-      right: 16px;
-      width: 64px;
-      height: 64px;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f3f4f6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: 1px solid #e5e7eb;
-    }
-    .item-thumb { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
-    .item-thumb:hover { transform: scale(1.05); }
-    .no-image-text { font-size: 9px; color: #9ca3af; text-align: center; font-weight: 600; }
+    .item-card-content { min-width: 0; }
 
     .item-maker { font-size: 0.78rem; color: #1a73e8; font-weight: 700; margin-bottom: 2px; }
     .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 6px; }
@@ -98,15 +72,40 @@
 
     .item-code { font-size: 0.78rem; color: #70757a; margin-bottom: 10px; }
     
+    /* 🌟 詳細エリア（下部）を横並びにして、右側に画像を収める構造にする */
     .item-details {
-      display: flex; justify-content: space-between; align-items: flex-end;
-      background: #f8f9fa; padding: 8px 12px; border-radius: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #f8f9fa; padding: 8px 12px; border-radius: 8px; gap: 8px;
     }
     .detail-capacity {
       font-size: 0.8rem; font-weight: 700; color: #78350f; background: #fef3c7;
       padding: 4px 8px; border-radius: 6px; border: 1px solid #fcd34d; display: inline-block;
     }
     
+    .detail-right-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* 🌟 サムネイル画像スタイル（「現在在庫」の左横スペースに配置） */
+    .item-thumb-wrapper {
+      flex-shrink: 0;
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1px solid #e5e7eb;
+    }
+    .item-thumb { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+    .item-thumb:hover { transform: scale(1.05); }
+    .no-image-text { font-size: 8px; color: #9ca3af; text-align: center; font-weight: 600; }
+
     .stock-val { font-size: 1.25rem; font-weight: 700; color: #1e8e3e; }
     .stock-low { color: #e37400 !important; } 
     .stock-zero { color: #d93025 !important; } 
@@ -315,13 +314,15 @@
           <div class="item-code">コード: ${escapeHtml(itemCode)}</div>
           <div class="item-details">
             <div>${capacityHtml}</div>
-            <div class="detail-stock">
-              <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px; text-align:right;">現在在庫</span>
-              <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
+            <div class="detail-right-area">
+              ${imageHtml}
+              <div class="detail-stock">
+                <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px; text-align:right;">現在在庫</span>
+                <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
+              </div>
             </div>
           </div>
         </div>
-        ${imageHtml}
       `;
       fragment.appendChild(card);
     });
