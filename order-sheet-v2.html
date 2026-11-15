@@ -55,18 +55,20 @@
       font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
     }
     
-    /* 🌟 カード全体を基準位置（relative）にして、右上のスペースを確保 */
+    /* 🌟 カード全体を基準（relative）にする */
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
       position: relative; 
     }
+    
+    /* 🌟 テキスト部分の右側に画像分の余白をしっかり空ける */
     .item-card-content {
-      padding-right: 76px; /* 画像が文字と重ならないように右側に余白を空ける */
+      padding-right: 76px;
       min-width: 0;
     }
 
-    /* 🌟 サムネイル画像をカード内の「右上」に配置 */
+    /* 🌟 サムネイル画像をカード内の「右上」にピタッと配置 */
     .item-thumb-wrapper {
       position: absolute;
       top: 14px;
@@ -112,7 +114,7 @@
     #loading { text-align: center; padding: 40px 0; color: #5f6368; display: none; }
     #no-result { text-align: center; padding: 30px; color: #70757a; background: #fff; border-radius: 12px; display: none; }
 
-    /* 🌟 画像拡大モーダル（ポップアップ）のスタイル */
+    /* 🌟 画像拡大モーダル */
     .image-modal {
       display: none; position: fixed; z-index: 2000; left: 0; top: 0;
       width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);
@@ -122,7 +124,6 @@
     .image-modal-content { max-width: 90%; max-height: 85vh; border-radius: 8px; object-fit: contain; background: #fff; }
     .image-modal-close { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 36px; font-weight: bold; cursor: pointer; }
 
-    /* 🌟 回転アニメーション */
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -219,7 +220,6 @@
     document.getElementById('update-time').innerText = diffMin >= 1 ? `${timeFormatted} (${diffMin}分前)` : `${timeFormatted} (たった今)`;
   }
 
-  // 🌟 GoogleドライブのURLからサムネイル表示用URLを生成する関数
   function convertDriveUrl(inputUrl) {
     if (!inputUrl || typeof inputUrl !== 'string') return '';
     let fileId = '';
@@ -233,7 +233,6 @@
     return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
   }
 
-  // 🌟 モーダルの開閉関数
   function openImageModal(imageUrl) {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');
@@ -292,7 +291,6 @@
 
       const itemCode = item.code || item.id || '';
 
-      // 🌟 サムネイル画像のHTML生成処理
       const thumbUrl = convertDriveUrl(item.imageUrl);
       let imageHtml = '';
       if (thumbUrl) {
@@ -309,7 +307,6 @@
         `;
       }
 
-      // 🌟 カード全体の組み立て（テキスト内に画像を絶対配置する構造）
       card.innerHTML = `
         <div class="item-card-content">
           ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
