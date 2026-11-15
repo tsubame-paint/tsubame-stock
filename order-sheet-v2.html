@@ -55,23 +55,30 @@
       font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
     }
     
+    /* 🌟 横並びカードデザイン（左：画像、右：テキスト） */
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
+      display: flex; align-items: center; gap: 12px;
     }
+    .item-card-content { flex-grow: 1; min-width: 0; }
+
+    /* 🌟 サムネイル画像スタイル */
+    .item-thumb-wrapper {
+      flex-shrink: 0; width: 64px; height: 64px; border-radius: 8px;
+      overflow: hidden; background: #f3f4f6; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; border: 1px solid #e5e7eb;
+    }
+    .item-thumb { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+    .item-thumb:hover { transform: scale(1.05); }
+    .no-image-text { font-size: 9px; color: #9ca3af; text-align: center; font-weight: 600; }
+
     .item-maker { font-size: 0.78rem; color: #1a73e8; font-weight: 700; margin-bottom: 2px; }
     .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 6px; }
     
     .item-sub-info {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: #78350f;
-      background-color: #fef3c7;
-      padding: 4px 10px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      display: inline-block;
-      border: 1px solid #fcd34d;
+      font-size: 0.85rem; font-weight: 700; color: #78350f; background-color: #fef3c7;
+      padding: 4px 10px; border-radius: 8px; margin-bottom: 8px; display: inline-block; border: 1px solid #fcd34d;
     }
 
     .item-code { font-size: 0.78rem; color: #70757a; margin-bottom: 10px; }
@@ -81,14 +88,8 @@
       background: #f8f9fa; padding: 8px 12px; border-radius: 8px;
     }
     .detail-capacity {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #78350f;
-      background: #fef3c7;
-      padding: 4px 8px;
-      border-radius: 6px;
-      border: 1px solid #fcd34d;
-      display: inline-block;
+      font-size: 0.8rem; font-weight: 700; color: #78350f; background: #fef3c7;
+      padding: 4px 8px; border-radius: 6px; border: 1px solid #fcd34d; display: inline-block;
     }
     
     .stock-val { font-size: 1.25rem; font-weight: 700; color: #1e8e3e; }
@@ -98,7 +99,17 @@
     #loading { text-align: center; padding: 40px 0; color: #5f6368; display: none; }
     #no-result { text-align: center; padding: 30px; color: #70757a; background: #fff; border-radius: 12px; display: none; }
 
-    /* 🌟 回転アニメーションの定義を追加 */
+    /* 🌟 画像拡大モーダル（ポップアップ）のスタイル */
+    .image-modal {
+      display: none; position: fixed; z-index: 2000; left: 0; top: 0;
+      width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .image-modal.active { display: flex; }
+    .image-modal-content { max-width: 90%; max-height: 85vh; border-radius: 8px; object-fit: contain; background: #fff; }
+    .image-modal-close { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 36px; font-weight: bold; cursor: pointer; }
+
+    /* 🌟 回転アニメーション */
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -134,6 +145,12 @@
   <div id="item-list"></div>
 </div>
 
+<!-- 🌟 画像拡大用モーダル要素 -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <span class="image-modal-close">&times;</span>
+  <img class="image-modal-content" id="modalImage" alt="拡大画像">
+</div>
+
 <script>
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u04tLQHsqYI_IoiG_xAmpbuooqy-upDdKDnClDli2A9U6TqQwOw/exec?api=true&mode=customer";
   
@@ -158,7 +175,6 @@
   async function loadCustomerData() {
     const refreshBtn = document.getElementById('refresh-btn');
     refreshBtn.disabled = true;
-    // 🌟 社内用と同じ回転アニメーション付きの表示に統一
     refreshBtn.innerHTML = '🔄 <span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> 読み込み中...';
     document.getElementById('loading').style.display = 'block';
 
@@ -188,6 +204,33 @@
     const diffMin = Math.floor((Date.now() - lastLoadedTimestamp) / 60000);
     const timeFormatted = new Date(lastLoadedTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     document.getElementById('update-time').innerText = diffMin >= 1 ? `${timeFormatted} (${diffMin}分前)` : `${timeFormatted} (たった今)`;
+  }
+
+  // 🌟 GoogleドライブのURLからサムネイル表示用URLを生成する関数
+  function convertDriveUrl(inputUrl) {
+    if (!inputUrl || typeof inputUrl !== 'string') return '';
+    let fileId = '';
+    if (!inputUrl.includes('http') && inputUrl.length > 20) {
+      fileId = inputUrl.trim();
+    } else {
+      const match = inputUrl.match(/[-\w]{25,}/);
+      if (match) fileId = match[0];
+    }
+    if (!fileId) return '';
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+  }
+
+  // 🌟 モーダルの開閉関数
+  function openImageModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = imageUrl;
+    modal.classList.add('active');
+  }
+
+  function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.remove('active');
   }
 
   function renderList(items, isAppend = false) {
@@ -236,16 +279,37 @@
 
       const itemCode = item.code || item.id || '';
 
+      // 🌟 サムネイル画像のHTML生成処理
+      const thumbUrl = convertDriveUrl(item.imageUrl);
+      let imageHtml = '';
+      if (thumbUrl) {
+        imageHtml = `
+          <div class="item-thumb-wrapper" onclick="openImageModal('${thumbUrl}')">
+            <img src="${thumbUrl}" class="item-thumb" alt="${escapeHtml(item.name)}" loading="lazy">
+          </div>
+        `;
+      } else {
+        imageHtml = `
+          <div class="item-thumb-wrapper">
+            <span class="no-image-text">No Image</span>
+          </div>
+        `;
+      }
+
+      // 🌟 カード全体の組み立て（左に画像、右にテキスト）
       card.innerHTML = `
-        ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
-        <div class="item-name">${escapeHtml(item.name)}</div>
-        ${subInfoHtml}
-        <div class="item-code">コード: ${escapeHtml(itemCode)}</div>
-        <div class="item-details">
-          <div>${capacityHtml}</div>
-          <div class="detail-stock">
-            <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px; text-align:right;">現在在庫</span>
-            <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
+        ${imageHtml}
+        <div class="item-card-content">
+          ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
+          <div class="item-name">${escapeHtml(item.name)}</div>
+          ${subInfoHtml}
+          <div class="item-code">コード: ${escapeHtml(itemCode)}</div>
+          <div class="item-details">
+            <div>${capacityHtml}</div>
+            <div class="detail-stock">
+              <span style="font-size:0.72rem; color:#70757a; display:block; margin-bottom:2px; text-align:right;">現在在庫</span>
+              <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.8rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
+            </div>
           </div>
         </div>
       `;
