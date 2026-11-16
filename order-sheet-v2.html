@@ -55,7 +55,7 @@
       font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
     }
     
-    /* 🌟 カード全体：Flexboxで左右に綺麗に配置する */
+    /* カード全体：Flexboxで左右に綺麗に配置する */
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
@@ -387,7 +387,7 @@
     return s.toLowerCase().trim();
   }
 
-  def filterItems() {
+  function filterItems() {
     const rawQuery = document.getElementById('search-input').value;
     const normalizedQuery = normalizeStr(rawQuery);
     const keywords = normalizedQuery ? normalizedQuery.split(/\s+/) : [];
