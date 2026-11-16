@@ -55,24 +55,34 @@
       font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
     }
     
-    /* 🌟 カード全体 */
+    /* 🌟 カード全体：Flexboxで左右に綺麗に配置する */
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
-      position: relative; 
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
     }
     
-    /* 🌟 テキスト部分の右側に画像が重ならないよう余白（110px）を確保 */
+    /* 左側（テキスト情報エリア） */
     .item-card-content {
-      padding-right: 110px;
+      flex: 1;
       min-width: 0;
     }
 
-    /* 🌟 画像を右上に配置 */
+    /* 右側（画像 ＋ 在庫をまとめるサイドカラム） */
+    .item-side-column {
+      width: 90px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 画像ラッパー */
     .item-thumb-wrapper {
-      position: absolute;
-      top: 14px;
-      right: 16px;
       width: 90px;
       height: 90px;
       border-radius: 8px;
@@ -90,18 +100,18 @@
     .no-image-text { font-size: 9px; color: #9ca3af; text-align: center; font-weight: 600; }
 
     .item-maker { font-size: 0.78rem; color: #1a73e8; font-weight: 700; margin-bottom: 2px; }
-    .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 6px; }
+    .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 6px; word-break: break-all; }
     
     .item-sub-info {
       font-size: 0.85rem; font-weight: 700; color: #78350f; background-color: #fef3c7;
-      padding: 4px 10px; border-radius: 8px; margin-bottom: 8px; display: inline-block; border: 1px solid #fcd34d;
+      padding: 4px 10px; border-radius: 8px; margin-bottom: 6px; display: inline-block; border: 1px solid #fcd34d;
     }
 
-    .item-code { font-size: 0.78rem; color: #70757a; margin-bottom: 8px; }
+    .item-code { font-size: 0.78rem; color: #70757a; margin-bottom: 6px; }
     
-    /* 🌟 下部エリア（容量バッジ） */
+    /* 下部エリア（容量バッジなど） */
     .item-details {
-      display: flex; justify-content: flex-start; align-items: center;
+      display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
       margin-top: 4px;
     }
     .detail-capacity {
@@ -109,12 +119,9 @@
       padding: 4px 8px; border-radius: 6px; border: 1px solid #fcd34d; display: inline-block;
     }
     
-    /* 🌟 現在在庫の表示スタイル（画像のすぐ下・カード右側に配置） */
-    .detail-stock-floating {
-      position: absolute;
-      top: 112px;
-      right: 16px;
-      width: 90px;
+    /* 現在在庫の表示スタイル（画像の真下に配置） */
+    .detail-stock-box {
+      width: 100%;
       text-align: center;
       background: #fdfaf3;
       border: 1px solid #fce7c8;
@@ -129,7 +136,7 @@
     #loading { text-align: center; padding: 40px 0; color: #5f6368; display: none; }
     #no-result { text-align: center; padding: 30px; color: #70757a; background: #fff; border-radius: 12px; display: none; }
 
-    /* 🌟 画像拡大モーダル */
+    /* 画像拡大モーダル */
     .image-modal {
       display: none; position: fixed; z-index: 2000; left: 0; top: 0;
       width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);
@@ -174,7 +181,7 @@
   <div id="item-list"></div>
 </div>
 
-<!-- 🌟 画像拡大用モーダル要素 -->
+<!-- 画像拡大用モーダル要素 -->
 <div id="imageModal" class="image-modal" onclick="closeImageModal()">
   <span class="image-modal-close">&times;</span>
   <img class="image-modal-content" id="modalImage" alt="拡大画像">
@@ -323,11 +330,6 @@
       }
 
       card.innerHTML = `
-        ${imageHtml}
-        <div class="detail-stock-floating">
-          <span style="font-size:0.7rem; color:#70757a; display:block; line-height:1.1;">現在在庫</span>
-          <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.75rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
-        </div>
         <div class="item-card-content">
           ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
           <div class="item-name">${escapeHtml(item.name)}</div>
@@ -335,6 +337,13 @@
           <div class="item-code">コード: ${escapeHtml(itemCode)}</div>
           <div class="item-details">
             <div>${capacityHtml}</div>
+          </div>
+        </div>
+        <div class="item-side-column">
+          ${imageHtml}
+          <div class="detail-stock-box">
+            <span style="font-size:0.7rem; color:#70757a; display:block; line-height:1.1;">現在在庫</span>
+            <span class="${stockClass}">${stockNum.toLocaleString()} <small style="font-size:0.75rem; font-weight:normal;">${escapeHtml(item.unit || '缶')}</small></span>
           </div>
         </div>
       `;
@@ -378,7 +387,7 @@
     return s.toLowerCase().trim();
   }
 
-  function filterItems() {
+  def filterItems() {
     const rawQuery = document.getElementById('search-input').value;
     const normalizedQuery = normalizeStr(rawQuery);
     const keywords = normalizedQuery ? normalizedQuery.split(/\s+/) : [];
