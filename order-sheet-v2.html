@@ -55,26 +55,26 @@
       font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
     }
     
-    /* 🌟 カード全体を基準位置（relative）にする */
+    /* 🌟 カード全体を左右のレイアウトにする（左：テキスト、右：画像スペース） */
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
-      position: relative; 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
     }
     
-    /* 🌟 テキスト部分の右側に画像分の余白を空ける */
     .item-card-content {
-      padding-right: 76px;
+      flex-grow: 1;
       min-width: 0;
     }
 
-    /* 🌟 サムネイル画像をカードの「右上（商品名の横あたり）」に配置 */
+    /* 🌟 サムネイル画像スタイル（ご指定の右側スペースに配置） */
     .item-thumb-wrapper {
-      position: absolute;
-      top: 14px;
-      right: 16px;
-      width: 64px;
-      height: 64px;
+      flex-shrink: 0;
+      width: 76px;
+      height: 76px;
       border-radius: 8px;
       overflow: hidden;
       background: #f3f4f6;
@@ -307,6 +307,7 @@
         `;
       }
 
+      // 🌟 左側にテキスト情報、右側に画像が並ぶレイアウト
       card.innerHTML = `
         <div class="item-card-content">
           ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
