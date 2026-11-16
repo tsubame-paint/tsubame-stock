@@ -55,20 +55,20 @@
       font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
     }
     
-    /* 🌟 カード全体を基準位置（relative）にする */
+    /* 🌟 カード全体を基準位置（relative）にして、絶対配置を可能にする */
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
       position: relative; 
     }
     
-    /* 🌟 テキスト部分の右側に画像分の余白（76px）を空ける */
+    /* 🌟 テキストの右側に画像分の余白（76px）を空けて文字が被らないようにする */
     .item-card-content {
       padding-right: 76px;
       min-width: 0;
     }
 
-    /* 🌟 サムネイル画像をカードの「右上（商品名の横スペース）」に絶対配置 */
+    /* 🌟 画像を「グレー背景の上（商品名・色名の横スペース）」に絶対配置する */
     .item-thumb-wrapper {
       position: absolute;
       top: 14px;
@@ -307,7 +307,7 @@
         `;
       }
 
-      // 🌟 テキストを左側に配置し、画像（imageHtml）は右上に絶対配置する構造
+      // 🌟 テキストを左、画像を右上に絶対配置する構造
       card.innerHTML = `
         <div class="item-card-content">
           ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
