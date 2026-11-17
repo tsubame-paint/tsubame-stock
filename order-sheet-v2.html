@@ -100,7 +100,19 @@
     .no-image-text { font-size: 9px; color: #9ca3af; text-align: center; font-weight: 600; }
 
     .item-maker { font-size: 0.78rem; color: #1a73e8; font-weight: 700; margin-bottom: 2px; }
-    .item-name { font-size: 1.05rem; font-weight: 700; color: #202124; margin-bottom: 6px; word-break: break-all; }
+    
+    /* 商品名リンクのスタイル */
+    .item-name { 
+      font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; word-break: break-all; 
+    }
+    .item-name a {
+      color: #202124;
+      text-decoration: none;
+    }
+    .item-name a:hover {
+      color: #1a73e8;
+      text-decoration: underline;
+    }
     
     .item-sub-info {
       font-size: 0.85rem; font-weight: 700; color: #78350f; background-color: #fef3c7;
@@ -217,16 +229,12 @@
     loadingEl.innerHTML = 'データを読み込み中...';
 
     try {
-      console.log("Fetching from:", GAS_API_URL);
       const response = await fetch(GAS_API_URL);
-      
       if (!response.ok) {
         throw new Error(`サーバーエラー (HTTP ステータス: ${response.status})`);
       }
       
       const data = await response.json();
-      console.log("Fetched data:", data);
-      
       if (data && data.success) {
         lastLoadedTimestamp = Date.now();
         allItems = data.items || [];
@@ -237,7 +245,7 @@
       }
     } catch (error) {
       console.error("Load error:", error);
-      loadingEl.innerHTML = `⚠️ データの取得に失敗しました。<br><small style="color:#d93025;">${escapeHtml(error.message)}</small><br><small style="color:#70757a; font-size:0.75rem;">※GASのアクセス権限（「全員」に公開されているか）やデプロイ設定をご確認ください。</small>`;
+      loadingEl.innerHTML = `⚠️ データの取得に失敗しました。<br><small style="color:#d93025;">${escapeHtml(error.message)}</small>`;
     } finally {
       refreshBtn.disabled = false;
       refreshBtn.innerText = "🔄 更新";
@@ -252,6 +260,7 @@
   }
 
   function convertDriveUrl(inputUrl) {
+    .indexOf
     if (!inputUrl || typeof inputUrl !== 'string') return '';
     let fileId = '';
     if (!inputUrl.includes('http') && inputUrl.length > 20) {
@@ -322,6 +331,10 @@
 
       const itemCode = item.code || item.id || '';
 
+      // メーカー名 ＋ 商品名 で検索するURLを生成
+      const searchKeywords = `${item.maker || ''} ${item.name || ''}`.trim();
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchKeywords)}`;
+
       const thumbUrl = convertDriveUrl(item.imageUrl);
       let imageHtml = '';
       if (thumbUrl) {
@@ -341,7 +354,7 @@
       card.innerHTML = `
         <div class="item-card-content">
           ${item.maker ? `<div class="item-maker">${escapeHtml(item.maker)}</div>` : ''}
-          <div class="item-name">${escapeHtml(item.name)}</div>
+          <div class="item-name"><a href="${searchUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.name)} 🔍</a></div>
           ${subInfoHtml}
           <div class="item-code">コード: ${escapeHtml(itemCode)}</div>
           <div class="item-details">
