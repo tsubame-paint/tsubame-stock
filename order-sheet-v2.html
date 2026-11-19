@@ -144,7 +144,7 @@
     .stock-low { color: #e37400 !important; } 
     .stock-zero { color: #d93025 !important; } 
 
-    #loading { text-align: center; padding: 40px 0; color: #5f6368; display: block; }
+    #loading { text-align: center; padding: 40px 0; color: #5f6368; display: none; }
     #no-result { text-align: center; padding: 30px; color: #70757a; background: #fff; border-radius: 12px; display: none; }
 
     /* 画像拡大モーダル */
@@ -249,6 +249,7 @@
     } finally {
       refreshBtn.disabled = false;
       refreshBtn.innerText = "🔄 更新";
+      loadingEl.style.display = 'none';
     }
   }
 
