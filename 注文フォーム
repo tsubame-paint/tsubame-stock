@@ -1,1 +1,459 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ご注文のご案内・WEB注文フォーム｜(有)つばめ塗料店 熊谷営業所</title>
+  <style>
+    :root {
+      --bg: #f3f5f8;
+      --card: #ffffff;
+      --primary: #0f4c81;
+      --primary-hover: #0a355b;
+      --accent: #06c755;
+      --border: #d1d5db;
+      --text: #111827;
+      --muted: #4b5563;
+      --danger: #dc2626;
+      --info-bg: #eff6ff;
+      --info-border: #bfdbfe;
+      --success-bg: #ecfdf5;
+      --success-border: #10b981;
+    }
 
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 22px 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.35rem;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1.1rem;
+      border-left: 4px solid var(--primary);
+      padding-left: 10px;
+    }
+
+    .lead {
+      margin: 0 0 14px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .alt-box {
+      background: var(--info-bg);
+      border: 1px solid var(--info-border);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 0.88rem;
+    }
+
+    .alt-box p {
+      margin: 0 0 8px;
+    }
+
+    .alt-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    .template-box {
+      background: #f8fafc;
+      border: 1px dashed #94a3b8;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      margin: 10px 0;
+    }
+
+    .btn-copy {
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-copy:hover {
+      background: #f3f4f6;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .req {
+      color: var(--danger);
+      font-size: 0.75rem;
+      margin-left: 4px;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.14);
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .items-section {
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 1fr 96px auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-add {
+      background: #e5e7eb;
+      color: var(--text);
+      font-size: 0.85rem;
+      padding: 8px 12px;
+    }
+
+    .btn-remove {
+      background: #fff;
+      color: var(--danger);
+      border: 1px solid #fca5a5;
+      padding: 8px 10px;
+      font-size: 0.82rem;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .notice-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .notice-list li {
+      margin-bottom: 4px;
+    }
+
+    .status-box {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 8px;
+      display: none;
+      font-size: 0.92rem;
+    }
+
+    .status-box.success {
+      display: block;
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: #065f46;
+    }
+
+    .status-box.error {
+      display: block;
+      background: #fef2f2;
+      border: 1px solid #f87171;
+      color: #991b1b;
+    }
+
+    @media (max-width: 520px) {
+      .item-row {
+        grid-template-columns: 1fr 78px auto;
+        gap: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- 上部：案内・代替手段 -->
+    <section class="card">
+      <span class="badge">(有)つばめ塗料店 熊谷営業所</span>
+      <h1>ご注文フォーム</h1>
+      <p class="lead">
+        必要事項をご入力のうえ送信してください。お急ぎの場合や写真・メモでお送りになりたい場合は、LINEのトーク画面からそのままご送信いただけます。
+      </p>
+
+      <div class="alt-box">
+        <p><strong>📷 写真・メモ書きでのご依頼について</strong><br />
+        手元の発注書・メモ・商品ラベルの写真は、WEBフォームではなく<strong>LINEのトーク画面に直接画像をお送りいただく方法</strong>がスムーズです。</p>
+        <div class="template-box" id="lineTemplate">【ご注文依頼】
+・お名前（または貴社名）：
+・ご連絡先（お電話番号）：
+・納品先住所（市町村まででも可）：
+・ご希望納期：
+・商品名・色・数量：
+・備考・その他ご要望：</div>
+        <button type="button" class="btn-copy" onclick="copyTemplate()">定型文をコピーする</button>
+        <span id="copyMsg" class="hint" style="margin-left: 8px;"></span>
+      </div>
+    </section>
+
+    <!-- 下部：WEB注文フォーム本体 -->
+    <section class="card">
+      <h2>WEBから入力して送信</h2>
+      <form id="orderForm">
+        <div class="field">
+          <label for="company">貴社名・お名前<span class="req">必須</span></label>
+          <input type="text" id="company" name="company" required placeholder="例：〇〇塗装株式会社 田中" />
+        </div>
+
+        <div class="field">
+          <label for="tel">ご連絡先（お電話番号）<span class="req">必須</span></label>
+          <input type="tel" id="tel" name="tel" required placeholder="例：090-1234-5678" />
+        </div>
+
+        <div class="field">
+          <label for="deliveryAddress">納品先住所・現場名（市町村まででも可）<span class="req">必須</span></label>
+          <input type="text" id="deliveryAddress" name="deliveryAddress" required placeholder="例：埼玉県熊谷市〇〇 / △△現場" />
+        </div>
+
+        <div class="field">
+          <label for="deliveryDate">ご希望納期</label>
+          <input type="date" id="deliveryDate" name="deliveryDate" />
+        </div>
+
+        <div class="items-section">
+          <label>ご注文内容（商品名・色・数量）<span class="req">必須</span></label>
+          <div id="itemsList">
+            <div class="item-row">
+              <input type="text" class="item-name" placeholder="商品名・色・容量（例：水性セラミシリコン ND-172 15kg）" required />
+              <input type="number" class="item-qty" min="1" value="1" required aria-label="数量" />
+              <button type="button" class="btn btn-remove" onclick="removeRow(this)">削除</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-add" onclick="addRow()">＋ 商品行を追加</button>
+          <div class="hint">複数商品がある場合は「＋ 商品行を追加」を押して行を増やしてください。</div>
+        </div>
+
+        <div class="field">
+          <label for="notes">備考・その他ご要望</label>
+          <textarea id="notes" name="notes" placeholder="配達希望時間帯、SDS・納品書のご要望など"></textarea>
+        </div>
+
+        <ul class="notice-list">
+          <li>お支払いについて：請求書払い以外の場合は「現金引換え」となります。</li>
+          <li>内容を確認のうえ、担当者より順次ご案内いたします。</li>
+          <li>営業時間外にいただいたご連絡は、翌営業日より順次対応いたします。</li>
+        </ul>
+
+        <div style="margin-top: 18px;">
+          <button type="submit" id="submitBtn" class="btn btn-submit">注文を送信する</button>
+        </div>
+      </form>
+
+      <div id="statusBox" class="status-box" role="alert"></div>
+    </section>
+  </div>
+
+  <script>
+    // GASのウェブアプリURL（.../exec）に差し替えてください
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+
+    function copyTemplate() {
+      const text = document.getElementById("lineTemplate").textContent;
+      const msg = document.getElementById("copyMsg");
+      navigator.clipboard.writeText(text).then(() => {
+        msg.textContent = "コピーしました";
+      }).catch(() => {
+        msg.textContent = "手動でコピーしてください";
+      });
+    }
+
+    function addRow() {
+      const list = document.getElementById("itemsList");
+      const row = document.createElement("div");
+      row.className = "item-row";
+      row.innerHTML = `
+        <input type="text" class="item-name" placeholder="商品名・色・容量" required />
+        <input type="number" class="item-qty" min="1" value="1" required aria-label="数量" />
+        <button type="button" class="btn btn-remove" onclick="removeRow(this)">削除</button>
+      `;
+      list.appendChild(row);
+    }
+
+    function removeRow(btn) {
+      const list = document.getElementById("itemsList");
+      if (list.children.length <= 1) {
+        alert("最低1行は注文品目が必要です。");
+        return;
+      }
+      btn.parentElement.remove();
+    }
+
+    function collectItems() {
+      const rows = document.querySelectorAll("#itemsList .item-row");
+      const items = [];
+      rows.forEach((row) => {
+        const name = row.querySelector(".item-name").value.trim();
+        const qty = Number(row.querySelector(".item-qty").value);
+        if (name) {
+          items.push({ name, qty });
+        }
+      });
+      return items;
+    }
+
+    document.getElementById("orderForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById("submitBtn");
+      const statusBox = document.getElementById("statusBox");
+      statusBox.className = "status-box";
+      statusBox.textContent = "";
+
+      const items = collectItems();
+      if (items.length === 0) {
+        statusBox.className = "status-box error";
+        statusBox.textContent = "商品名を入力してください。";
+        return;
+      }
+
+      const payload = {
+        company: document.getElementById("company").value.trim(),
+        tel: document.getElementById("tel").value.trim(),
+        deliveryAddress: document.getElementById("deliveryAddress").value.trim(),
+        deliveryDate: document.getElementById("deliveryDate").value,
+        items: items,
+        notes: document.getElementById("notes").value.trim(),
+        source: "github_order_form",
+        submittedAt: new Date().toISOString()
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "送信中...";
+
+      try {
+        const response = await fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTPエラー: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.status !== "ok") {
+          throw new Error(result.message || "送信処理に失敗しました");
+        }
+
+        statusBox.className = "status-box success";
+        statusBox.textContent = "ご注文を受け付けました。内容を確認のうえご連絡いたします。";
+        e.target.reset();
+      } catch (err) {
+        statusBox.className = "status-box error";
+        statusBox.textContent = `送信に失敗しました（${err.message}）。お手数ですが時間をおいて再度お試しいただくか、LINEのトーク画面から直接ご連絡ください。`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "注文を送信する";
+      }
+    });
+  </script>
+</body>
+</html>
