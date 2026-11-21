@@ -3,22 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ご注文のご案内・WEB注文フォーム｜(有)つばめ塗料店 熊谷営業所</title>
+  <title>WEB注文フォーム | つばめ塗料店</title>
   <style>
     :root {
-      --bg: #f3f5f8;
-      --card: #ffffff;
       --primary: #0f4c81;
-      --primary-hover: #0a355b;
-      --accent: #06c755;
-      --border: #d1d5db;
-      --text: #111827;
-      --muted: #4b5563;
-      --danger: #dc2626;
-      --info-bg: #eff6ff;
-      --info-border: #bfdbfe;
-      --success-bg: #ecfdf5;
-      --success-border: #10b981;
+      --primary-hover: #09355c;
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --border: #d0d7de;
+      --text: #1f2328;
+      --muted: #57606a;
+      --danger: #cf222e;
     }
 
     * {
@@ -27,433 +22,672 @@
 
     body {
       margin: 0;
-      padding: 16px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.5;
+      padding: 16px;
     }
 
-    .wrap {
+    .container {
       max-width: 720px;
       margin: 0 auto;
     }
 
-    .card {
+    .header-card {
       background: var(--card);
-      border-radius: 14px;
-      padding: 22px 20px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
     }
 
-    .badge {
-      display: inline-block;
-      background: #e0f2fe;
-      color: #0369a1;
-      font-size: 0.78rem;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 999px;
-      margin-bottom: 8px;
+    .header-card h1 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      color: var(--primary);
     }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: 1.35rem;
-    }
-
-    h2 {
-      margin: 0 0 12px;
-      font-size: 1.1rem;
-      border-left: 4px solid var(--primary);
-      padding-left: 10px;
-    }
-
-    .lead {
-      margin: 0 0 14px;
-      font-size: 0.92rem;
+    .header-card p {
+      margin: 0;
+      font-size: 13px;
       color: var(--muted);
     }
 
-    .alt-box {
-      background: var(--info-bg);
-      border: 1px solid var(--info-border);
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 0.88rem;
-    }
-
-    .alt-box p {
-      margin: 0 0 8px;
-    }
-
-    .alt-box p:last-child {
-      margin-bottom: 0;
-    }
-
-    .template-box {
-      background: #f8fafc;
-      border: 1px dashed #94a3b8;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.8rem;
-      white-space: pre-wrap;
-      margin: 10px 0;
-    }
-
-    .btn-copy {
-      background: #ffffff;
-      color: var(--text);
+    .section-card {
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
     }
 
-    .btn-copy:hover {
-      background: #f3f4f6;
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 16px;
+      font-weight: 700;
+      border-left: 4px solid var(--primary);
+      padding-left: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .field {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
     }
 
     label {
       display: block;
-      font-size: 0.9rem;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 600;
       margin-bottom: 6px;
     }
 
     .req {
-      color: var(--danger);
-      font-size: 0.75rem;
-      margin-left: 4px;
-    }
-
-    .hint {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-top: 4px;
+      display: inline-block;
+      background: var(--danger);
+      color: #fff;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
     }
 
     input[type="text"],
     input[type="tel"],
-    input[type="date"],
     input[type="number"],
+    select,
     textarea {
       width: 100%;
       padding: 10px 12px;
-      font-size: 1rem;
+      font-size: 15px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 6px;
       background: #fff;
       color: var(--text);
     }
 
     input:focus,
+    select:focus,
     textarea:focus {
-      outline: none;
+      outline: 2px solid rgba(15, 76, 129, 0.25);
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.14);
     }
 
     textarea {
-      min-height: 86px;
+      min-height: 84px;
       resize: vertical;
     }
 
-    .items-section {
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 18px;
+    .item-row {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafbfc;
     }
 
-    .item-row {
-      display: grid;
-      grid-template-columns: 1fr 96px auto;
-      gap: 8px;
+    .item-row-header {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .item-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 84px;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .unit-custom {
+      margin-top: 6px;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border: none;
-      border-radius: 8px;
+      gap: 6px;
       padding: 10px 14px;
-      font-size: 0.95rem;
-      font-weight: 700;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
       cursor: pointer;
     }
 
-    .btn-add {
-      background: #e5e7eb;
-      color: var(--text);
-      font-size: 0.85rem;
-      padding: 8px 12px;
+    .btn:hover {
+      background: #f3f4f6;
     }
 
-    .btn-remove {
-      background: #fff;
-      color: var(--danger);
-      border: 1px solid #fca5a5;
-      padding: 8px 10px;
-      font-size: 0.82rem;
-    }
-
-    .btn-submit {
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
       width: 100%;
       padding: 14px;
-      font-size: 1rem;
-      background: var(--primary);
-      color: #fff;
+      font-size: 16px;
     }
 
-    .btn-submit:hover:not(:disabled) {
+    .btn-primary:hover {
       background: var(--primary-hover);
     }
 
-    .btn-submit:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .btn-remove {
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--danger);
+      border-color: #f3b7bd;
+      background: #fff;
     }
 
-    .notice-list {
-      margin: 0;
-      padding-left: 18px;
-      font-size: 0.85rem;
+    .btn-link-sm {
+      padding: 4px 8px;
+      font-size: 12px;
       color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
     }
 
-    .notice-list li {
+    .notice-bar {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .status-banner {
+      display: none;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-success {
+      display: block;
+      background: #dafbe1;
+      color: #116329;
+      border: 1px solid #4ac26b;
+    }
+
+    .status-error {
+      display: block;
+      background: #ffebe9;
+      color: #82071e;
+      border: 1px solid #ff8182;
+    }
+
+    /* 確認モーダル */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.is-open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 10px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    .confirm-block {
+      margin-bottom: 14px;
+    }
+
+    .confirm-block-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
       margin-bottom: 4px;
     }
 
-    .status-box {
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 8px;
-      display: none;
-      font-size: 0.92rem;
+    .confirm-item-list {
+      margin: 0;
+      padding-left: 18px;
     }
 
-    .status-box.success {
-      display: block;
-      background: var(--success-bg);
-      border: 1px solid var(--success-border);
-      color: #065f46;
+    .confirm-item-list li {
+      margin-bottom: 6px;
     }
 
-    .status-box.error {
-      display: block;
-      background: #fef2f2;
-      border: 1px solid #f87171;
-      color: #991b1b;
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
     }
 
-    @media (max-width: 520px) {
-      .item-row {
-        grid-template-columns: 1fr 78px auto;
-        gap: 6px;
+    .modal-footer .btn {
+      flex: 1;
+    }
+
+    .modal-footer .btn-submit-confirm {
+      flex: 1.4;
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    @media (max-width: 600px) {
+      .item-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- 上部：案内・代替手段 -->
-    <section class="card">
-      <span class="badge">(有)つばめ塗料店 熊谷営業所</span>
-      <h1>ご注文フォーム</h1>
-      <p class="lead">
-        必要事項をご入力のうえ送信してください。お急ぎの場合や写真・メモでお送りになりたい場合は、LINEのトーク画面からそのままご送信いただけます。
-      </p>
+  <div class="container">
+    <div class="header-card">
+      <h1>WEB注文フォーム</h1>
+      <p>必要事項をご入力のうえ、「注文内容を確認する」へお進みください。</p>
+    </div>
 
-      <div class="alt-box">
-        <p><strong>📷 写真・メモ書きでのご依頼について</strong><br />
-        手元の発注書・メモ・商品ラベルの写真は、WEBフォームではなく<strong>LINEのトーク画面に直接画像をお送りいただく方法</strong>がスムーズです。</p>
-        <div class="template-box" id="lineTemplate">【ご注文依頼】
-・お名前（または貴社名）：
-・ご連絡先（お電話番号）：
-・納品先住所（市町村まででも可）：
-・ご希望納期：
-・商品名・色・数量：
-・備考・その他ご要望：</div>
-        <button type="button" class="btn-copy" onclick="copyTemplate()">定型文をコピーする</button>
-        <span id="copyMsg" class="hint" style="margin-left: 8px;"></span>
-      </div>
-    </section>
+    <div id="statusBanner" class="status-banner" role="alert"></div>
 
-    <!-- 下部：WEB注文フォーム本体 -->
-    <section class="card">
-      <h2>WEBから入力して送信</h2>
-      <form id="orderForm">
-        <div class="field">
-          <label for="company">貴社名・お名前<span class="req">必須</span></label>
-          <input type="text" id="company" name="company" required placeholder="例：〇〇塗装株式会社 田中" />
+    <form id="orderForm" novalidate>
+      <!-- お客様情報 -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>お客様情報</span>
+          <button type="button" id="clearSavedBtn" class="btn btn-link-sm">前回入力を消去</button>
         </div>
 
         <div class="field">
-          <label for="tel">ご連絡先（お電話番号）<span class="req">必須</span></label>
+          <label for="company">貴社名・お名前<span class="req">必須</span></label>
+          <input type="text" id="company" name="company" required placeholder="例：〇〇塗装株式会社 山田" />
+        </div>
+
+        <div class="field">
+          <label for="tel">電話番号（連絡先）<span class="req">必須</span></label>
           <input type="tel" id="tel" name="tel" required placeholder="例：090-1234-5678" />
         </div>
 
         <div class="field">
-          <label for="deliveryAddress">納品先住所・現場名（市町村まででも可）<span class="req">必須</span></label>
-          <input type="text" id="deliveryAddress" name="deliveryAddress" required placeholder="例：埼玉県熊谷市〇〇 / △△現場" />
+          <label for="address">納品先住所・現場名<span class="req">必須</span></label>
+          <input type="text" id="address" name="address" required placeholder="例：埼玉県熊谷市〇〇 〇〇現場" />
+          <div class="notice-bar">※一度送信すると、次回から会社名・電話番号・納品先が自動入力されます。</div>
+        </div>
+      </div>
+
+      <!-- ご注文内容 -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>ご注文商品</span>
         </div>
 
+        <div id="itemsContainer"></div>
+
+        <button type="button" id="addRowBtn" class="btn">＋ 商品行を追加</button>
+      </div>
+
+      <!-- 備考 -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>ご希望納期・備考</span>
+        </div>
         <div class="field">
-          <label for="deliveryDate">ご希望納期</label>
-          <input type="date" id="deliveryDate" name="deliveryDate" />
+          <label for="notes">連絡事項・納品希望時間など</label>
+          <textarea id="notes" name="notes" placeholder="例：明日午前中希望、現場着時に電話連絡希望 など"></textarea>
         </div>
+      </div>
 
-        <div class="items-section">
-          <label>ご注文内容（商品名・色・数量）<span class="req">必須</span></label>
-          <div id="itemsList">
-            <div class="item-row">
-              <input type="text" class="item-name" placeholder="商品名・色・容量（例：水性セラミシリコン ND-172 15kg）" required />
-              <input type="number" class="item-qty" min="1" value="1" required aria-label="数量" />
-              <button type="button" class="btn btn-remove" onclick="removeRow(this)">削除</button>
-            </div>
-          </div>
-          <button type="button" class="btn btn-add" onclick="addRow()">＋ 商品行を追加</button>
-          <div class="hint">複数商品がある場合は「＋ 商品行を追加」を押して行を増やしてください。</div>
-        </div>
+      <button type="submit" id="openConfirmBtn" class="btn btn-primary">注文内容を確認する</button>
+    </form>
+  </div>
 
-        <div class="field">
-          <label for="notes">備考・その他ご要望</label>
-          <textarea id="notes" name="notes" placeholder="配達希望時間帯、SDS・納品書のご要望など"></textarea>
-        </div>
-
-        <ul class="notice-list">
-          <li>お支払いについて：請求書払い以外の場合は「現金引換え」となります。</li>
-          <li>内容を確認のうえ、担当者より順次ご案内いたします。</li>
-          <li>営業時間外にいただいたご連絡は、翌営業日より順次対応いたします。</li>
-        </ul>
-
-        <div style="margin-top: 18px;">
-          <button type="submit" id="submitBtn" class="btn btn-submit">注文を送信する</button>
-        </div>
-      </form>
-
-      <div id="statusBox" class="status-box" role="alert"></div>
-    </section>
+  <!-- 確認モーダル -->
+  <div id="confirmModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+      <div id="modalTitle" class="modal-header">ご注文内容の確認</div>
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" id="closeModalBtn" class="btn">修正する</button>
+        <button type="button" id="finalSendBtn" class="btn btn-submit-confirm">この内容で送信する</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    // GASのウェブアプリURL（.../exec）に差し替えてください
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+    // ★ 既存のGAS WebアプリURLを設定してください（未設定の場合はプレビュー動作になります）
+    const GAS_ENDPOINT_URL = "";
+    const STORAGE_KEY = "tsubame_web_order_customer_v1";
+    const UNIT_OPTIONS = ["15kg", "16kg", "4kg", "3kg", "1缶", "1箱", "その他"];
 
-    function copyTemplate() {
-      const text = document.getElementById("lineTemplate").textContent;
-      const msg = document.getElementById("copyMsg");
-      navigator.clipboard.writeText(text).then(() => {
-        msg.textContent = "コピーしました";
-      }).catch(() => {
-        msg.textContent = "手動でコピーしてください";
+    const form = document.getElementById("orderForm");
+    const itemsContainer = document.getElementById("itemsContainer");
+    const addRowBtn = document.getElementById("addRowBtn");
+    const clearSavedBtn = document.getElementById("clearSavedBtn");
+    const statusBanner = document.getElementById("statusBanner");
+
+    const modal = document.getElementById("confirmModal");
+    const modalBody = document.getElementById("modalBody");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    const finalSendBtn = document.getElementById("finalSendBtn");
+
+    let pendingPayload = null;
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function showBanner(type, message) {
+      statusBanner.className = "status-banner " + (type === "success" ? "status-success" : "status-error");
+      statusBanner.textContent = message;
+      statusBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function hideBanner() {
+      statusBanner.className = "status-banner";
+      statusBanner.textContent = "";
+    }
+
+    function createItemRow() {
+      const row = document.createElement("div");
+      row.className = "item-row";
+
+      const optionsHtml = UNIT_OPTIONS.map((unit) => {
+        const label = unit === "その他" ? "その他（手入力）" : unit;
+        return `<option value="${escapeHtml(unit)}">${escapeHtml(label)}</option>`;
+      }).join("");
+
+      row.innerHTML = `
+        <div class="item-row-header">
+          <span class="row-label">商品</span>
+          <button type="button" class="btn btn-remove" aria-label="この行を削除">削除</button>
+        </div>
+        <div class="item-grid">
+          <div>
+            <input type="text" class="item-name" placeholder="商品名・色番（例：水性セラミシリコン ND-172）" />
+          </div>
+          <div>
+            <select class="item-unit">
+              <option value="">容量・単位を選択</option>
+              ${optionsHtml}
+            </select>
+            <input type="text" class="item-unit-custom unit-custom" placeholder="容量を入力（例：18L、特注）" style="display:none;" />
+          </div>
+          <div>
+            <input type="number" class="item-qty" min="1" value="1" aria-label="数量" />
+          </div>
+        </div>
+      `;
+
+      const selectEl = row.querySelector(".item-unit");
+      const customEl = row.querySelector(".item-unit-custom");
+      const removeBtn = row.querySelector(".btn-remove");
+
+      selectEl.addEventListener("change", () => {
+        if (selectEl.value === "その他") {
+          customEl.style.display = "block";
+          customEl.focus();
+        } else {
+          customEl.style.display = "none";
+          customEl.value = "";
+        }
+      });
+
+      removeBtn.addEventListener("click", () => {
+        if (itemsContainer.children.length <= 1) {
+          // 最後の1行は消さずに中身だけクリア
+          row.querySelector(".item-name").value = "";
+          selectEl.value = "";
+          customEl.value = "";
+          customEl.style.display = "none";
+          row.querySelector(".item-qty").value = "1";
+          return;
+        }
+        row.remove();
+        refreshRowNumbers();
+      });
+
+      itemsContainer.appendChild(row);
+      refreshRowNumbers();
+    }
+
+    function refreshRowNumbers() {
+      const rows = itemsContainer.querySelectorAll(".item-row");
+      rows.forEach((row, idx) => {
+        const labelEl = row.querySelector(".row-label");
+        if (labelEl) labelEl.textContent = `商品 ${idx + 1}`;
       });
     }
 
-    function addRow() {
-      const list = document.getElementById("itemsList");
-      const row = document.createElement("div");
-      row.className = "item-row";
-      row.innerHTML = `
-        <input type="text" class="item-name" placeholder="商品名・色・容量" required />
-        <input type="number" class="item-qty" min="1" value="1" required aria-label="数量" />
-        <button type="button" class="btn btn-remove" onclick="removeRow(this)">削除</button>
-      `;
-      list.appendChild(row);
-    }
-
-    function removeRow(btn) {
-      const list = document.getElementById("itemsList");
-      if (list.children.length <= 1) {
-        alert("最低1行は注文品目が必要です。");
-        return;
-      }
-      btn.parentElement.remove();
-    }
-
     function collectItems() {
-      const rows = document.querySelectorAll("#itemsList .item-row");
       const items = [];
+      const rows = itemsContainer.querySelectorAll(".item-row");
       rows.forEach((row) => {
         const name = row.querySelector(".item-name").value.trim();
-        const qty = Number(row.querySelector(".item-qty").value);
-        if (name) {
-          items.push({ name, qty });
+        const unitSelect = row.querySelector(".item-unit").value;
+        const unitCustom = row.querySelector(".item-unit-custom").value.trim();
+        const qtyRaw = parseInt(row.querySelector(".item-qty").value, 10);
+        const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? qtyRaw : 1;
+        const unit = unitSelect === "その他" ? unitCustom : unitSelect;
+
+        if (name || unit) {
+          items.push({
+            name,
+            unit,
+            qty
+          });
         }
       });
       return items;
     }
 
-    document.getElementById("orderForm").addEventListener("submit", async (e) => {
+    // 前回お客様情報の保存・復元
+    function saveCustomerInfo(company, tel, address) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ company, tel, address }));
+      } catch (e) {
+        // ストレージ制限時は無視
+      }
+    }
+
+    function loadCustomerInfo() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        const companyEl = document.getElementById("company");
+        const telEl = document.getElementById("tel");
+        const addressEl = document.getElementById("address");
+
+        if (companyEl && !companyEl.value && saved.company) companyEl.value = saved.company;
+        if (telEl && !telEl.value && saved.tel) telEl.value = saved.tel;
+        if (addressEl && !addressEl.value && saved.address) addressEl.value = saved.address;
+      } catch (e) {
+        // 読み込み失敗時は無視
+      }
+    }
+
+    clearSavedBtn.addEventListener("click", () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+      document.getElementById("company").value = "";
+      document.getElementById("tel").value = "";
+      document.getElementById("address").value = "";
+      showBanner("success", "前回入力の保存情報をクリアしました。");
+    });
+
+    // 確認モーダル表示
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
+      hideBanner();
 
-      const submitBtn = document.getElementById("submitBtn");
-      const statusBox = document.getElementById("statusBox");
-      statusBox.className = "status-box";
-      statusBox.textContent = "";
-
+      const company = document.getElementById("company").value.trim();
+      const tel = document.getElementById("tel").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const notes = document.getElementById("notes").value.trim();
       const items = collectItems();
-      if (items.length === 0) {
-        statusBox.className = "status-box error";
-        statusBox.textContent = "商品名を入力してください。";
+
+      if (!company || !tel || !address) {
+        showBanner("error", "「貴社名・お名前」「電話番号」「納品先住所・現場名」は必須です。");
         return;
       }
 
-      const payload = {
-        company: document.getElementById("company").value.trim(),
-        tel: document.getElementById("tel").value.trim(),
-        deliveryAddress: document.getElementById("deliveryAddress").value.trim(),
-        deliveryDate: document.getElementById("deliveryDate").value,
-        items: items,
-        notes: document.getElementById("notes").value.trim(),
-        source: "github_order_form",
-        submittedAt: new Date().toISOString()
+      if (items.length === 0) {
+        showBanner("error", "ご注文商品を1点以上入力してください。");
+        return;
+      }
+
+      const missingUnit = items.find((it) => !it.name || !it.unit);
+      if (missingUnit) {
+        showBanner("error", "入力中の商品行について、「商品名・色番」と「容量・単位」の両方を確認してください。");
+        return;
+      }
+
+      pendingPayload = {
+        submittedAt: new Date().toISOString(),
+        company,
+        tel,
+        address,
+        items,
+        notes
       };
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = "送信中...";
+      const itemsHtml = items
+        .map(
+          (it, i) =>
+            `<li><strong>${i + 1}.</strong> ${escapeHtml(it.name)} ／ <strong>${escapeHtml(it.unit)}</strong> ／ 数量：<strong>${escapeHtml(it.qty)}</strong></li>`
+        )
+        .join("");
 
-      try {
-        const response = await fetch(GAS_WEB_APP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
+      modalBody.innerHTML = `
+        <div class="confirm-block">
+          <div class="confirm-block-title">貴社名・お名前</div>
+          <div>${escapeHtml(company)}</div>
+        </div>
+        <div class="confirm-block">
+          <div class="confirm-block-title">電話番号</div>
+          <div>${escapeHtml(tel)}</div>
+        </div>
+        <div class="confirm-block">
+          <div class="confirm-block-title">納品先住所・現場名</div>
+          <div>${escapeHtml(address)}</div>
+        </div>
+        <div class="confirm-block">
+          <div class="confirm-block-title">ご注文商品</div>
+          <ul class="confirm-item-list">${itemsHtml}</ul>
+        </div>
+        <div class="confirm-block">
+          <div class="confirm-block-title">ご希望納期・備考</div>
+          <div>${notes ? escapeHtml(notes).replace(/\n/g, "<br>") : "（なし）"}</div>
+        </div>
+      `;
 
-        if (!response.ok) {
-          throw new Error(`HTTPエラー: ${response.status}`);
-        }
+      modal.classList.add("is-open");
+    });
 
-        const result = await response.json();
-        if (result.status !== "ok") {
-          throw new Error(result.message || "送信処理に失敗しました");
-        }
+    closeModalBtn.addEventListener("click", () => {
+      modal.classList.remove("is-open");
+    });
 
-        statusBox.className = "status-box success";
-        statusBox.textContent = "ご注文を受け付けました。内容を確認のうえご連絡いたします。";
-        e.target.reset();
-      } catch (err) {
-        statusBox.className = "status-box error";
-        statusBox.textContent = `送信に失敗しました（${err.message}）。お手数ですが時間をおいて再度お試しいただくか、LINEのトーク画面から直接ご連絡ください。`;
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "注文を送信する";
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.remove("is-open");
       }
     });
+
+    // 本送信処理
+    finalSendBtn.addEventListener("click", async () => {
+      if (!pendingPayload) return;
+
+      finalSendBtn.disabled = true;
+      closeModalBtn.disabled = true;
+      finalSendBtn.textContent = "送信中...";
+
+      try {
+        if (GAS_ENDPOINT_URL) {
+          const res = await fetch(GAS_ENDPOINT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(pendingPayload)
+          });
+          void res;
+        }
+
+        // 次回自動入力用に保存
+        saveCustomerInfo(pendingPayload.company, pendingPayload.tel, pendingPayload.address);
+
+        modal.classList.remove("is-open");
+        showBanner(
+          "success",
+          GAS_ENDPOINT_URL
+            ? "ご注文を送信しました。ありがとうございました。"
+            : "確認処理が完了しました（GAS_ENDPOINT_URL を設定すると実送信されます）。"
+        );
+
+        // 商品と備考をリセット（お客様情報は保持）
+        itemsContainer.innerHTML = "";
+        createItemRow();
+        document.getElementById("notes").value = "";
+        pendingPayload = null;
+      } catch (err) {
+        modal.classList.remove("is-open");
+        showBanner("error", "送信中にエラーが発生しました。通信環境をご確認のうえ再度お試しください。");
+      } finally {
+        finalSendBtn.disabled = false;
+        closeModalBtn.disabled = false;
+        finalSendBtn.textContent = "この内容で送信する";
+      }
+    });
+
+    addRowBtn.addEventListener("click", createItemRow);
+
+    // 初期表示
+    createItemRow();
+    loadCustomerInfo();
   </script>
 </body>
 </html>
