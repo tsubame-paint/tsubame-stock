@@ -143,13 +143,57 @@
       font-size: 13px;
       font-weight: 700;
       color: var(--muted);
+      gap: 8px;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
     }
 
     .item-grid {
       display: grid;
-      grid-template-columns: 2fr 1.2fr 84px;
+      grid-template-columns: 2fr 1.2fr 132px;
       gap: 8px;
       align-items: start;
+    }
+
+    .qty-stepper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .qty-btn {
+      width: 38px;
+      height: 42px;
+      padding: 0;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .qty-btn:hover {
+      background: #eef2f6;
+    }
+
+    .qty-stepper input.item-qty {
+      width: 48px;
+      text-align: center;
+      padding: 10px 4px;
+      -moz-appearance: textfield;
+    }
+
+    .qty-stepper input.item-qty::-webkit-outer-spin-button,
+    .qty-stepper input.item-qty::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
     .unit-custom {
@@ -186,6 +230,14 @@
 
     .btn-primary:hover {
       background: var(--primary-hover);
+    }
+
+    .btn-duplicate {
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--primary);
+      border-color: #b6d0e8;
+      background: #fff;
     }
 
     .btn-remove {
@@ -231,6 +283,18 @@
       background: #ffebe9;
       color: #82071e;
       border: 1px solid #ff8182;
+    }
+
+    .receipt-box {
+      margin-top: 10px;
+      padding: 10px;
+      background: #ffffff;
+      border: 1px solid #82e596;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text);
+      white-space: pre-wrap;
     }
 
     /* 確認モーダル */
@@ -316,6 +380,14 @@
       .item-grid {
         grid-template-columns: 1fr;
       }
+
+      .qty-stepper {
+        justify-content: flex-start;
+      }
+
+      .qty-stepper input.item-qty {
+        width: 72px;
+      }
     }
   </style>
 </head>
@@ -362,6 +434,7 @@
         <div id="itemsContainer"></div>
 
         <button type="button" id="addRowBtn" class="btn">＋ 商品行を追加</button>
+        <div class="notice-bar">※塗料は「艶有・7分艶・5分艶・3分艶・艶消」などの艶指定もあわせてご記入ください。</div>
       </div>
 
       <!-- 備考 -->
@@ -392,7 +465,7 @@
   </div>
 
   <script>
-    // ★ 既存のGAS WebアプリURLを設定してください（未設定の場合はプレビュー動作になります）
+    // ★ デプロイしたGAS WebアプリURLを設定してください
     const GAS_ENDPOINT_URL = "";
     const STORAGE_KEY = "tsubame_web_order_customer_v1";
     const UNIT_OPTIONS = ["15kg", "16kg", "4kg", "3kg", "1缶", "1箱", "その他"];
@@ -419,50 +492,82 @@
         .replace(/'/g, "&#39;");
     }
 
-    function showBanner(type, message) {
+    function showBanner(type, message, receiptText = "") {
       statusBanner.className = "status-banner " + (type === "success" ? "status-success" : "status-error");
-      statusBanner.textContent = message;
+      statusBanner.innerHTML = "";
+
+      const msgDiv = document.createElement("div");
+      msgDiv.textContent = message;
+      statusBanner.appendChild(msgDiv);
+
+      if (receiptText) {
+        const pre = document.createElement("div");
+        pre.className = "receipt-box";
+        pre.textContent = receiptText;
+        statusBanner.appendChild(pre);
+      }
+
       statusBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     function hideBanner() {
       statusBanner.className = "status-banner";
-      statusBanner.textContent = "";
+      statusBanner.innerHTML = "";
     }
 
-    function createItemRow() {
+    function createItemRow(initial = {}) {
+      const initName = initial.name ?? "";
+      const initUnitSelect = initial.unitSelect ?? "";
+      const initUnitCustom = initial.unitCustom ?? "";
+      const initQty = Number.isFinite(Number(initial.qty)) && Number(initial.qty) > 0 ? Number(initial.qty) : 1;
+
       const row = document.createElement("div");
       row.className = "item-row";
 
       const optionsHtml = UNIT_OPTIONS.map((unit) => {
         const label = unit === "その他" ? "その他（手入力）" : unit;
-        return `<option value="${escapeHtml(unit)}">${escapeHtml(label)}</option>`;
+        const selected = unit === initUnitSelect ? " selected" : "";
+        return `<option value="${escapeHtml(unit)}"${selected}>${escapeHtml(label)}</option>`;
       }).join("");
+
+      const customDisplayStyle = initUnitSelect === "その他" ? "block" : "none";
 
       row.innerHTML = `
         <div class="item-row-header">
           <span class="row-label">商品</span>
-          <button type="button" class="btn btn-remove" aria-label="この行を削除">削除</button>
+          <div class="row-actions">
+            <button type="button" class="btn btn-duplicate" aria-label="この行を複製">複製</button>
+            <button type="button" class="btn btn-remove" aria-label="この行を削除">削除</button>
+          </div>
         </div>
         <div class="item-grid">
           <div>
-            <input type="text" class="item-name" placeholder="商品名・色番（例：水性セラミシリコン ND-172）" />
+            <input type="text" class="item-name" value="${escapeHtml(initName)}" placeholder="商品名・色番・艶（例：水性セラミシリコン ND-172 艶有）" />
           </div>
           <div>
             <select class="item-unit">
               <option value="">容量・単位を選択</option>
               ${optionsHtml}
             </select>
-            <input type="text" class="item-unit-custom unit-custom" placeholder="容量を入力（例：18L、特注）" style="display:none;" />
+            <input type="text" class="item-unit-custom unit-custom" value="${escapeHtml(initUnitCustom)}" placeholder="容量を入力（例：18L、特注）" style="display:${customDisplayStyle};" />
           </div>
           <div>
-            <input type="number" class="item-qty" min="1" value="1" aria-label="数量" />
+            <div class="qty-stepper">
+              <button type="button" class="qty-btn qty-minus" aria-label="数量を減らす">−</button>
+              <input type="number" class="item-qty" inputmode="numeric" min="1" value="${escapeHtml(initQty)}" aria-label="数量" />
+              <button type="button" class="qty-btn qty-plus" aria-label="数量を増やす">＋</button>
+            </div>
           </div>
         </div>
       `;
 
+      const nameEl = row.querySelector(".item-name");
       const selectEl = row.querySelector(".item-unit");
       const customEl = row.querySelector(".item-unit-custom");
+      const qtyEl = row.querySelector(".item-qty");
+      const minusBtn = row.querySelector(".qty-minus");
+      const plusBtn = row.querySelector(".qty-plus");
+      const dupBtn = row.querySelector(".btn-duplicate");
       const removeBtn = row.querySelector(".btn-remove");
 
       selectEl.addEventListener("change", () => {
@@ -475,22 +580,49 @@
         }
       });
 
+      minusBtn.addEventListener("click", () => {
+        const current = parseInt(qtyEl.value, 10);
+        const next = Number.isFinite(current) && current > 1 ? current - 1 : 1;
+        qtyEl.value = String(next);
+      });
+
+      plusBtn.addEventListener("click", () => {
+        const current = parseInt(qtyEl.value, 10);
+        const next = Number.isFinite(current) && current >= 1 ? current + 1 : 2;
+        qtyEl.value = String(next);
+      });
+
+      dupBtn.addEventListener("click", () => {
+        const currentQty = parseInt(qtyEl.value, 10);
+        const copiedRow = createItemRow({
+          name: nameEl.value,
+          unitSelect: selectEl.value,
+          unitCustom: customEl.value,
+          qty: Number.isFinite(currentQty) && currentQty > 0 ? currentQty : 1
+        });
+        row.insertAdjacentElement("afterend", copiedRow);
+        refreshRowNumbers();
+        copiedRow.querySelector(".item-name").focus();
+      });
+
       removeBtn.addEventListener("click", () => {
         if (itemsContainer.children.length <= 1) {
-          // 最後の1行は消さずに中身だけクリア
-          row.querySelector(".item-name").value = "";
+          nameEl.value = "";
           selectEl.value = "";
           customEl.value = "";
           customEl.style.display = "none";
-          row.querySelector(".item-qty").value = "1";
+          qtyEl.value = "1";
           return;
         }
         row.remove();
         refreshRowNumbers();
       });
 
-      itemsContainer.appendChild(row);
+      if (!initial.insertAfter) {
+        itemsContainer.appendChild(row);
+      }
       refreshRowNumbers();
+      return row;
     }
 
     function refreshRowNumbers() {
@@ -523,13 +655,25 @@
       return items;
     }
 
-    // 前回お客様情報の保存・復元
+    function buildReceiptText(payload) {
+      const lines = [
+        `【WEB注文控え】`,
+        `貴社名・お名前：${payload.company}`,
+        `電話番号：${payload.tel}`,
+        `納品先：${payload.address}`,
+        `--- ご注文商品 ---`,
+        ...payload.items.map((it, i) => `${i + 1}. ${it.name} / ${it.unit} × ${it.qty}`)
+      ];
+      if (payload.notes) {
+        lines.push(`--- 備考 ---`, payload.notes);
+      }
+      return lines.join("\n");
+    }
+
     function saveCustomerInfo(company, tel, address) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ company, tel, address }));
-      } catch (e) {
-        // ストレージ制限時は無視
-      }
+      } catch (e) {}
     }
 
     function loadCustomerInfo() {
@@ -544,9 +688,7 @@
         if (companyEl && !companyEl.value && saved.company) companyEl.value = saved.company;
         if (telEl && !telEl.value && saved.tel) telEl.value = saved.tel;
         if (addressEl && !addressEl.value && saved.address) addressEl.value = saved.address;
-      } catch (e) {
-        // 読み込み失敗時は無視
-      }
+      } catch (e) {}
     }
 
     clearSavedBtn.addEventListener("click", () => {
@@ -559,7 +701,6 @@
       showBanner("success", "前回入力の保存情報をクリアしました。");
     });
 
-    // 確認モーダル表示
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       hideBanner();
@@ -582,7 +723,7 @@
 
       const missingUnit = items.find((it) => !it.name || !it.unit);
       if (missingUnit) {
-        showBanner("error", "入力中の商品行について、「商品名・色番」と「容量・単位」の両方を確認してください。");
+        showBanner("error", "入力中の商品行について、「商品名・色番・艶」と「容量・単位」の両方を確認してください。");
         return;
       }
 
@@ -638,7 +779,6 @@
       }
     });
 
-    // 本送信処理
     finalSendBtn.addEventListener("click", async () => {
       if (!pendingPayload) return;
 
@@ -648,27 +788,26 @@
 
       try {
         if (GAS_ENDPOINT_URL) {
-          const res = await fetch(GAS_ENDPOINT_URL, {
+          await fetch(GAS_ENDPOINT_URL, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(pendingPayload)
           });
-          void res;
         }
 
-        // 次回自動入力用に保存
         saveCustomerInfo(pendingPayload.company, pendingPayload.tel, pendingPayload.address);
+        const receiptText = buildReceiptText(pendingPayload);
 
         modal.classList.remove("is-open");
         showBanner(
           "success",
           GAS_ENDPOINT_URL
             ? "ご注文を送信しました。ありがとうございました。"
-            : "確認処理が完了しました（GAS_ENDPOINT_URL を設定すると実送信されます）。"
+            : "確認処理が完了しました（GAS_ENDPOINT_URL を設定すると実送信されます）。",
+          receiptText
         );
 
-        // 商品と備考をリセット（お客様情報は保持）
         itemsContainer.innerHTML = "";
         createItemRow();
         document.getElementById("notes").value = "";
@@ -683,9 +822,11 @@
       }
     });
 
-    addRowBtn.addEventListener("click", createItemRow);
+    addRowBtn.addEventListener("click", () => {
+      const newRow = createItemRow();
+      newRow.querySelector(".item-name").focus();
+    });
 
-    // 初期表示
     createItemRow();
     loadCustomerInfo();
   </script>
