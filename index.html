@@ -128,36 +128,60 @@
       resize: vertical;
     }
 
-    .address-tools {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 8px;
-      align-items: center;
+    /* 納品場所区分タブ */
+    .location-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
     }
 
-    .address-tools select {
-      flex: 1;
-      min-width: 180px;
+    .loc-tab {
+      padding: 9px 6px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .loc-tab:hover {
+      background: #f0f4f8;
+    }
+
+    .loc-tab.is-active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .location-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fafbfc;
+    }
+
+    .history-select {
+      margin-bottom: 8px;
       font-size: 14px;
       padding: 8px 10px;
-      background: #f8fafc;
+      background: #fff;
     }
 
-    .btn-preset {
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--primary);
-      background: var(--primary-soft);
-      border: 1px solid #b6d0e8;
-      border-radius: 6px;
-      cursor: pointer;
-      white-space: nowrap;
+    .sub-field {
+      margin-top: 10px;
     }
 
-    .btn-preset:hover {
-      background: #d7e7f5;
+    .sub-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 4px;
     }
 
     .item-row {
@@ -493,15 +517,39 @@
         </div>
 
         <div class="field">
-          <label for="address">納品先住所・現場名<span class="req">必須</span></label>
-          <div class="address-tools">
-            <button type="button" id="fillCompanyBtn" class="btn-preset">貴社</button>
-            <select id="addressHistorySelect" aria-label="過去の納品先から選択" style="display:none;">
-              <option value="">過去の納品先から選ぶ...</option>
-            </select>
+          <label>納品場所<span class="req">必須</span></label>
+          <div class="location-tabs" role="tablist" aria-label="納品場所区分">
+            <button type="button" class="loc-tab is-active" data-loc="貴社">貴社</button>
+            <button type="button" class="loc-tab" data-loc="現場">現場</button>
+            <button type="button" class="loc-tab" data-loc="倉庫">倉庫</button>
+            <button type="button" class="loc-tab" data-loc="その他">その他</button>
           </div>
-          <input type="text" id="address" name="address" required placeholder="例：埼玉県熊谷市〇〇 〇〇現場" />
-          <div class="notice-bar">※「貴社」ボタンで入力するか、送信した納品先履歴から次回以降も選べます。</div>
+
+          <div class="location-box">
+            <select id="locationHistorySelect" class="history-select" aria-label="過去の履歴から選択" style="display:none;">
+              <option value="">過去の履歴から選ぶ...</option>
+            </select>
+
+            <!-- 貴社 / 現場 / 倉庫 用の単一住所入力 -->
+            <div id="singleAddressWrap">
+              <label id="singleAddressLabel" for="singleAddress" class="sub-label">貴社住所</label>
+              <input type="text" id="singleAddress" placeholder="例：埼玉県熊谷市〇〇 1-2-3" />
+            </div>
+
+            <!-- その他 用の「説明」＋「住所」入力 -->
+            <div id="otherAddressWrap" style="display:none;">
+              <div>
+                <label for="otherDesc" class="sub-label">説明</label>
+                <input type="text" id="otherDesc" placeholder="例：〇〇様邸、〇〇営業所、置き配指定 など" />
+              </div>
+              <div class="sub-field">
+                <label for="otherAddress" class="sub-label">住所</label>
+                <input type="text" id="otherAddress" placeholder="例：群馬県前橋市〇〇 1-2-3" />
+              </div>
+            </div>
+
+            <div class="notice-bar">※送信した内容は区分ごとの履歴に保存され、次回から選べます。</div>
+          </div>
         </div>
       </div>
 
@@ -546,10 +594,9 @@
 
   <script>
     const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbzuHLwm-bGvfXNuAWy-JX3HyIHYS23Z1dbIM5eE7xy4SeKQBqUUpK3Zemrgq5CQVW36/exec";
-    const STORAGE_KEY = "tsubame_web_order_customer_v2";
-    const MAX_ADDRESS_HISTORY = 15;
-    // 固定の貴社住所を入れたい場合はここに記入（空文字なら「貴社」と入力されます）
-    const PRESET_COMPANY_ADDRESS = "";
+    const STORAGE_KEY = "tsubame_web_order_customer_v3";
+    const MAX_HISTORY_PER_TYPE = 15;
+    const LOCATION_TYPES = ["貴社", "現場", "倉庫", "その他"];
     const UNIT_OPTIONS = ["15kg", "16kg", "4kg", "3kg", "1缶", "1箱", "その他"];
     const GLOSS_OPTIONS = ["指定なし", "艶有", "7分艶", "5分艶", "3分艶", "艶消"];
 
@@ -559,15 +606,27 @@
     const clearSavedBtn = document.getElementById("clearSavedBtn");
     const statusBanner = document.getElementById("statusBanner");
 
-    const fillCompanyBtn = document.getElementById("fillCompanyBtn");
-    const addressHistorySelect = document.getElementById("addressHistorySelect");
-    const addressInput = document.getElementById("address");
+    const locTabEls = document.querySelectorAll(".loc-tab");
+    const locationHistorySelect = document.getElementById("locationHistorySelect");
+    const singleAddressWrap = document.getElementById("singleAddressWrap");
+    const singleAddressLabel = document.getElementById("singleAddressLabel");
+    const singleAddressInput = document.getElementById("singleAddress");
+    const otherAddressWrap = document.getElementById("otherAddressWrap");
+    const otherDescInput = document.getElementById("otherDesc");
+    const otherAddressInput = document.getElementById("otherAddress");
 
     const modal = document.getElementById("confirmModal");
     const modalBody = document.getElementById("modalBody");
     const closeModalBtn = document.getElementById("closeModalBtn");
     const finalSendBtn = document.getElementById("finalSendBtn");
 
+    let currentLocationType = "貴社";
+    let historyByType = {
+      "貴社": [],
+      "現場": [],
+      "倉庫": [],
+      "その他": []
+    };
     let pendingPayload = null;
 
     function escapeHtml(str) {
@@ -602,18 +661,115 @@
       statusBanner.innerHTML = "";
     }
 
-    fillCompanyBtn.addEventListener("click", () => {
-      const companyName = document.getElementById("company").value.trim();
-      if (PRESET_COMPANY_ADDRESS) {
-        addressInput.value = PRESET_COMPANY_ADDRESS;
-      } else if (companyName) {
-        addressInput.value = `${companyName}（貴社）`;
+    function updateLocationUI(type, applyLatestHistory = false) {
+      currentLocationType = LOCATION_TYPES.includes(type) ? type : "貴社";
+      locTabEls.forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.loc === currentLocationType);
+      });
+
+      if (currentLocationType === "その他") {
+        singleAddressWrap.style.display = "none";
+        otherAddressWrap.style.display = "block";
       } else {
-        addressInput.value = "貴社";
+        singleAddressWrap.style.display = "block";
+        otherAddressWrap.style.display = "none";
+
+        if (currentLocationType === "貴社") {
+          singleAddressLabel.textContent = "貴社住所";
+          singleAddressInput.placeholder = "例：埼玉県熊谷市〇〇 1-2-3（貴社）";
+        } else if (currentLocationType === "現場") {
+          singleAddressLabel.textContent = "現場住所";
+          singleAddressInput.placeholder = "例：埼玉県熊谷市〇〇 〇〇現場";
+        } else {
+          singleAddressLabel.textContent = "倉庫住所";
+          singleAddressInput.placeholder = "例：埼玉県深谷市〇〇 〇〇倉庫";
+        }
       }
-      addressHistorySelect.value = "";
-      addressInput.focus();
+
+      const list = historyByType[currentLocationType] || [];
+      renderLocationHistorySelect(list);
+
+      if (applyLatestHistory && list.length > 0) {
+        applyHistoryEntry(list[0]);
+      }
+    }
+
+    function formatHistoryOptionText(entry) {
+      if (typeof entry === "string") return entry;
+      if (entry.type === "その他") {
+        const parts = [entry.description, entry.address].filter(Boolean);
+        return parts.join(" ／ ");
+      }
+      return entry.address || "";
+    }
+
+    function applyHistoryEntry(entry) {
+      if (!entry) return;
+      if (typeof entry === "string") {
+        singleAddressInput.value = entry;
+        return;
+      }
+      if (entry.type === "その他") {
+        otherDescInput.value = entry.description || "";
+        otherAddressInput.value = entry.address || "";
+      } else {
+        singleAddressInput.value = entry.address || "";
+      }
+    }
+
+    function renderLocationHistorySelect(list) {
+      locationHistorySelect.innerHTML = `<option value="">過去の${currentLocationType}履歴から選ぶ...</option>`;
+      if (!Array.isArray(list) || list.length === 0) {
+        locationHistorySelect.style.display = "none";
+        return;
+      }
+
+      list.forEach((entry, idx) => {
+        const opt = document.createElement("option");
+        opt.value = String(idx);
+        opt.textContent = formatHistoryOptionText(entry);
+        locationHistorySelect.appendChild(opt);
+      });
+      locationHistorySelect.style.display = "block";
+    }
+
+    locationHistorySelect.addEventListener("change", () => {
+      const idx = parseInt(locationHistorySelect.value, 10);
+      const list = historyByType[currentLocationType] || [];
+      if (Number.isFinite(idx) && list[idx]) {
+        applyHistoryEntry(list[idx]);
+      }
     });
+
+    locTabEls.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        updateLocationUI(btn.dataset.loc, true);
+      });
+    });
+
+    function getLocationInputData() {
+      if (currentLocationType === "その他") {
+        const description = otherDescInput.value.trim();
+        const address = otherAddressInput.value.trim();
+        const combined = [description ? `説明：${description}` : "", address ? `住所：${address}` : ""]
+          .filter(Boolean)
+          .join(" ／ ");
+        return {
+          locationType: "その他",
+          description,
+          address,
+          formattedAddress: combined
+        };
+      }
+
+      const address = singleAddressInput.value.trim();
+      return {
+        locationType: currentLocationType,
+        description: "",
+        address,
+        formattedAddress: address
+      };
+    }
 
     function createItemRow(initial = {}) {
       const initName = initial.name ?? "";
@@ -799,7 +955,7 @@
         `【WEB注文控え】`,
         `貴社名・お名前：${payload.company}`,
         `電話番号：${payload.tel}`,
-        `納品先：${payload.address}`,
+        `納品場所（${payload.locationType}）：${payload.address}`,
         `--- ご注文商品 ---`,
         ...payload.items.map((it, i) => `${i + 1}. ${formatItemLabel(it)}`)
       ];
@@ -809,85 +965,89 @@
       return lines.join("\n");
     }
 
-    function renderAddressHistory(addresses, currentAddress = "") {
-      addressHistorySelect.innerHTML = `<option value="">過去の納品先から選ぶ...</option>`;
-      if (!Array.isArray(addresses) || addresses.length === 0) {
-        addressHistorySelect.style.display = "none";
-        return;
-      }
-
-      addresses.forEach((addr) => {
-        const opt = document.createElement("option");
-        opt.value = addr;
-        opt.textContent = addr;
-        if (addr === currentAddress) {
-          opt.selected = true;
-        }
-        addressHistorySelect.appendChild(opt);
-      });
-      addressHistorySelect.style.display = "block";
-    }
-
-    addressHistorySelect.addEventListener("change", () => {
-      if (addressHistorySelect.value) {
-        addressInput.value = addressHistorySelect.value;
-      }
-    });
-
-    function saveCustomerInfo(company, tel, address) {
+    function saveCustomerAndLocation(company, tel, locData) {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const prev = raw ? JSON.parse(raw) : {};
-        const prevAddresses = Array.isArray(prev.addresses) ? prev.addresses : [];
+        const entry =
+          locData.locationType === "その他"
+            ? {
+                type: "その他",
+                description: locData.description,
+                address: locData.address
+              }
+            : {
+                type: locData.locationType,
+                address: locData.address
+              };
 
-        const nextAddresses = [address, ...prevAddresses.filter((a) => a !== address)].slice(
-          0,
-          MAX_ADDRESS_HISTORY
-        );
+        const entryKey = JSON.stringify(entry);
+        const prevList = Array.isArray(historyByType[locData.locationType])
+          ? historyByType[locData.locationType]
+          : [];
+
+        const nextList = [
+          entry,
+          ...prevList.filter((item) => JSON.stringify(item) !== entryKey)
+        ].slice(0, MAX_HISTORY_PER_TYPE);
+
+        historyByType[locData.locationType] = nextList;
 
         localStorage.setItem(
           STORAGE_KEY,
           JSON.stringify({
             company,
             tel,
-            address,
-            addresses: nextAddresses
+            lastLocationType: locData.locationType,
+            historyByType
           })
         );
-        renderAddressHistory(nextAddresses, address);
+
+        renderLocationHistorySelect(nextList);
       } catch (e) {}
     }
 
-    function loadCustomerInfo() {
+    function loadSavedData() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
+        if (!raw) {
+          updateLocationUI("貴社", false);
+          return;
+        }
         const saved = JSON.parse(raw);
         const companyEl = document.getElementById("company");
         const telEl = document.getElementById("tel");
 
         if (companyEl && !companyEl.value && saved.company) companyEl.value = saved.company;
         if (telEl && !telEl.value && saved.tel) telEl.value = saved.tel;
-        if (addressInput && !addressInput.value && saved.address) addressInput.value = saved.address;
 
-        const historyList = Array.isArray(saved.addresses)
-          ? saved.addresses
-          : saved.address
-          ? [saved.address]
-          : [];
-        renderAddressHistory(historyList, addressInput.value);
-      } catch (e) {}
+        if (saved.historyByType && typeof saved.historyByType === "object") {
+          LOCATION_TYPES.forEach((t) => {
+            if (Array.isArray(saved.historyByType[t])) {
+              historyByType[t] = saved.historyByType[t];
+            }
+          });
+        }
+
+        const initialType = LOCATION_TYPES.includes(saved.lastLocationType)
+          ? saved.lastLocationType
+          : "貴社";
+        updateLocationUI(initialType, true);
+      } catch (e) {
+        updateLocationUI("貴社", false);
+      }
     }
 
     clearSavedBtn.addEventListener("click", () => {
       try {
         localStorage.removeItem(STORAGE_KEY);
       } catch (e) {}
+      historyByType = { "貴社": [], "現場": [], "倉庫": [], "その他": [] };
       document.getElementById("company").value = "";
       document.getElementById("tel").value = "";
-      addressInput.value = "";
-      renderAddressHistory([]);
-      showBanner("success", "前回入力・納品先履歴をクリアしました。");
+      singleAddressInput.value = "";
+      otherDescInput.value = "";
+      otherAddressInput.value = "";
+      updateLocationUI("貴社", false);
+      showBanner("success", "前回入力・納品場所履歴をクリアしました。");
     });
 
     form.addEventListener("submit", (e) => {
@@ -896,12 +1056,22 @@
 
       const company = document.getElementById("company").value.trim();
       const tel = document.getElementById("tel").value.trim();
-      const address = addressInput.value.trim();
+      const locData = getLocationInputData();
       const notes = document.getElementById("notes").value.trim();
       const items = collectItems();
 
-      if (!company || !tel || !address) {
-        showBanner("error", "「貴社名・お名前」「電話番号」「納品先住所・現場名」は必須です。");
+      if (!company || !tel) {
+        showBanner("error", "「貴社名・お名前」「電話番号」は必須です。");
+        return;
+      }
+
+      if (locData.locationType === "その他") {
+        if (!locData.description || !locData.address) {
+          showBanner("error", "「その他」を選択した場合は、「説明」と「住所」の両方を入力してください。");
+          return;
+        }
+      } else if (!locData.address) {
+        showBanner("error", `「${singleAddressLabel.textContent}」を入力してください。`);
         return;
       }
 
@@ -920,7 +1090,10 @@
         submittedAt: new Date().toISOString(),
         company,
         tel,
-        address,
+        locationType: locData.locationType,
+        locationDescription: locData.description,
+        address: locData.formattedAddress,
+        rawAddress: locData.address,
         items,
         notes
       };
@@ -942,8 +1115,8 @@
           <div>${escapeHtml(tel)}</div>
         </div>
         <div class="confirm-block">
-          <div class="confirm-block-title">納品先住所・現場名</div>
-          <div>${escapeHtml(address)}</div>
+          <div class="confirm-block-title">納品場所（${escapeHtml(locData.locationType)}）</div>
+          <div>${escapeHtml(locData.formattedAddress)}</div>
         </div>
         <div class="confirm-block">
           <div class="confirm-block-title">ご注文商品</div>
@@ -985,7 +1158,12 @@
           });
         }
 
-        saveCustomerInfo(pendingPayload.company, pendingPayload.tel, pendingPayload.address);
+        saveCustomerAndLocation(pendingPayload.company, pendingPayload.tel, {
+          locationType: pendingPayload.locationType,
+          description: pendingPayload.locationDescription,
+          address: pendingPayload.rawAddress
+        });
+
         const receiptText = buildReceiptText(pendingPayload);
 
         modal.classList.remove("is-open");
@@ -1017,7 +1195,7 @@
     });
 
     createItemRow();
-    loadCustomerInfo();
+    loadSavedData();
   </script>
 </body>
 </html>
