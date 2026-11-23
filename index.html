@@ -8,6 +8,7 @@
     :root {
       --primary: #0f4c81;
       --primary-hover: #09355c;
+      --primary-soft: #e8f1f8;
       --bg: #f4f6f9;
       --card: #ffffff;
       --border: #d0d7de;
@@ -127,6 +128,20 @@
       resize: vertical;
     }
 
+    .address-history-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .address-history-row select {
+      flex: 1;
+      font-size: 14px;
+      padding: 8px 10px;
+      background: #f8fafc;
+    }
+
     .item-row {
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -156,6 +171,47 @@
       grid-template-columns: 2fr 1.2fr 132px;
       gap: 8px;
       align-items: start;
+    }
+
+    /* 艶タブ */
+    .gloss-tabs-wrap {
+      margin-top: 8px;
+    }
+
+    .gloss-tabs-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .gloss-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .gloss-tab {
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .gloss-tab:hover {
+      background: #f0f4f8;
+    }
+
+    .gloss-tab.is-active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
     }
 
     .qty-stepper {
@@ -420,8 +476,13 @@
 
         <div class="field">
           <label for="address">納品先住所・現場名<span class="req">必須</span></label>
+          <div id="addressHistoryWrap" class="address-history-row" style="display:none;">
+            <select id="addressHistorySelect" aria-label="過去の納品先から選択">
+              <option value="">過去の納品先から選ぶ...</option>
+            </select>
+          </div>
           <input type="text" id="address" name="address" required placeholder="例：埼玉県熊谷市〇〇 〇〇現場" />
-          <div class="notice-bar">※一度送信すると、次回から会社名・電話番号・納品先が自動入力されます。</div>
+          <div class="notice-bar">※送信した納品先（会社住所・現場名など）は履歴に保存され、次回から選べます。</div>
         </div>
       </div>
 
@@ -434,7 +495,7 @@
         <div id="itemsContainer"></div>
 
         <button type="button" id="addRowBtn" class="btn">＋ 商品行を追加</button>
-        <div class="notice-bar">※塗料は「艶有・7分艶・5分艶・3分艶・艶消」などの艶指定もあわせてご記入ください。</div>
+        <div class="notice-bar">※艶タブで「艶有・7分艶・5分艶・3分艶・艶消」などを選択できます。</div>
       </div>
 
       <!-- 備考 -->
@@ -466,14 +527,20 @@
 
   <script>
     const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbzuHLwm-bGvfXNuAWy-JX3HyIHYS23Z1dbIM5eE7xy4SeKQBqUUpK3Zemrgq5CQVW36/exec";
-    const STORAGE_KEY = "tsubame_web_order_customer_v1";
+    const STORAGE_KEY = "tsubame_web_order_customer_v2";
+    const MAX_ADDRESS_HISTORY = 15;
     const UNIT_OPTIONS = ["15kg", "16kg", "4kg", "3kg", "1缶", "1箱", "その他"];
+    const GLOSS_OPTIONS = ["指定なし", "艶有", "7分艶", "5分艶", "3分艶", "艶消"];
 
     const form = document.getElementById("orderForm");
     const itemsContainer = document.getElementById("itemsContainer");
     const addRowBtn = document.getElementById("addRowBtn");
     const clearSavedBtn = document.getElementById("clearSavedBtn");
     const statusBanner = document.getElementById("statusBanner");
+
+    const addressHistoryWrap = document.getElementById("addressHistoryWrap");
+    const addressHistorySelect = document.getElementById("addressHistorySelect");
+    const addressInput = document.getElementById("address");
 
     const modal = document.getElementById("confirmModal");
     const modalBody = document.getElementById("modalBody");
@@ -516,6 +583,7 @@
 
     function createItemRow(initial = {}) {
       const initName = initial.name ?? "";
+      const initGloss = GLOSS_OPTIONS.includes(initial.gloss) ? initial.gloss : "指定なし";
       const initUnitSelect = initial.unitSelect ?? "";
       const initUnitCustom = initial.unitCustom ?? "";
       const initQty = Number.isFinite(Number(initial.qty)) && Number(initial.qty) > 0 ? Number(initial.qty) : 1;
@@ -527,6 +595,11 @@
         const label = unit === "その他" ? "その他（手入力）" : unit;
         const selected = unit === initUnitSelect ? " selected" : "";
         return `<option value="${escapeHtml(unit)}"${selected}>${escapeHtml(label)}</option>`;
+      }).join("");
+
+      const glossTabsHtml = GLOSS_OPTIONS.map((gloss) => {
+        const activeClass = gloss === initGloss ? " is-active" : "";
+        return `<button type="button" class="gloss-tab${activeClass}" data-gloss="${escapeHtml(gloss)}">${escapeHtml(gloss)}</button>`;
       }).join("");
 
       const customDisplayStyle = initUnitSelect === "その他" ? "block" : "none";
@@ -541,7 +614,13 @@
         </div>
         <div class="item-grid">
           <div>
-            <input type="text" class="item-name" value="${escapeHtml(initName)}" placeholder="商品名・色番・艶（例：水性セラミシリコン ND-172 艶有）" />
+            <input type="text" class="item-name" value="${escapeHtml(initName)}" placeholder="商品名・色番（例：水性セラミシリコン ND-172）" />
+            <div class="gloss-tabs-wrap">
+              <span class="gloss-tabs-label">艶指定</span>
+              <div class="gloss-tabs" role="tablist" aria-label="艶指定">
+                ${glossTabsHtml}
+              </div>
+            </div>
           </div>
           <div>
             <select class="item-unit">
@@ -568,6 +647,16 @@
       const plusBtn = row.querySelector(".qty-plus");
       const dupBtn = row.querySelector(".btn-duplicate");
       const removeBtn = row.querySelector(".btn-remove");
+      const glossTabEls = row.querySelectorAll(".gloss-tab");
+
+      let selectedGloss = initGloss;
+
+      glossTabEls.forEach((tabBtn) => {
+        tabBtn.addEventListener("click", () => {
+          selectedGloss = tabBtn.dataset.gloss || "指定なし";
+          glossTabEls.forEach((b) => b.classList.toggle("is-active", b === tabBtn));
+        });
+      });
 
       selectEl.addEventListener("change", () => {
         if (selectEl.value === "その他") {
@@ -595,9 +684,11 @@
         const currentQty = parseInt(qtyEl.value, 10);
         const copiedRow = createItemRow({
           name: nameEl.value,
+          gloss: selectedGloss,
           unitSelect: selectEl.value,
           unitCustom: customEl.value,
-          qty: Number.isFinite(currentQty) && currentQty > 0 ? currentQty : 1
+          qty: Number.isFinite(currentQty) && currentQty > 0 ? currentQty : 1,
+          insertAfter: true
         });
         row.insertAdjacentElement("afterend", copiedRow);
         refreshRowNumbers();
@@ -607,6 +698,8 @@
       removeBtn.addEventListener("click", () => {
         if (itemsContainer.children.length <= 1) {
           nameEl.value = "";
+          selectedGloss = "指定なし";
+          glossTabEls.forEach((b) => b.classList.toggle("is-active", b.dataset.gloss === "指定なし"));
           selectEl.value = "";
           customEl.value = "";
           customEl.style.display = "none";
@@ -616,6 +709,22 @@
         row.remove();
         refreshRowNumbers();
       });
+
+      row.getItemData = () => {
+        const name = nameEl.value.trim();
+        const unitSelect = selectEl.value;
+        const unitCustom = customEl.value.trim();
+        const qtyRaw = parseInt(qtyEl.value, 10);
+        const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? qtyRaw : 1;
+        const unit = unitSelect === "その他" ? unitCustom : unitSelect;
+
+        return {
+          name,
+          gloss: selectedGloss,
+          unit,
+          qty
+        };
+      };
 
       if (!initial.insertAfter) {
         itemsContainer.appendChild(row);
@@ -636,22 +745,19 @@
       const items = [];
       const rows = itemsContainer.querySelectorAll(".item-row");
       rows.forEach((row) => {
-        const name = row.querySelector(".item-name").value.trim();
-        const unitSelect = row.querySelector(".item-unit").value;
-        const unitCustom = row.querySelector(".item-unit-custom").value.trim();
-        const qtyRaw = parseInt(row.querySelector(".item-qty").value, 10);
-        const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? qtyRaw : 1;
-        const unit = unitSelect === "その他" ? unitCustom : unitSelect;
-
-        if (name || unit) {
-          items.push({
-            name,
-            unit,
-            qty
-          });
+        if (typeof row.getItemData === "function") {
+          const item = row.getItemData();
+          if (item.name || item.unit || item.gloss !== "指定なし") {
+            items.push(item);
+          }
         }
       });
       return items;
+    }
+
+    function formatItemLabel(item) {
+      const glossPart = item.gloss && item.gloss !== "指定なし" ? ` [${item.gloss}]` : "";
+      return `${item.name}${glossPart} / ${item.unit} × ${item.qty}`;
     }
 
     function buildReceiptText(payload) {
@@ -661,7 +767,7 @@
         `電話番号：${payload.tel}`,
         `納品先：${payload.address}`,
         `--- ご注文商品 ---`,
-        ...payload.items.map((it, i) => `${i + 1}. ${it.name} / ${it.unit} × ${it.qty}`)
+        ...payload.items.map((it, i) => `${i + 1}. ${formatItemLabel(it)}`)
       ];
       if (payload.notes) {
         lines.push(`--- 備考 ---`, payload.notes);
@@ -669,9 +775,52 @@
       return lines.join("\n");
     }
 
+    function renderAddressHistory(addresses, currentAddress = "") {
+      addressHistorySelect.innerHTML = `<option value="">過去の納品先から選ぶ...</option>`;
+      if (!Array.isArray(addresses) || addresses.length === 0) {
+        addressHistoryWrap.style.display = "none";
+        return;
+      }
+
+      addresses.forEach((addr) => {
+        const opt = document.createElement("option");
+        opt.value = addr;
+        opt.textContent = addr;
+        if (addr === currentAddress) {
+          opt.selected = true;
+        }
+        addressHistorySelect.appendChild(opt);
+      });
+      addressHistoryWrap.style.display = "flex";
+    }
+
+    addressHistorySelect.addEventListener("change", () => {
+      if (addressHistorySelect.value) {
+        addressInput.value = addressHistorySelect.value;
+      }
+    });
+
     function saveCustomerInfo(company, tel, address) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ company, tel, address }));
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const prev = raw ? JSON.parse(raw) : {};
+        const prevAddresses = Array.isArray(prev.addresses) ? prev.addresses : [];
+
+        const nextAddresses = [address, ...prevAddresses.filter((a) => a !== address)].slice(
+          0,
+          MAX_ADDRESS_HISTORY
+        );
+
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            company,
+            tel,
+            address,
+            addresses: nextAddresses
+          })
+        );
+        renderAddressHistory(nextAddresses, address);
       } catch (e) {}
     }
 
@@ -682,11 +831,17 @@
         const saved = JSON.parse(raw);
         const companyEl = document.getElementById("company");
         const telEl = document.getElementById("tel");
-        const addressEl = document.getElementById("address");
 
         if (companyEl && !companyEl.value && saved.company) companyEl.value = saved.company;
         if (telEl && !telEl.value && saved.tel) telEl.value = saved.tel;
-        if (addressEl && !addressEl.value && saved.address) addressEl.value = saved.address;
+        if (addressInput && !addressInput.value && saved.address) addressInput.value = saved.address;
+
+        const historyList = Array.isArray(saved.addresses)
+          ? saved.addresses
+          : saved.address
+          ? [saved.address]
+          : [];
+        renderAddressHistory(historyList, addressInput.value);
       } catch (e) {}
     }
 
@@ -696,8 +851,9 @@
       } catch (e) {}
       document.getElementById("company").value = "";
       document.getElementById("tel").value = "";
-      document.getElementById("address").value = "";
-      showBanner("success", "前回入力の保存情報をクリアしました。");
+      addressInput.value = "";
+      renderAddressHistory([]);
+      showBanner("success", "前回入力・納品先履歴をクリアしました。");
     });
 
     form.addEventListener("submit", (e) => {
@@ -706,7 +862,7 @@
 
       const company = document.getElementById("company").value.trim();
       const tel = document.getElementById("tel").value.trim();
-      const address = document.getElementById("address").value.trim();
+      const address = addressInput.value.trim();
       const notes = document.getElementById("notes").value.trim();
       const items = collectItems();
 
@@ -720,9 +876,9 @@
         return;
       }
 
-      const missingUnit = items.find((it) => !it.name || !it.unit);
-      if (missingUnit) {
-        showBanner("error", "入力中の商品行について、「商品名・色番・艶」と「容量・単位」の両方を確認してください。");
+      const missingField = items.find((it) => !it.name || !it.unit);
+      if (missingField) {
+        showBanner("error", "入力中の商品行について、「商品名・色番」と「容量・単位」の両方を確認してください。");
         return;
       }
 
@@ -736,10 +892,10 @@
       };
 
       const itemsHtml = items
-        .map(
-          (it, i) =>
-            `<li><strong>${i + 1}.</strong> ${escapeHtml(it.name)} ／ <strong>${escapeHtml(it.unit)}</strong> ／ 数量：<strong>${escapeHtml(it.qty)}</strong></li>`
-        )
+        .map((it, i) => {
+          const glossBadge = it.gloss && it.gloss !== "指定なし" ? ` 【${escapeHtml(it.gloss)}】` : "";
+          return `<li><strong>${i + 1}.</strong> ${escapeHtml(it.name)}${glossBadge} ／ <strong>${escapeHtml(it.unit)}</strong> ／ 数量：<strong>${escapeHtml(it.qty)}</strong></li>`;
+        })
         .join("");
 
       modalBody.innerHTML = `
