@@ -128,18 +128,36 @@
       resize: vertical;
     }
 
-    .address-history-row {
+    .address-tools {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 8px;
       align-items: center;
     }
 
-    .address-history-row select {
+    .address-tools select {
       flex: 1;
+      min-width: 180px;
       font-size: 14px;
       padding: 8px 10px;
       background: #f8fafc;
+    }
+
+    .btn-preset {
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border: 1px solid #b6d0e8;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-preset:hover {
+      background: #d7e7f5;
     }
 
     .item-row {
@@ -476,13 +494,14 @@
 
         <div class="field">
           <label for="address">納品先住所・現場名<span class="req">必須</span></label>
-          <div id="addressHistoryWrap" class="address-history-row" style="display:none;">
-            <select id="addressHistorySelect" aria-label="過去の納品先から選択">
+          <div class="address-tools">
+            <button type="button" id="fillCompanyBtn" class="btn-preset">貴社</button>
+            <select id="addressHistorySelect" aria-label="過去の納品先から選択" style="display:none;">
               <option value="">過去の納品先から選ぶ...</option>
             </select>
           </div>
           <input type="text" id="address" name="address" required placeholder="例：埼玉県熊谷市〇〇 〇〇現場" />
-          <div class="notice-bar">※送信した納品先（会社住所・現場名など）は履歴に保存され、次回から選べます。</div>
+          <div class="notice-bar">※「貴社」ボタンで入力するか、送信した納品先履歴から次回以降も選べます。</div>
         </div>
       </div>
 
@@ -529,6 +548,8 @@
     const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbzuHLwm-bGvfXNuAWy-JX3HyIHYS23Z1dbIM5eE7xy4SeKQBqUUpK3Zemrgq5CQVW36/exec";
     const STORAGE_KEY = "tsubame_web_order_customer_v2";
     const MAX_ADDRESS_HISTORY = 15;
+    // 固定の貴社住所を入れたい場合はここに記入（空文字なら「貴社」と入力されます）
+    const PRESET_COMPANY_ADDRESS = "";
     const UNIT_OPTIONS = ["15kg", "16kg", "4kg", "3kg", "1缶", "1箱", "その他"];
     const GLOSS_OPTIONS = ["指定なし", "艶有", "7分艶", "5分艶", "3分艶", "艶消"];
 
@@ -538,7 +559,7 @@
     const clearSavedBtn = document.getElementById("clearSavedBtn");
     const statusBanner = document.getElementById("statusBanner");
 
-    const addressHistoryWrap = document.getElementById("addressHistoryWrap");
+    const fillCompanyBtn = document.getElementById("fillCompanyBtn");
     const addressHistorySelect = document.getElementById("addressHistorySelect");
     const addressInput = document.getElementById("address");
 
@@ -580,6 +601,19 @@
       statusBanner.className = "status-banner";
       statusBanner.innerHTML = "";
     }
+
+    fillCompanyBtn.addEventListener("click", () => {
+      const companyName = document.getElementById("company").value.trim();
+      if (PRESET_COMPANY_ADDRESS) {
+        addressInput.value = PRESET_COMPANY_ADDRESS;
+      } else if (companyName) {
+        addressInput.value = `${companyName}（貴社）`;
+      } else {
+        addressInput.value = "貴社";
+      }
+      addressHistorySelect.value = "";
+      addressInput.focus();
+    });
 
     function createItemRow(initial = {}) {
       const initName = initial.name ?? "";
@@ -778,7 +812,7 @@
     function renderAddressHistory(addresses, currentAddress = "") {
       addressHistorySelect.innerHTML = `<option value="">過去の納品先から選ぶ...</option>`;
       if (!Array.isArray(addresses) || addresses.length === 0) {
-        addressHistoryWrap.style.display = "none";
+        addressHistorySelect.style.display = "none";
         return;
       }
 
@@ -791,7 +825,7 @@
         }
         addressHistorySelect.appendChild(opt);
       });
-      addressHistoryWrap.style.display = "flex";
+      addressHistorySelect.style.display = "block";
     }
 
     addressHistorySelect.addEventListener("change", () => {
