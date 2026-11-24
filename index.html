@@ -208,11 +208,19 @@
       gap: 6px;
     }
 
-    .item-grid {
+    .item-top-grid {
       display: grid;
-      grid-template-columns: 2fr 1.2fr 132px;
+      grid-template-columns: 1.7fr 1.1fr;
       gap: 8px;
       align-items: start;
+    }
+
+    .item-bottom-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 132px;
+      gap: 8px;
+      align-items: start;
+      margin-top: 8px;
     }
 
     /* 艶タブ */
@@ -475,7 +483,8 @@
     }
 
     @media (max-width: 600px) {
-      .item-grid {
+      .item-top-grid,
+      .item-bottom-grid {
         grid-template-columns: 1fr;
       }
 
@@ -562,7 +571,7 @@
         <div id="itemsContainer"></div>
 
         <button type="button" id="addRowBtn" class="btn">＋ 商品行を追加</button>
-        <div class="notice-bar">※艶タブで「艶有・7分艶・5分艶・3分艶・艶消」などを選択できます。</div>
+        <div class="notice-bar">※「商品名」と「色・色番」を分けて入力し、艶タブで「艶有・7分艶・5分艶・3分艶・艶消」などを選択できます。</div>
       </div>
 
       <!-- 備考 -->
@@ -594,7 +603,7 @@
 
   <script>
     const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbzuHLwm-bGvfXNuAWy-JX3HyIHYS23Z1dbIM5eE7xy4SeKQBqUUpK3Zemrgq5CQVW36/exec";
-    const STORAGE_KEY = "tsubame_web_order_customer_v3";
+    const STORAGE_KEY = "tsubame_web_order_customer_v4";
     const MAX_HISTORY_PER_TYPE = 15;
     const LOCATION_TYPES = ["貴社", "現場", "倉庫", "その他"];
     const UNIT_OPTIONS = ["15kg", "16kg", "4kg", "3kg", "1缶", "1箱", "その他"];
@@ -773,6 +782,7 @@
 
     function createItemRow(initial = {}) {
       const initName = initial.name ?? "";
+      const initColor = initial.color ?? "";
       const initGloss = GLOSS_OPTIONS.includes(initial.gloss) ? initial.gloss : "指定なし";
       const initUnitSelect = initial.unitSelect ?? "";
       const initUnitCustom = initial.unitCustom ?? "";
@@ -802,17 +812,25 @@
             <button type="button" class="btn btn-remove" aria-label="この行を削除">削除</button>
           </div>
         </div>
-        <div class="item-grid">
+        <div class="item-top-grid">
           <div>
-            <input type="text" class="item-name" value="${escapeHtml(initName)}" placeholder="商品名・色番（例：水性セラミシリコン ND-172）" />
-            <div class="gloss-tabs-wrap">
-              <span class="gloss-tabs-label">艶指定</span>
-              <div class="gloss-tabs" role="tablist" aria-label="艶指定">
-                ${glossTabsHtml}
-              </div>
-            </div>
+            <label class="sub-label">商品名</label>
+            <input type="text" class="item-name" value="${escapeHtml(initName)}" placeholder="例：水性セラミシリコン" />
           </div>
           <div>
+            <label class="sub-label">色・色番</label>
+            <input type="text" class="item-color" value="${escapeHtml(initColor)}" placeholder="例：ND-172、白、N-90" />
+          </div>
+        </div>
+        <div class="gloss-tabs-wrap">
+          <span class="gloss-tabs-label">艶指定</span>
+          <div class="gloss-tabs" role="tablist" aria-label="艶指定">
+            ${glossTabsHtml}
+          </div>
+        </div>
+        <div class="item-bottom-grid">
+          <div>
+            <label class="sub-label">容量・単位</label>
             <select class="item-unit">
               <option value="">容量・単位を選択</option>
               ${optionsHtml}
@@ -820,6 +838,7 @@
             <input type="text" class="item-unit-custom unit-custom" value="${escapeHtml(initUnitCustom)}" placeholder="容量を入力（例：18L、特注）" style="display:${customDisplayStyle};" />
           </div>
           <div>
+            <label class="sub-label">数量</label>
             <div class="qty-stepper">
               <button type="button" class="qty-btn qty-minus" aria-label="数量を減らす">−</button>
               <input type="number" class="item-qty" inputmode="numeric" min="1" value="${escapeHtml(initQty)}" aria-label="数量" />
@@ -830,6 +849,7 @@
       `;
 
       const nameEl = row.querySelector(".item-name");
+      const colorEl = row.querySelector(".item-color");
       const selectEl = row.querySelector(".item-unit");
       const customEl = row.querySelector(".item-unit-custom");
       const qtyEl = row.querySelector(".item-qty");
@@ -874,6 +894,7 @@
         const currentQty = parseInt(qtyEl.value, 10);
         const copiedRow = createItemRow({
           name: nameEl.value,
+          color: colorEl.value,
           gloss: selectedGloss,
           unitSelect: selectEl.value,
           unitCustom: customEl.value,
@@ -888,6 +909,7 @@
       removeBtn.addEventListener("click", () => {
         if (itemsContainer.children.length <= 1) {
           nameEl.value = "";
+          colorEl.value = "";
           selectedGloss = "指定なし";
           glossTabEls.forEach((b) => b.classList.toggle("is-active", b.dataset.gloss === "指定なし"));
           selectEl.value = "";
@@ -902,6 +924,7 @@
 
       row.getItemData = () => {
         const name = nameEl.value.trim();
+        const color = colorEl.value.trim();
         const unitSelect = selectEl.value;
         const unitCustom = customEl.value.trim();
         const qtyRaw = parseInt(qtyEl.value, 10);
@@ -910,6 +933,7 @@
 
         return {
           name,
+          color,
           gloss: selectedGloss,
           unit,
           qty
@@ -937,7 +961,7 @@
       rows.forEach((row) => {
         if (typeof row.getItemData === "function") {
           const item = row.getItemData();
-          if (item.name || item.unit || item.gloss !== "指定なし") {
+          if (item.name || item.color || item.unit || item.gloss !== "指定なし") {
             items.push(item);
           }
         }
@@ -946,8 +970,9 @@
     }
 
     function formatItemLabel(item) {
+      const colorPart = item.color ? ` ／ 色：${item.color}` : "";
       const glossPart = item.gloss && item.gloss !== "指定なし" ? ` [${item.gloss}]` : "";
-      return `${item.name}${glossPart} / ${item.unit} × ${item.qty}`;
+      return `${item.name}${colorPart}${glossPart} ／ ${item.unit} × ${item.qty}`;
     }
 
     function buildReceiptText(payload) {
@@ -1082,7 +1107,7 @@
 
       const missingField = items.find((it) => !it.name || !it.unit);
       if (missingField) {
-        showBanner("error", "入力中の商品行について、「商品名・色番」と「容量・単位」の両方を確認してください。");
+        showBanner("error", "入力中の商品行について、「商品名」と「容量・単位」の両方を確認してください。");
         return;
       }
 
@@ -1100,8 +1125,9 @@
 
       const itemsHtml = items
         .map((it, i) => {
+          const colorBadge = it.color ? ` ／ 色：<strong>${escapeHtml(it.color)}</strong>` : "";
           const glossBadge = it.gloss && it.gloss !== "指定なし" ? ` 【${escapeHtml(it.gloss)}】` : "";
-          return `<li><strong>${i + 1}.</strong> ${escapeHtml(it.name)}${glossBadge} ／ <strong>${escapeHtml(it.unit)}</strong> ／ 数量：<strong>${escapeHtml(it.qty)}</strong></li>`;
+          return `<li><strong>${i + 1}.</strong> ${escapeHtml(it.name)}${colorBadge}${glossBadge} ／ <strong>${escapeHtml(it.unit)}</strong> ／ 数量：<strong>${escapeHtml(it.qty)}</strong></li>`;
         })
         .join("");
 
