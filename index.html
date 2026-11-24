@@ -306,6 +306,12 @@
       margin-top: 6px;
     }
 
+    .item-actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     .btn {
       display: inline-flex;
       align-items: center;
@@ -323,6 +329,17 @@
 
     .btn:hover {
       background: #f3f4f6;
+    }
+
+    .btn-stock {
+      background: var(--primary-soft);
+      border-color: #9ec5e5;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .btn-stock:hover {
+      background: #d6e7f5;
     }
 
     .btn-primary {
@@ -539,13 +556,11 @@
               <option value="">過去の履歴から選ぶ...</option>
             </select>
 
-            <!-- 貴社 / 現場 / 倉庫 用の単一住所入力 -->
             <div id="singleAddressWrap">
               <label id="singleAddressLabel" for="singleAddress" class="sub-label">貴社住所</label>
               <input type="text" id="singleAddress" placeholder="例：埼玉県熊谷市〇〇 1-2-3" />
             </div>
 
-            <!-- その他 用の「説明」＋「住所」入力 -->
             <div id="otherAddressWrap" style="display:none;">
               <div>
                 <label for="otherDesc" class="sub-label">説明</label>
@@ -570,8 +585,11 @@
 
         <div id="itemsContainer"></div>
 
-        <button type="button" id="addRowBtn" class="btn">＋ 商品行を追加</button>
-        <div class="notice-bar">※「商品名」と「色・色番」を分けて入力し、艶タブで「艶有・7分艶・5分艶・3分艶・艶消」などを選択できます。</div>
+        <div class="item-actions-bar">
+          <button type="button" id="addRowBtn" class="btn">＋ 商品行を追加</button>
+          <button type="button" id="pickFromStockBtn" class="btn btn-stock">📦 在庫から選ぶ</button>
+        </div>
+        <div class="notice-bar">※「在庫から選ぶ」を押すと在庫一覧へ移動し、選んだ商品をまとめて注文行へ追加できます。</div>
       </div>
 
       <!-- 備考 -->
@@ -603,7 +621,11 @@
 
   <script>
     const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbzuHLwm-bGvfXNuAWy-JX3HyIHYS23Z1dbIM5eE7xy4SeKQBqUUpK3Zemrgq5CQVW36/exec";
+    const STOCK_LIST_URL = "https://tsubame-paint.github.io/tsubame-stock/team-member.index.html";
     const STORAGE_KEY = "tsubame_web_order_customer_v4";
+    const DRAFT_KEY = "tsubame_web_order_draft_v1";
+    const SELECTED_STOCK_KEY = "tsubame_selected_stock_items_v1";
+
     const MAX_HISTORY_PER_TYPE = 15;
     const LOCATION_TYPES = ["貴社", "現場", "倉庫", "その他"];
     const UNIT_OPTIONS = ["15kg", "16kg", "4kg", "3kg", "1缶", "1箱", "その他"];
@@ -612,6 +634,7 @@
     const form = document.getElementById("orderForm");
     const itemsContainer = document.getElementById("itemsContainer");
     const addRowBtn = document.getElementById("addRowBtn");
+    const pickFromStockBtn = document.getElementById("pickFromStockBtn");
     const clearSavedBtn = document.getElementById("clearSavedBtn");
     const statusBanner = document.getElementById("statusBanner");
 
@@ -780,6 +803,15 @@
       };
     }
 
+    function mapUnitToFields(rawUnit) {
+      const u = String(rawUnit || "").trim();
+      if (!u) return { unitSelect: "", unitCustom: "" };
+      if (UNIT_OPTIONS.includes(u) && u !== "その他") {
+        return { unitSelect: u, unitCustom: "" };
+      }
+      return { unitSelect: "その他", unitCustom: u };
+    }
+
     function createItemRow(initial = {}) {
       const initName = initial.name ?? "";
       const initColor = initial.color ?? "";
@@ -936,7 +968,15 @@
           color,
           gloss: selectedGloss,
           unit,
-          qty
+          qty,
+          _raw: {
+            name,
+            color,
+            gloss: selectedGloss,
+            unitSelect,
+            unitCustom,
+            qty
+          }
         };
       };
 
@@ -962,11 +1002,30 @@
         if (typeof row.getItemData === "function") {
           const item = row.getItemData();
           if (item.name || item.color || item.unit || item.gloss !== "指定なし") {
-            items.push(item);
+            items.push({
+              name: item.name,
+              color: item.color,
+              gloss: item.gloss,
+              unit: item.unit,
+              qty: item.qty
+            });
           }
         }
       });
       return items;
+    }
+
+    function collectRawItemsForDraft() {
+      const rawList = [];
+      itemsContainer.querySelectorAll(".item-row").forEach((row) => {
+        if (typeof row.getItemData === "function") {
+          const d = row.getItemData();
+          if (d._raw.name || d._raw.color || d._raw.unitSelect || d._raw.unitCustom || d._raw.gloss !== "指定なし") {
+            rawList.push(d._raw);
+          }
+        }
+      });
+      return rawList;
     }
 
     function formatItemLabel(item) {
@@ -1061,9 +1120,92 @@
       }
     }
 
+    function saveDraftBeforeStock_() {
+      try {
+        const draft = {
+          company: document.getElementById("company").value,
+          tel: document.getElementById("tel").value,
+          locationType: currentLocationType,
+          singleAddress: singleAddressInput.value,
+          otherDesc: otherDescInput.value,
+          otherAddress: otherAddressInput.value,
+          notes: document.getElementById("notes").value,
+          rawItems: collectRawItemsForDraft()
+        };
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      } catch (e) {}
+    }
+
+    function applyReturnedStockItems_() {
+      let draft = null;
+      try {
+        const rawDraft = localStorage.getItem(DRAFT_KEY);
+        if (rawDraft) draft = JSON.parse(rawDraft);
+      } catch (e) {}
+
+      let picked = [];
+      try {
+        const rawPicked = localStorage.getItem(SELECTED_STOCK_KEY);
+        if (rawPicked) picked = JSON.parse(rawPicked);
+      } catch (e) {}
+
+      const hasPicked = Array.isArray(picked) && picked.length > 0;
+      if (!draft && !hasPicked) return;
+
+      if (draft) {
+        if (draft.company) document.getElementById("company").value = draft.company;
+        if (draft.tel) document.getElementById("tel").value = draft.tel;
+        if (draft.locationType) updateLocationUI(draft.locationType, false);
+        if (draft.singleAddress) singleAddressInput.value = draft.singleAddress;
+        if (draft.otherDesc) otherDescInput.value = draft.otherDesc;
+        if (draft.otherAddress) otherAddressInput.value = draft.otherAddress;
+        if (draft.notes) document.getElementById("notes").value = draft.notes;
+      }
+
+      const combinedRows = [];
+      if (draft && Array.isArray(draft.rawItems)) {
+        combinedRows.push(...draft.rawItems);
+      }
+
+      if (hasPicked) {
+        picked.forEach((p) => {
+          const mapped = mapUnitToFields(p.unit);
+          combinedRows.push({
+            name: p.name || "",
+            color: p.color || "",
+            gloss: GLOSS_OPTIONS.includes(p.gloss) ? p.gloss : "指定なし",
+            unitSelect: mapped.unitSelect,
+            unitCustom: mapped.unitCustom,
+            qty: Number.isFinite(Number(p.qty)) && Number(p.qty) > 0 ? Number(p.qty) : 1
+          });
+        });
+      }
+
+      if (combinedRows.length > 0) {
+        itemsContainer.innerHTML = "";
+        combinedRows.forEach((rowInit) => createItemRow(rowInit));
+      }
+
+      if (hasPicked) {
+        showBanner("success", `在庫一覧から ${picked.length} 件の商品を追加しました。数量や艶をご確認ください。`);
+      }
+
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(SELECTED_STOCK_KEY);
+      } catch (e) {}
+    }
+
+    pickFromStockBtn.addEventListener("click", () => {
+      saveDraftBeforeStock_();
+      const returnUrl = encodeURIComponent(window.location.href.split("#")[0]);
+      window.location.href = `${STOCK_LIST_URL}?fromOrder=1&returnUrl=${returnUrl}`;
+    });
+
     clearSavedBtn.addEventListener("click", () => {
       try {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(DRAFT_KEY);
       } catch (e) {}
       historyByType = { "貴社": [], "現場": [], "倉庫": [], "その他": [] };
       document.getElementById("company").value = "";
@@ -1222,6 +1364,7 @@
 
     createItemRow();
     loadSavedData();
+    applyReturnedStockItems_();
   </script>
 </body>
 </html>
