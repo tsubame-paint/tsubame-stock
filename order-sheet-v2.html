@@ -10,7 +10,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background-color: #f0f2f5;
       margin: 0;
-      padding: 0;
+      padding: 0 0 84px 0;
       color: #1c1e21;
       -webkit-tap-highlight-color: transparent;
     }
@@ -62,7 +62,6 @@
       background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; outline: none; cursor: pointer;
     }
 
-    /* カード全体：Flexboxで左右に配置 */
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 5px solid #1a73e8;
@@ -72,13 +71,17 @@
       gap: 12px;
     }
 
-    /* 左側（テキスト情報エリア） */
+    .item-card.is-selected {
+      background: #f0f7ff;
+      border-left-color: #0f4c81;
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.25);
+    }
+
     .item-card-content {
       flex: 1;
       min-width: 0;
     }
 
-    /* 右側（画像 ＋ 在庫ボックス） */
     .item-side-column {
       width: 90px;
       flex-shrink: 0;
@@ -88,7 +91,6 @@
       gap: 6px;
     }
 
-    /* 画像ラッパー */
     .item-thumb-wrapper {
       width: 90px;
       height: 90px;
@@ -108,7 +110,6 @@
 
     .item-maker { font-size: 0.78rem; color: #1a73e8; font-weight: 700; margin-bottom: 2px; }
 
-    /* 商品名リンクのスタイル */
     .item-name {
       font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; word-break: break-all;
     }
@@ -129,15 +130,34 @@
     .item-code { font-size: 0.78rem; color: #70757a; margin-bottom: 6px; }
 
     .item-details {
-      display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
-      margin-top: 4px;
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      margin-top: 6px;
     }
     .detail-capacity {
       font-size: 0.8rem; font-weight: 700; color: #78350f; background: #fef3c7;
       padding: 4px 8px; border-radius: 6px; border: 1px solid #fcd34d; display: inline-block;
     }
 
-    /* 現在在庫の表示スタイル */
+    .select-item-btn {
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid #1a73e8;
+      background: #ffffff;
+      color: #1a73e8;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .select-item-btn:hover {
+      background: #e8f0fe;
+    }
+    .select-item-btn.is-selected {
+      background: #0f4c81;
+      border-color: #0f4c81;
+      color: #ffffff;
+    }
+
     .detail-stock-box {
       width: 100%;
       text-align: center;
@@ -153,6 +173,58 @@
 
     #loading { text-align: center; padding: 40px 0; color: #5f6368; display: none; }
     #no-result { text-align: center; padding: 30px; color: #70757a; background: #fff; border-radius: 12px; display: none; }
+
+    /* 選択バー（画面下部固定） */
+    .selection-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1500;
+      background: #0f4c81;
+      color: #ffffff;
+      padding: 10px 14px;
+      box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.18);
+    }
+    .selection-bar-inner {
+      max-width: 500px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .selection-info {
+      font-size: 0.88rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .selection-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .sel-clear-btn {
+      padding: 7px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      background: transparent;
+      color: #ffffff;
+      cursor: pointer;
+    }
+    .sel-return-btn {
+      padding: 8px 12px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      background: #ffffff;
+      color: #0f4c81;
+      cursor: pointer;
+    }
 
     /* 画像拡大モーダル */
     .image-modal {
@@ -206,6 +278,17 @@
   <div id="item-list"></div>
 </div>
 
+<!-- 選択バー（画面下部固定） -->
+<div id="selectionBar" class="selection-bar">
+  <div class="selection-bar-inner">
+    <div id="selectionCountText" class="selection-info">選択中：0 件</div>
+    <div class="selection-actions">
+      <button type="button" id="clearSelectionBtn" class="sel-clear-btn" onclick="clearSelectedItems()">選択解除</button>
+      <button type="button" id="returnToOrderBtn" class="sel-return-btn" onclick="returnToOrderForm()">注文フォームへ戻る</button>
+    </div>
+  </div>
+</div>
+
 <!-- 画像拡大用モーダル要素 -->
 <div id="imageModal" class="image-modal" onclick="closeImageModal()">
   <span class="image-modal-close">&times;</span>
@@ -214,6 +297,7 @@
 
 <script>
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxeQTG_dDEzDChZUB3u04tLQHsqYI_IoiG_xAmpbuooqy-upDdKDnClDli2A9U6TqQwOw/exec?api=true&mode=customer";
+  const SELECTED_STOCK_KEY = "tsubame_selected_stock_items_v1";
 
   let allItems = [];
   let displayLimit = 100;
@@ -222,8 +306,13 @@
   let currentFilteredItems = [];
   let lastLoadedTimestamp = 0;
 
+  const selectedItemsMap = new Map();
+  const urlParams = new URLSearchParams(window.location.search);
+  const returnUrlFromParam = urlParams.get("returnUrl") || "";
+
   window.addEventListener('DOMContentLoaded', () => {
     loadCustomerData();
+    updateSelectionBar();
     setInterval(updateTimeDisplay, 60000);
 
     window.addEventListener('scroll', () => {
@@ -232,6 +321,90 @@
       }
     }, {passive: true});
   });
+
+  function getItemKey(item) {
+    const codePart = item.code || item.id || '';
+    return `${codePart}__${item.name || ''}__${item.colorEtc || ''}__${item.capacityEtc || ''}`;
+  }
+
+  function toggleSelectItem(itemKey) {
+    const item = allItems.find(it => getItemKey(it) === itemKey);
+    if (!item) return;
+
+    if (selectedItemsMap.has(itemKey)) {
+      selectedItemsMap.delete(itemKey);
+    } else {
+      selectedItemsMap.set(itemKey, {
+        code: item.code || item.id || '',
+        maker: item.maker || '',
+        name: item.name || '',
+        color: item.colorEtc || '',
+        gloss: '指定なし',
+        unit: item.capacityEtc || item.unit || '',
+        qty: 1
+      });
+    }
+
+    updateCardSelectionState(itemKey);
+    updateSelectionBar();
+  }
+
+  function updateCardSelectionState(itemKey) {
+    const isSel = selectedItemsMap.has(itemKey);
+    const card = document.querySelector(`.item-card[data-item-key="${CSS.escape(itemKey)}"]`);
+    const btn = document.querySelector(`.select-item-btn[data-item-key="${CSS.escape(itemKey)}"]`);
+    if (card) {
+      card.classList.toggle('is-selected', isSel);
+    }
+    if (btn) {
+      btn.classList.toggle('is-selected', isSel);
+      btn.textContent = isSel ? '選択中 ✓' : '＋ 選択';
+    }
+  }
+
+  function clearSelectedItems() {
+    const keys = Array.from(selectedItemsMap.keys());
+    selectedItemsMap.clear();
+    keys.forEach(k => updateCardSelectionState(k));
+    updateSelectionBar();
+  }
+
+  function updateSelectionBar() {
+    const countEl = document.getElementById('selectionCountText');
+    const returnBtn = document.getElementById('returnToOrderBtn');
+    const count = selectedItemsMap.size;
+    countEl.textContent = `選択中：${count} 件`;
+    returnBtn.textContent = count > 0 ? `注文フォームへ戻る (${count})` : '注文フォームへ戻る';
+  }
+
+  function returnToOrderForm() {
+    const itemsToSend = Array.from(selectedItemsMap.values());
+    try {
+      localStorage.setItem(SELECTED_STOCK_KEY, JSON.stringify(itemsToSend));
+    } catch (e) {}
+
+    let targetUrl = '';
+    if (returnUrlFromParam) {
+      try {
+        const decoded = decodeURIComponent(returnUrlFromParam);
+        if (/^https?:\/\//i.test(decoded)) {
+          targetUrl = decoded;
+        }
+      } catch (e) {}
+    }
+
+    if (!targetUrl && document.referrer && /^https?:\/\//i.test(document.referrer)) {
+      targetUrl = document.referrer;
+    }
+
+    if (targetUrl) {
+      window.location.href = targetUrl;
+    } else if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      alert('注文フォームへ戻るURLが見つかりませんでした。注文フォーム画面に戻ってご確認ください。');
+    }
+  }
 
   async function loadCustomerData() {
     const refreshBtn = document.getElementById('refresh-btn');
@@ -346,8 +519,13 @@
     const fragment = document.createDocumentFragment();
 
     targetItems.forEach(item => {
+      const itemKey = getItemKey(item);
+      const isSel = selectedItemsMap.has(itemKey);
+
       const card = document.createElement('div');
-      card.className = 'item-card';
+      card.className = 'item-card' + (isSel ? ' is-selected' : '');
+      card.setAttribute('data-item-key', itemKey);
+
       const stockNum = Number(item.stock) || 0;
 
       let stockClass = 'stock-val';
@@ -366,7 +544,6 @@
 
       const itemCode = item.code || item.id || '';
 
-      // メーカー名 ＋ 商品名 で検索するURLを生成
       const searchKeywords = `${item.maker || ''} ${item.name || ''}`.trim();
       const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchKeywords)}`;
 
@@ -393,7 +570,8 @@
           ${subInfoHtml}
           <div class="item-code">コード: ${escapeHtml(itemCode)}</div>
           <div class="item-details">
-            <div>${capacityHtml}</div>
+            ${capacityHtml}
+            <button type="button" class="select-item-btn${isSel ? ' is-selected' : ''}" data-item-key="${escapeHtml(itemKey)}" onclick="toggleSelectItem(this.dataset.itemKey)">${isSel ? '選択中 ✓' : '＋ 選択'}</button>
           </div>
         </div>
         <div class="item-side-column">
