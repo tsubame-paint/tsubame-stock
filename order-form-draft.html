@@ -76,6 +76,37 @@
     @media (max-width: 640px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
     .field { display: flex; flex-direction: column; gap: 4px; }
     label { font-size: 12px; font-weight: 700; color: #334155; }
+    .input-clear-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .input-clear-wrap input,
+    .input-clear-wrap select {
+      padding-right: 30px;
+    }
+    .field-clear-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #475569;
+      font-size: 12px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .field-clear-btn:hover {
+      background: #fee2e2;
+      color: var(--danger);
+    }
     input, select, textarea {
       width: 100%;
       padding: 8px 10px;
@@ -191,67 +222,100 @@
         <div class="grid-4">
           <div class="field">
             <label for="issuer">発行者（端末ごとに記憶・自動保管）</label>
-            <input id="issuer" name="発行者" type="text" list="issuerList" placeholder="例：今井 / 佐々木" />
+            <div class="input-clear-wrap">
+              <input id="issuer" name="発行者" type="text" list="issuerList" placeholder="例：今井 / 佐々木" />
+              <button type="button" class="field-clear-btn" data-clear-target="issuer" data-label="発行者" title="発行者を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label for="userName">ユーザー名（得意先・在庫）</label>
-            <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="例：中澤塗装㈱ / ㈲アベル" required />
+            <div class="input-clear-wrap">
+              <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="例：中澤塗装㈱ / ㈲アベル" required />
+              <button type="button" class="field-clear-btn" data-clear-target="userName" data-label="ユーザー名" title="ユーザー名を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label for="contactPerson">担当者</label>
-            <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="例：根岸 / 主任" />
+            <div class="input-clear-wrap">
+              <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="例：根岸 / 主任" />
+              <button type="button" class="field-clear-btn" data-clear-target="contactPerson" data-label="担当者" title="担当者を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label for="phone">電話番号</label>
-            <input id="phone" name="電話番号" type="tel" list="phoneList" placeholder="例：090-2524-8332" />
+            <div class="input-clear-wrap">
+              <input id="phone" name="電話番号" type="tel" list="phoneList" placeholder="例：090-2524-8332" />
+              <button type="button" class="field-clear-btn" data-clear-target="phone" data-label="電話番号" title="電話番号を削除">×</button>
+            </div>
           </div>
         </div>
 
         <div class="grid-3" style="margin-top: 10px;">
           <div class="field">
             <label for="siteName">現場名</label>
-            <input id="siteName" name="現場名" type="text" list="siteNameList" placeholder="例：サンドラッグ行徳店" />
+            <div class="input-clear-wrap">
+              <input id="siteName" name="現場名" type="text" list="siteNameList" placeholder="例：サンドラッグ行徳店" />
+              <button type="button" class="field-clear-btn" data-clear-target="siteName" data-label="現場名" title="現場名を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label for="deliveryDate">希望納期</label>
-            <input id="deliveryDate" name="希望納期" type="date" />
+            <div class="input-clear-wrap">
+              <input id="deliveryDate" name="希望納期" type="date" />
+              <button type="button" class="field-clear-btn" data-clear-target="deliveryDate" data-label="希望納期" title="希望納期を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label for="deliveryTime">納期時間帯</label>
-            <select id="deliveryTime" name="納期時間帯">
-              <option value="">指定なし</option>
-              <option value="AM">AM</option>
-              <option value="PM">PM</option>
-              <option value="至急">至急</option>
-            </select>
+            <div class="input-clear-wrap">
+              <select id="deliveryTime" name="納期時間帯">
+                <option value="">指定なし</option>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+                <option value="至急">至急</option>
+              </select>
+              <button type="button" class="field-clear-btn" data-clear-target="deliveryTime" data-label="納期時間帯" title="納期時間帯を削除">×</button>
+            </div>
           </div>
         </div>
 
         <div class="grid-3" style="margin-top: 10px;">
           <div class="field">
             <label for="destination">届け先</label>
-            <select id="destination" name="届け先">
-              <option value="貴社">貴社</option>
-              <option value="現場">現場</option>
-              <option value="店渡し">店渡し</option>
-              <option value="直送">直送</option>
-              <option value="現場直送">現場直送</option>
-              <option value="その他">その他</option>
-            </select>
+            <div class="input-clear-wrap">
+              <select id="destination" name="届け先">
+                <option value="貴社">貴社</option>
+                <option value="現場">現場</option>
+                <option value="店渡し">店渡し</option>
+                <option value="直送">直送</option>
+                <option value="現場直送">現場直送</option>
+                <option value="その他">その他</option>
+              </select>
+              <button type="button" class="field-clear-btn" data-clear-target="destination" data-label="届け先" title="届け先を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label for="deliveryRequest">配達依頼</label>
-            <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="例：前橋 / 現場直送 / 白岡引き取り" />
+            <div class="input-clear-wrap">
+              <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="例：前橋 / 現場直送 / 白岡引き取り" />
+              <button type="button" class="field-clear-btn" data-clear-target="deliveryRequest" data-label="配達依頼" title="配達依頼を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label for="orderSource">発注先</label>
-            <input id="orderSource" name="発注先" type="text" list="makerList" placeholder="例：メーカー名・仕入先" />
+            <div class="input-clear-wrap">
+              <input id="orderSource" name="発注先" type="text" list="makerList" placeholder="例：メーカー名・仕入先" />
+              <button type="button" class="field-clear-btn" data-clear-target="orderSource" data-label="発注先" title="発注先を削除">×</button>
+            </div>
           </div>
         </div>
 
         <div class="field" style="margin-top: 10px;">
           <label for="siteAddress">現場住所</label>
-          <input id="siteAddress" name="現場住所" type="text" list="siteAddressList" placeholder="例：〒272-0133 千葉県市川市行徳駅前2丁目11−2" />
+          <div class="input-clear-wrap">
+            <input id="siteAddress" name="現場住所" type="text" list="siteAddressList" placeholder="例：〒272-0133 千葉県市川市行徳駅前2丁目11−2" />
+            <button type="button" class="field-clear-btn" data-clear-target="siteAddress" data-label="現場住所" title="現場住所を削除">×</button>
+          </div>
         </div>
 
         <div class="field" style="margin-top: 10px;">
@@ -720,25 +784,40 @@
         <div class="item-row-upper">
           <div class="field">
             <label>メーカー${index}</label>
-            <input type="text" data-field="メーカー" list="makerList" placeholder="例：エスケー" />
+            <div class="input-clear-wrap">
+              <input type="text" data-field="メーカー" list="makerList" placeholder="例：エスケー" />
+              <button type="button" class="field-clear-btn" data-clear-field="メーカー" title="メーカーを削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label>品名${index}</label>
-            <input type="text" data-field="品名" list="itemNameList-${index}" placeholder="メーカー選択で絞り込み" />
+            <div class="input-clear-wrap">
+              <input type="text" data-field="品名" list="itemNameList-${index}" placeholder="メーカー選択で絞り込み" />
+              <button type="button" class="field-clear-btn" data-clear-field="品名" title="品名を削除">×</button>
+            </div>
             <datalist id="itemNameList-${index}"></datalist>
           </div>
           <div class="field">
             <label>詳細${index}</label>
-            <input type="text" data-field="詳細" list="detailList" placeholder="生ネタサンプル / 塗板 など" />
+            <div class="input-clear-wrap">
+              <input type="text" data-field="詳細" list="detailList" placeholder="生ネタサンプル / 塗板 など" />
+              <button type="button" class="field-clear-btn" data-clear-field="詳細" title="詳細を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label>艶${index}</label>
-            <input type="text" data-field="艶" list="itemGlossList-${index}" placeholder="履歴から絞り込み" />
+            <div class="input-clear-wrap">
+              <input type="text" data-field="艶" list="itemGlossList-${index}" placeholder="履歴から絞り込み" />
+              <button type="button" class="field-clear-btn" data-clear-field="艶" title="艶を削除">×</button>
+            </div>
             <datalist id="itemGlossList-${index}"></datalist>
           </div>
           <div class="field">
             <label>色${index}</label>
-            <input type="text" data-field="色" list="itemColorList-${index}" placeholder="履歴から絞り込み" />
+            <div class="input-clear-wrap">
+              <input type="text" data-field="色" list="itemColorList-${index}" placeholder="履歴から絞り込み" />
+              <button type="button" class="field-clear-btn" data-clear-field="色" title="色を削除">×</button>
+            </div>
             <datalist id="itemColorList-${index}"></datalist>
           </div>
         </div>
@@ -746,20 +825,32 @@
         <div class="item-row-lower">
           <div class="field">
             <label>容量${index}</label>
-            <input type="text" data-field="容量" list="itemSizeList-${index}" placeholder="履歴から絞り込み" />
+            <div class="input-clear-wrap">
+              <input type="text" data-field="容量" list="itemSizeList-${index}" placeholder="履歴から絞り込み" />
+              <button type="button" class="field-clear-btn" data-clear-field="容量" title="容量を削除">×</button>
+            </div>
             <datalist id="itemSizeList-${index}"></datalist>
           </div>
           <div class="field">
             <label>数量${index}</label>
-            <input type="number" step="any" data-field="数量" placeholder="1" />
+            <div class="input-clear-wrap">
+              <input type="number" step="any" data-field="数量" placeholder="1" />
+              <button type="button" class="field-clear-btn" data-clear-field="数量" title="数量を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label>単位${index}</label>
-            <input type="text" data-field="単位" list="unitList" placeholder="例：缶" />
+            <div class="input-clear-wrap">
+              <input type="text" data-field="単位" list="unitList" placeholder="例：缶" />
+              <button type="button" class="field-clear-btn" data-clear-field="単位" title="単位を削除">×</button>
+            </div>
           </div>
           <div class="field">
             <label>摘要${index}</label>
-            <input type="text" data-field="摘要" list="remarkList" placeholder="例：在庫 / 追加" />
+            <div class="input-clear-wrap">
+              <input type="text" data-field="摘要" list="remarkList" placeholder="例：在庫 / 追加" />
+              <button type="button" class="field-clear-btn" data-clear-field="摘要" title="摘要を削除">×</button>
+            </div>
           </div>
         </div>
       `;
@@ -775,6 +866,17 @@
         } else if (field === '数量') {
           input.value = '1';
         }
+      });
+
+      card.querySelectorAll('.field-clear-btn[data-clear-field]').forEach((btn) => {
+        const fieldName = btn.dataset.clearField;
+        btn.addEventListener('click', () => {
+          const targetInput = card.querySelector(`[data-field="${fieldName}"]`);
+          if (!targetInput) return;
+          targetInput.value = '';
+          targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+          statusText.textContent = `明細${card.dataset.index}の「${fieldName}」を削除しました`;
+        });
       });
 
       applyMakerFilter(card, false);
@@ -890,6 +992,18 @@
       const d = String(dateObj.getDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
     }
+
+    document.querySelectorAll('.field-clear-btn[data-clear-target]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.dataset.clearTarget;
+        const labelText = btn.dataset.label || targetId;
+        const el = document.getElementById(targetId);
+        if (!el) return;
+        el.value = '';
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        statusText.textContent = `「${labelText}」を削除しました`;
+      });
+    });
 
     issuerInput.addEventListener('change', async () => {
       const val = issuerInput.value.trim();
