@@ -199,7 +199,7 @@
     <div class="topbar">
       <div>
         <h1>受注フォーム（GAS連動・v5）</h1>
-        <div class="sub">端末ごとの発行者記憶・ユーザー名選択で直近履歴自動入力＆明細絞り込み</div>
+        <div class="sub">端末ごとの発行者記憶・GAS連動自動復元・ユーザー名選択で直近履歴自動入力＆明細絞り込み</div>
       </div>
       <span class="badge" id="syncBadge">未同期（フォールバック使用中）</span>
     </div>
@@ -218,6 +218,7 @@
         <button type="button" class="btn-primary" id="loadGasBtn">マスター＆履歴を読み込み</button>
         <button type="button" class="btn-secondary" id="saveGasUrlBtn">URLを保存</button>
       </div>
+      <div class="sub" id="deviceIdInfo" style="margin-top: 8px;">端末ID: -</div>
     </div>
 
     <form id="orderForm">
@@ -381,6 +382,7 @@
     const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
     const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
     const STORAGE_KEY_DEVICE_ISSUER = 'tsubame_device_issuer_v1';
+    const STORAGE_KEY_DEVICE_ID = 'tsubame_device_id_v1';
 
     const FALLBACK_DATA = {
       ok: true,
@@ -471,11 +473,28 @@
       customerOrders: [...FALLBACK_DATA.customerOrders]
     };
 
+    function getOrCreateDeviceId() {
+      let id = '';
+      try {
+        id = (localStorage.getItem(STORAGE_KEY_DEVICE_ID) || '').trim();
+        if (!id) {
+          id = 'dev-' + Math.random().toString(36).slice(2, 10);
+          localStorage.setItem(STORAGE_KEY_DEVICE_ID, id);
+        }
+      } catch (e) {
+        id = 'dev-temp';
+      }
+      return id;
+    }
+
+    const deviceId = getOrCreateDeviceId();
+
     const gasUrlInput = document.getElementById('gasUrl');
     const loadGasBtn = document.getElementById('loadGasBtn');
     const saveGasUrlBtn = document.getElementById('saveGasUrlBtn');
     const syncBadge = document.getElementById('syncBadge');
     const lastUpdatedText = document.getElementById('lastUpdatedText');
+    const deviceIdInfo = document.getElementById('deviceIdInfo');
 
     const issuerInput = document.getElementById('issuer');
     const userNameInput = document.getElementById('userName');
@@ -494,6 +513,8 @@
     const statusText = document.getElementById('statusText');
     const orderForm = document.getElementById('orderForm');
 
+    deviceIdInfo.textContent = `端末ID: ${deviceId}（発行者マスターの「端末ID」列に登録するとlocalStorage消失時も自動復元）`;
+
     function uniqueValues(arr) {
       return Array.from(new Set((arr || []).map((v) => String(v || '').trim()).filter(Boolean)));
     }
@@ -508,12 +529,30 @@
       });
     }
 
-    // 端末に保存された発行者、またはGASから返った候補を反映（固定値にはしない）
-    function applyDeviceOrGasIssuer(gasSuggestedIssuer = '') {
-      const savedDeviceIssuer = (localStorage.getItem(STORAGE_KEY_DEVICE_ISSUER) || '').trim();
-      const target = savedDeviceIssuer || String(gasSuggestedIssuer || '').trim();
-      if (target) {
-        issuerInput.value = target;
+    // 端末保存の発行者が消えた場合でも、GAS側の issuerByDeviceId / suggestedIssuer から復元し再保存
+    function restoreIssuerIfMissing(data = {}) {
+      let savedIssuer = '';
+      try {
+        savedIssuer = (localStorage.getItem(STORAGE_KEY_DEVICE_ISSUER) || '').trim();
+      } catch (e) {
+        savedIssuer = '';
+      }
+
+      const fromDeviceMap = (data.issuerByDeviceId && data.issuerByDeviceId[deviceId])
+        ? String(data.issuerByDeviceId[deviceId]).trim()
+        : '';
+      const fromSuggested = data.suggestedIssuer ? String(data.suggestedIssuer).trim() : '';
+
+      const recovered = savedIssuer || fromDeviceMap || fromSuggested || '';
+      if (recovered) {
+        if (!issuerInput.value.trim()) {
+          issuerInput.value = recovered;
+        }
+        if (!savedIssuer) {
+          try {
+            localStorage.setItem(STORAGE_KEY_DEVICE_ISSUER, recovered);
+          } catch (e) {}
+        }
       }
     }
 
@@ -588,7 +627,9 @@
       }
 
       try {
-        const res = await fetch(url, { method: 'GET' });
+        const separator = url.includes('?') ? '&' : '?';
+        const requestUrl = `${url}${separator}deviceId=${encodeURIComponent(deviceId)}`;
+        const res = await fetch(requestUrl, { method: 'GET' });
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -605,7 +646,7 @@
         };
 
         refreshGlobalSuggestions();
-        applyDeviceOrGasIssuer(data.suggestedIssuer || '');
+        restoreIssuerIfMissing(data);
 
         if (userNameInput.value.trim()) {
           applyCustomerHistoryAutofill();
@@ -866,6 +907,7 @@
       if (payload['希望納期']) {
         payload['希望納期'] = payload['希望納期'].replace(/-/g, '/');
       }
+      payload.deviceId = deviceId;
 
       const cards = Array.from(itemsContainer.querySelectorAll('.item-card'));
       for (let i = 1; i <= MAX_ITEMS; i++) {
@@ -892,10 +934,14 @@
     issuerInput.addEventListener('change', () => {
       const val = issuerInput.value.trim();
       if (val) {
-        localStorage.setItem(STORAGE_KEY_DEVICE_ISSUER, val);
+        try {
+          localStorage.setItem(STORAGE_KEY_DEVICE_ISSUER, val);
+        } catch (e) {}
         statusText.textContent = `この端末の発行者を「${val}」として保存しました`;
       } else {
-        localStorage.removeItem(STORAGE_KEY_DEVICE_ISSUER);
+        try {
+          localStorage.removeItem(STORAGE_KEY_DEVICE_ISSUER);
+        } catch (e) {}
         statusText.textContent = '端末の発行者記憶をクリアしました';
       }
       updatePreview();
@@ -907,7 +953,9 @@
 
     saveGasUrlBtn.addEventListener('click', () => {
       const url = gasUrlInput.value.trim();
-      localStorage.setItem(STORAGE_KEY_GAS_URL, url);
+      try {
+        localStorage.setItem(STORAGE_KEY_GAS_URL, url);
+      } catch (e) {}
       statusText.textContent = url ? 'GAS URLをブラウザに保存しました' : '保存済みGAS URLをクリアしました';
     });
 
@@ -943,7 +991,6 @@
     });
 
     clearBasicBtn.addEventListener('click', () => {
-      // 端末記憶の発行者（issuer）は維持し、それ以外の基本情報をクリア
       ['userName', 'contactPerson', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
         document.getElementById(id).value = '';
       });
@@ -989,11 +1036,16 @@
       }
     });
 
-    const savedUrl = localStorage.getItem(STORAGE_KEY_GAS_URL) || '';
+    let savedUrl = '';
+    try {
+      savedUrl = localStorage.getItem(STORAGE_KEY_GAS_URL) || '';
+    } catch (e) {
+      savedUrl = '';
+    }
     if (savedUrl) {
       gasUrlInput.value = savedUrl;
     }
-    applyDeviceOrGasIssuer('');
+    restoreIssuerIfMissing({});
     refreshGlobalSuggestions();
     addItemRow({ 単位: '缶' });
     updatePreview();
