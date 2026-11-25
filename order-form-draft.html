@@ -45,14 +45,6 @@
     }
     .topbar h1 { margin: 0; font-size: 18px; }
     .sub { color: var(--muted); font-size: 12px; }
-    .badge {
-      background: #dbeafe;
-      color: #1e40af;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 999px;
-    }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -78,15 +70,8 @@
     .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .gas-bar {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 8px;
-      align-items: end;
-    }
     @media (max-width: 900px) {
       .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .gas-bar { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
     .field { display: flex; flex-direction: column; gap: 4px; }
@@ -180,18 +165,8 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      margin-top: 12px;
     }
     .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    pre {
-      background: #0f172a;
-      color: #f8fafc;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      overflow-x: auto;
-      margin: 10px 0 0;
-    }
   </style>
 </head>
 <body>
@@ -201,24 +176,6 @@
         <h1>受注フォーム（GAS連動・v5）</h1>
         <div class="sub">端末ごとの発行者記憶・発行者マスター自動保管・ユーザー名選択で直近履歴自動入力＆明細絞り込み</div>
       </div>
-      <span class="badge" id="syncBadge">未同期（フォールバック使用中）</span>
-    </div>
-
-    <!-- 0. GAS連携設定 -->
-    <div class="card">
-      <div class="card-head">
-        <h2 class="card-title">0. GAS Webアプリ連携</h2>
-        <span class="sub" id="lastUpdatedText">最終同期: -</span>
-      </div>
-      <div class="gas-bar">
-        <div class="field">
-          <label for="gasUrl">GAS WebアプリURL（doGet / doPost 共通）</label>
-          <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/xxxxx/exec" />
-        </div>
-        <button type="button" class="btn-primary" id="loadGasBtn">マスター＆履歴を読み込み</button>
-        <button type="button" class="btn-secondary" id="saveGasUrlBtn">URLを保存</button>
-      </div>
-      <div class="sub" id="deviceIdInfo" style="margin-top: 8px;">端末ID: -</div>
     </div>
 
     <form id="orderForm">
@@ -323,17 +280,12 @@
         <div id="itemsContainer"></div>
       </div>
 
-      <!-- 3. 送信・流し込み確認 -->
+      <!-- 3. 送信 -->
       <div class="card">
-        <h2 class="card-title">3. 送信・流し込み確認</h2>
         <div class="footer-bar">
-          <div class="btn-group">
-            <button type="button" class="btn-secondary" id="previewBtn">JSONプレビュー更新</button>
-            <button type="submit" class="btn-primary" id="submitBtn">フォーム送信</button>
-          </div>
+          <button type="submit" class="btn-primary" id="submitBtn">フォーム送信</button>
           <span id="statusText" class="sub">準備完了</span>
         </div>
-        <pre id="jsonPreview">{}</pre>
       </div>
     </form>
   </div>
@@ -490,14 +442,17 @@
       return id;
     }
 
-    const deviceId = getOrCreateDeviceId();
+    function getGasUrl() {
+      let savedUrl = '';
+      try {
+        savedUrl = (localStorage.getItem(STORAGE_KEY_GAS_URL) || '').trim();
+      } catch (e) {
+        savedUrl = '';
+      }
+      return savedUrl || DEFAULT_GAS_URL.trim();
+    }
 
-    const gasUrlInput = document.getElementById('gasUrl');
-    const loadGasBtn = document.getElementById('loadGasBtn');
-    const saveGasUrlBtn = document.getElementById('saveGasUrlBtn');
-    const syncBadge = document.getElementById('syncBadge');
-    const lastUpdatedText = document.getElementById('lastUpdatedText');
-    const deviceIdInfo = document.getElementById('deviceIdInfo');
+    const deviceId = getOrCreateDeviceId();
 
     const issuerInput = document.getElementById('issuer');
     const userNameInput = document.getElementById('userName');
@@ -510,13 +465,9 @@
 
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItemBtn');
-    const previewBtn = document.getElementById('previewBtn');
     const clearBasicBtn = document.getElementById('clearBasicBtn');
-    const jsonPreview = document.getElementById('jsonPreview');
     const statusText = document.getElementById('statusText');
     const orderForm = document.getElementById('orderForm');
-
-    deviceIdInfo.textContent = `端末ID: ${deviceId}（発行者入力・読み込み時に端末IDと名前を「発行者マスター」へ自動保管）`;
 
     function uniqueValues(arr) {
       return Array.from(new Set((arr || []).map((v) => String(v || '').trim()).filter(Boolean)));
@@ -559,7 +510,7 @@
     }
 
     async function syncIssuerToSheet(force = false) {
-      const url = gasUrlInput.value.trim();
+      const url = getGasUrl();
       const issuerVal = issuerInput.value.trim();
       if (!url || !issuerVal || !deviceId) return;
 
@@ -638,22 +589,12 @@
         uniqueValues(sameUserRows.map((r) => r.siteAddress).concat(orders.map((o) => o.siteAddress)))
       );
 
-      updatePreview();
       statusText.textContent = `「${selectedUser}」の直近履歴（担当者・電話番号・現場名・現場住所）を反映しました`;
     }
 
     async function loadCatalogFromGas(showMessage = true) {
-      const url = gasUrlInput.value.trim();
-      if (!url) {
-        if (showMessage) {
-          statusText.textContent = 'GAS WebアプリURLを入力してください';
-        }
-        return;
-      }
-
-      if (showMessage) {
-        statusText.textContent = 'GASから商品マスター・履歴を読み込み中...';
-      }
+      const url = getGasUrl();
+      if (!url) return;
 
       try {
         const separator = url.includes('?') ? '&' : '?';
@@ -686,12 +627,6 @@
           applyProductHistoryFilter(card, false);
         });
 
-        syncBadge.textContent = 'GAS同期済み';
-        syncBadge.style.background = '#dcfce7';
-        syncBadge.style.color = '#166534';
-        lastUpdatedText.textContent = `最終同期: ${data.updatedAt || new Date().toLocaleString('ja-JP')}`;
-        updatePreview();
-
         if (issuerInput.value.trim()) {
           syncIssuerToSheet(false);
         }
@@ -700,9 +635,6 @@
           statusText.textContent = '商品マスターと受注履歴を最新化しました';
         }
       } catch (err) {
-        syncBadge.textContent = '同期エラー（フォールバック使用中）';
-        syncBadge.style.background = '#fee2e2';
-        syncBadge.style.color = '#991b1b';
         if (showMessage) {
           statusText.textContent = `読み込みエラー: ${err.message}`;
         }
@@ -837,8 +769,11 @@
 
       ITEM_FIELDS.forEach((field) => {
         const input = card.querySelector(`[data-field="${field}"]`);
-        if (input && initial[field] !== undefined) {
+        if (!input) return;
+        if (initial[field] !== undefined) {
           input.value = initial[field];
+        } else if (field === '数量') {
+          input.value = '1';
         }
       });
 
@@ -847,13 +782,11 @@
 
       makerInput.addEventListener('change', () => {
         applyMakerFilter(card, true);
-        updatePreview();
         statusText.textContent = `明細${card.dataset.index}：メーカーに合わせて商品マスターを絞り込みました`;
       });
 
       nameInput.addEventListener('change', () => {
         applyProductHistoryFilter(card, true);
-        updatePreview();
         statusText.textContent = `明細${card.dataset.index}：履歴から艶・色・容量を絞り込み、前回値を反映しました`;
       });
 
@@ -869,7 +802,6 @@
         });
         itemsContainer.appendChild(createItemCard(currentCards + 1, values));
         renumberItems();
-        updatePreview();
       });
 
       const removeBtn = card.querySelector('.remove-item-btn');
@@ -877,7 +809,6 @@
         removeBtn.addEventListener('click', () => {
           card.remove();
           renumberItems();
-          updatePreview();
         });
       }
 
@@ -915,7 +846,6 @@
           btn.addEventListener('click', () => {
             card.remove();
             renumberItems();
-            updatePreview();
           });
           actions.appendChild(btn);
         } else if (num === 1 && hasRemove) {
@@ -954,10 +884,6 @@
       return payload;
     }
 
-    function updatePreview() {
-      jsonPreview.textContent = JSON.stringify(buildPayload(), null, 2);
-    }
-
     function formatDateYmd(dateObj) {
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -979,23 +905,10 @@
         } catch (e) {}
         statusText.textContent = '端末の発行者記憶をクリアしました';
       }
-      updatePreview();
     });
 
     userNameInput.addEventListener('change', () => {
       applyCustomerHistoryAutofill();
-    });
-
-    saveGasUrlBtn.addEventListener('click', () => {
-      const url = gasUrlInput.value.trim();
-      try {
-        localStorage.setItem(STORAGE_KEY_GAS_URL, url);
-      } catch (e) {}
-      statusText.textContent = url ? 'GAS URLをブラウザに保存しました' : '保存済みGAS URLをクリアしました';
-    });
-
-    loadGasBtn.addEventListener('click', () => {
-      loadCatalogFromGas(true);
     });
 
     document.querySelectorAll('.chip[data-preset]').forEach((chip) => {
@@ -1020,7 +933,6 @@
           document.getElementById('deliveryDate').value = formatDateYmd(tomorrow);
           document.getElementById('deliveryTime').value = 'AM';
         }
-        updatePreview();
         statusText.textContent = `プリセット「${chip.textContent}」を反映しました`;
       });
     });
@@ -1032,28 +944,19 @@
       document.getElementById('deliveryTime').value = '';
       destinationSelect.value = '貴社';
       refreshGlobalSuggestions();
-      updatePreview();
       statusText.textContent = '基本情報をクリアしました（端末の発行者設定は維持）';
     });
 
     addItemBtn.addEventListener('click', () => {
-      addItemRow({ 単位: '缶' });
-      updatePreview();
-    });
-
-    previewBtn.addEventListener('click', () => {
-      updatePreview();
-      statusText.textContent = 'JSONプレビューを更新しました';
+      addItemRow({ 数量: '1', 単位: '缶' });
     });
 
     orderForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = buildPayload();
-      jsonPreview.textContent = JSON.stringify(data, null, 2);
-
-      const gasUrl = gasUrlInput.value.trim();
+      const gasUrl = getGasUrl();
       if (!gasUrl) {
-        statusText.textContent = 'GAS URL未入力のため、画面プレビューのみ更新しました';
+        statusText.textContent = '送信先URLが設定されていません';
         return;
       }
 
@@ -1072,21 +975,10 @@
       }
     });
 
-    let savedUrl = '';
-    try {
-      savedUrl = (localStorage.getItem(STORAGE_KEY_GAS_URL) || '').trim();
-    } catch (e) {
-      savedUrl = '';
-    }
-    const activeGasUrl = savedUrl || DEFAULT_GAS_URL.trim();
-    if (activeGasUrl) {
-      gasUrlInput.value = activeGasUrl;
-    }
     restoreIssuerIfMissing({});
     refreshGlobalSuggestions();
-    addItemRow({ 単位: '缶' });
-    updatePreview();
-    if (activeGasUrl) {
+    addItemRow({ 数量: '1', 単位: '缶' });
+    if (getGasUrl()) {
       loadCatalogFromGas(false);
     }
   </script>
