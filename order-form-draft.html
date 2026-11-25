@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>受注フォーム（GAS連動・v4）</title>
+  <title>受注フォーム（GAS連動・v5）</title>
   <style>
     :root {
       --bg: #f1f5f9;
@@ -198,8 +198,8 @@
   <div class="container">
     <div class="topbar">
       <div>
-        <h1>受注フォーム（GAS連動・v4）</h1>
-        <div class="sub">GAS（doGet）から商品マスター・履歴を取得し、メーカー／品名／艶・色・容量の絞り込みと前回値初期表示を連動</div>
+        <h1>受注フォーム（GAS連動・v5）</h1>
+        <div class="sub">ユーザー名選択で直近履歴から担当者・電話番号・現場名・現場住所を自動入力＆明細絞り込み</div>
       </div>
       <span class="badge" id="syncBadge">未同期（フォールバック使用中）</span>
     </div>
@@ -237,22 +237,22 @@
           </div>
           <div class="field">
             <label for="userName">ユーザー名（得意先・在庫）</label>
-            <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="例：中澤塗装㈱ / 在庫" required />
+            <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="例：中澤塗装㈱ / ㈲アベル" required />
           </div>
           <div class="field">
             <label for="contactPerson">担当者</label>
-            <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="例：青柳 / 主任" />
+            <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="例：根岸 / 主任" />
           </div>
           <div class="field">
             <label for="phone">電話番号</label>
-            <input id="phone" name="電話番号" type="tel" list="phoneList" placeholder="例：090-0000-0000" />
+            <input id="phone" name="電話番号" type="tel" list="phoneList" placeholder="例：090-2524-8332" />
           </div>
         </div>
 
         <div class="grid-3" style="margin-top: 10px;">
           <div class="field">
             <label for="siteName">現場名</label>
-            <input id="siteName" name="現場名" type="text" placeholder="例：〇〇邸 / 倉庫" />
+            <input id="siteName" name="現場名" type="text" list="siteNameList" placeholder="例：サンドラッグ行徳店" />
           </div>
           <div class="field">
             <label for="deliveryDate">希望納期</label>
@@ -293,7 +293,7 @@
 
         <div class="field" style="margin-top: 10px;">
           <label for="siteAddress">現場住所</label>
-          <input id="siteAddress" name="現場住所" type="text" placeholder="例：〒360-0000 埼玉県熊谷市..." />
+          <input id="siteAddress" name="現場住所" type="text" list="siteAddressList" placeholder="例：〒272-0133 千葉県市川市行徳駅前2丁目11−2" />
         </div>
 
         <div class="field" style="margin-top: 10px;">
@@ -342,33 +342,11 @@
     <option value="今井"></option>
     <option value="佐々木"></option>
   </datalist>
-  <datalist id="userList">
-    <option value="在庫"></option>
-    <option value="中澤塗装㈱"></option>
-    <option value="ケイスタイル㈱"></option>
-    <option value="㈱彩心"></option>
-    <option value="㈱おんだ塗装"></option>
-    <option value="㈲アベル"></option>
-    <option value="川村塗装"></option>
-    <option value="木下塗装興業"></option>
-    <option value="㈱ハシ塗装工業"></option>
-    <option value="吉岡塗装工業"></option>
-  </datalist>
-  <datalist id="contactList">
-    <option value="青柳"></option>
-    <option value="主任"></option>
-    <option value="横沢"></option>
-    <option value="根岸"></option>
-    <option value="川端"></option>
-    <option value="飯塚"></option>
-  </datalist>
-  <datalist id="phoneList">
-    <option value="049-573-1234"></option>
-    <option value="090-3346-3470"></option>
-    <option value="090-8642-8309"></option>
-    <option value="090-2465-9291"></option>
-    <option value="090-7255-0061"></option>
-  </datalist>
+  <datalist id="userList"></datalist>
+  <datalist id="contactList"></datalist>
+  <datalist id="phoneList"></datalist>
+  <datalist id="siteNameList"></datalist>
+  <datalist id="siteAddressList"></datalist>
   <datalist id="deliveryReqList">
     <option value="前橋"></option>
     <option value="現場直送"></option>
@@ -403,7 +381,7 @@
     const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
     const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
 
-    // GAS未接続時のフォールバックデータ
+    // フォールバックデータ（新しい履歴が先頭になるよう並べる）
     const FALLBACK_DATA = {
       ok: true,
       updatedAt: 'オフライン初期値',
@@ -436,13 +414,61 @@
           options: { gloss: [], color: ['赤さび', '黄', '25-92B'], size: ['3kg', '15kg'], unit: ['缶'] },
           latest: { maker: 'カンペ', gloss: '', color: '赤さび', size: '3kg', unit: '缶', detail: '' }
         }
-      }
+      },
+      customerOrders: [
+        {
+          userName: '㈲アベル',
+          contactPerson: '根岸',
+          phone: '090-2524-8332',
+          siteName: 'サンドラッグ行徳店',
+          siteAddress: '〒272-0133 千葉県市川市行徳駅前2丁目11−2',
+          destination: '現場直送',
+          deliveryRequest: ''
+        },
+        {
+          userName: 'ケイスタイル㈱',
+          contactPerson: '主任',
+          phone: '090-7171-5960',
+          siteName: '羽生城沼住宅',
+          siteAddress: '〒348-0052 埼玉県羽生市東7丁目15−8 県-78-1',
+          destination: '現場',
+          deliveryRequest: ''
+        },
+        {
+          userName: '中澤塗装㈱',
+          contactPerson: '',
+          phone: '049-573-1234',
+          siteName: 'いろりの友特別老人ホーム',
+          siteAddress: '',
+          destination: '貴社',
+          deliveryRequest: ''
+        },
+        {
+          userName: '川村塗装',
+          contactPerson: '',
+          phone: '',
+          siteName: '',
+          siteAddress: '',
+          destination: '貴社',
+          deliveryRequest: ''
+        },
+        {
+          userName: '在庫',
+          contactPerson: '',
+          phone: '',
+          siteName: '',
+          siteAddress: '',
+          destination: '貴社',
+          deliveryRequest: ''
+        }
+      ]
     };
 
     let catalogState = {
       makers: [...FALLBACK_DATA.makers],
       productsByMaker: { ...FALLBACK_DATA.productsByMaker },
-      historyByProduct: { ...FALLBACK_DATA.historyByProduct }
+      historyByProduct: { ...FALLBACK_DATA.historyByProduct },
+      customerOrders: [...FALLBACK_DATA.customerOrders]
     };
 
     const gasUrlInput = document.getElementById('gasUrl');
@@ -450,6 +476,14 @@
     const saveGasUrlBtn = document.getElementById('saveGasUrlBtn');
     const syncBadge = document.getElementById('syncBadge');
     const lastUpdatedText = document.getElementById('lastUpdatedText');
+
+    const userNameInput = document.getElementById('userName');
+    const contactPersonInput = document.getElementById('contactPerson');
+    const phoneInput = document.getElementById('phone');
+    const siteNameInput = document.getElementById('siteName');
+    const siteAddressInput = document.getElementById('siteAddress');
+    const destinationSelect = document.getElementById('destination');
+    const deliveryRequestInput = document.getElementById('deliveryRequest');
 
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItemBtn');
@@ -473,12 +507,66 @@
       });
     }
 
-    function refreshGlobalMakerList() {
-      const makerListEl = document.getElementById('makerList');
-      setDatalistOptions(makerListEl, catalogState.makers);
+    function refreshGlobalSuggestions() {
+      setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
+
+      const orders = catalogState.customerOrders || [];
+      setDatalistOptions(document.getElementById('userList'), orders.map((o) => o.userName));
+      setDatalistOptions(document.getElementById('contactList'), orders.map((o) => o.contactPerson));
+      setDatalistOptions(document.getElementById('phoneList'), orders.map((o) => o.phone));
+      setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
+      setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
     }
 
-    // GASの doGet エンドポイントからメーカー・商品名・履歴を取得
+    // ユーザー名（得意先）選択時：直近の履歴から担当者・電話番号・現場名・現場住所を自動入力
+    function applyCustomerHistoryAutofill() {
+      const selectedUser = userNameInput.value.trim();
+      if (!selectedUser) return;
+
+      const orders = catalogState.customerOrders || [];
+      const latestOrder = orders.find((o) => String(o.userName || '').trim() === selectedUser);
+
+      if (!latestOrder) {
+        statusText.textContent = `「${selectedUser}」の過去履歴が見つかりませんでした`;
+        return;
+      }
+
+      // 同一得意先の過去行に部分的に入っている値があれば補完用として拾う
+      const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
+      const latestContact = latestOrder.contactPerson || (sameUserRows.find((r) => r.contactPerson) || {}).contactPerson || '';
+      const latestPhone = latestOrder.phone || (sameUserRows.find((r) => r.phone) || {}).phone || '';
+      const latestSiteName = latestOrder.siteName || (sameUserRows.find((r) => r.siteName) || {}).siteName || '';
+      const latestSiteAddress = latestOrder.siteAddress || (sameUserRows.find((r) => r.siteAddress) || {}).siteAddress || '';
+
+      contactPersonInput.value = latestContact;
+      phoneInput.value = latestPhone;
+      siteNameInput.value = latestSiteName;
+      siteAddressInput.value = latestSiteAddress;
+
+      if (latestOrder.destination) {
+        const hasOption = Array.from(destinationSelect.options).some((opt) => opt.value === latestOrder.destination);
+        if (hasOption) {
+          destinationSelect.value = latestOrder.destination;
+        }
+      }
+      if (latestOrder.deliveryRequest !== undefined) {
+        deliveryRequestInput.value = latestOrder.deliveryRequest || '';
+      }
+
+      // 現場名・現場住所の候補リストをその得意先の履歴順に優先表示
+      setDatalistOptions(
+        document.getElementById('siteNameList'),
+        uniqueValues(sameUserRows.map((r) => r.siteName).concat(orders.map((o) => o.siteName)))
+      );
+      setDatalistOptions(
+        document.getElementById('siteAddressList'),
+        uniqueValues(sameUserRows.map((r) => r.siteAddress).concat(orders.map((o) => o.siteAddress)))
+      );
+
+      updatePreview();
+      statusText.textContent = `「${selectedUser}」の直近履歴（担当者・電話番号・現場名・現場住所）を反映しました`;
+    }
+
     async function loadCatalogFromGas(showMessage = true) {
       const url = gasUrlInput.value.trim();
       if (!url) {
@@ -505,12 +593,16 @@
         catalogState = {
           makers: uniqueValues(data.makers),
           productsByMaker: data.productsByMaker || {},
-          historyByProduct: data.historyByProduct || {}
+          historyByProduct: data.historyByProduct || {},
+          customerOrders: Array.isArray(data.customerOrders) ? data.customerOrders : []
         };
 
-        refreshGlobalMakerList();
+        refreshGlobalSuggestions();
 
-        // 既存の各明細行の候補リストを更新（手入力中の値や初期値は保持）
+        if (userNameInput.value.trim()) {
+          applyCustomerHistoryAutofill();
+        }
+
         Array.from(itemsContainer.querySelectorAll('.item-card')).forEach((card) => {
           applyMakerFilter(card, false);
           applyProductHistoryFilter(card, false);
@@ -533,7 +625,6 @@
       }
     }
 
-    // メーカー選択時：商品マスターから品名を絞り込み、直近履歴の品名と連動
     function applyMakerFilter(card, autoFillLatestProduct = true) {
       const idx = card.dataset.index;
       const makerInput = card.querySelector('[data-field="メーカー"]');
@@ -549,7 +640,6 @@
 
       if (autoFillLatestProduct && maker) {
         const productCandidates = uniqueValues(candidates);
-        // 履歴がある品名を優先して直近のものを初期値にする
         const historyMatch = productCandidates.find((prodName) => {
           const hist = catalogState.historyByProduct[prodName];
           return hist && hist.latest && (!hist.latest.maker || hist.latest.maker === maker);
@@ -562,7 +652,6 @@
       }
     }
 
-    // 商品名選択時：履歴から艶・色・容量を絞り込み、前回値（latest）を初期値にセット
     function applyProductHistoryFilter(card, autoFillLatestSpecs = true) {
       const idx = card.dataset.index;
       const nameInput = card.querySelector('[data-field="品名"]');
@@ -791,6 +880,10 @@
       return `${y}-${m}-${d}`;
     }
 
+    userNameInput.addEventListener('change', () => {
+      applyCustomerHistoryAutofill();
+    });
+
     saveGasUrlBtn.addEventListener('click', () => {
       const url = gasUrlInput.value.trim();
       localStorage.setItem(STORAGE_KEY_GAS_URL, url);
@@ -809,15 +902,16 @@
         tomorrow.setDate(today.getDate() + 1);
 
         if (preset === 'stock') {
-          document.getElementById('userName').value = '在庫';
-          document.getElementById('destination').value = '貴社';
+          userNameInput.value = '在庫';
+          destinationSelect.value = '貴社';
+          applyCustomerHistoryAutofill();
         } else if (preset === 'store') {
-          document.getElementById('destination').value = '店渡し';
+          destinationSelect.value = '店渡し';
           document.getElementById('deliveryDate').value = formatDateYmd(today);
         } else if (preset === 'site') {
-          document.getElementById('destination').value = '現場';
+          destinationSelect.value = '現場';
         } else if (preset === 'direct') {
-          document.getElementById('destination').value = '直送';
+          destinationSelect.value = '直送';
         } else if (preset === 'tomorrow-am') {
           document.getElementById('deliveryDate').value = formatDateYmd(tomorrow);
           document.getElementById('deliveryTime').value = 'AM';
@@ -832,7 +926,8 @@
         document.getElementById(id).value = '';
       });
       document.getElementById('deliveryTime').value = '';
-      document.getElementById('destination').value = '貴社';
+      destinationSelect.value = '貴社';
+      refreshGlobalSuggestions();
       updatePreview();
       statusText.textContent = '基本情報をクリアしました';
     });
@@ -872,12 +967,11 @@
       }
     });
 
-    // 初期化
     const savedUrl = localStorage.getItem(STORAGE_KEY_GAS_URL) || '';
     if (savedUrl) {
       gasUrlInput.value = savedUrl;
     }
-    refreshGlobalMakerList();
+    refreshGlobalSuggestions();
     addItemRow({ 単位: '缶' });
     updatePreview();
     if (savedUrl) {
