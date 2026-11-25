@@ -3,85 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>受注フォーム（仮UI）</title>
+  <title>受注フォーム（仮UI・改訂版）</title>
   <style>
     :root {
-      --bg: #f4f6f8;
+      --bg: #f1f5f9;
       --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --border: #d1d5db;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
       --primary: #1d4ed8;
       --primary-hover: #1e40af;
+      --accent: #0f766e;
       --danger: #dc2626;
-      --soft: #eff6ff;
+      --chip-bg: #f8fafc;
+      --chip-border: #cbd5e1;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 20px;
+      padding: 16px;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.45;
     }
     .container {
-      max-width: 1040px;
+      max-width: 1080px;
       margin: 0 auto;
     }
-    .header {
+    .topbar {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 16px 20px;
-      margin-bottom: 16px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
-    .header h1 {
+    .topbar h1 {
       margin: 0;
       font-size: 18px;
     }
-    .badge {
-      display: inline-block;
-      background: var(--soft);
-      color: var(--primary);
-      border: 1px solid #bfdbfe;
-      border-radius: 999px;
-      padding: 2px 10px;
+    .sub {
+      color: var(--muted);
       font-size: 12px;
-      font-weight: 600;
+    }
+    .badge {
+      background: #dbeafe;
+      color: #1e40af;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
     }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 18px 20px;
-      margin-bottom: 16px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+    .card-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
     }
     .card-title {
-      margin: 0 0 14px;
+      margin: 0;
       font-size: 15px;
       font-weight: 700;
       border-left: 4px solid var(--primary);
       padding-left: 10px;
     }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
     .grid-2 {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
-    @media (max-width: 768px) {
-      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
     }
     .field {
       display: flex;
@@ -90,8 +110,8 @@
     }
     label {
       font-size: 12px;
-      font-weight: 600;
-      color: #374151;
+      font-weight: 700;
+      color: #334155;
     }
     input, select, textarea {
       width: 100%;
@@ -107,115 +127,161 @@
       border-color: var(--primary);
     }
     textarea {
-      min-height: 64px;
+      min-height: 58px;
       resize: vertical;
     }
-    .item-box {
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      align-items: center;
+    }
+    .chips-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-right: 2px;
+    }
+    .chip {
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      color: #1e293b;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .chip:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: var(--primary);
+    }
+    .item-card {
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 12px;
-      margin-bottom: 12px;
-      background: #fafafa;
+      margin-bottom: 10px;
+      background: #f8fafc;
     }
-    .item-head {
+    .item-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
-      font-weight: 700;
-      font-size: 13px;
-    }
-    .item-grid {
-      display: grid;
-      grid-template-columns: repeat(9, minmax(0, 1fr));
       gap: 8px;
     }
-    @media (max-width: 960px) {
-      .item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .item-badge {
+      font-weight: 700;
+      font-size: 13px;
+      color: #0f172a;
     }
-    @media (max-width: 560px) {
-      .item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    .actions {
+    .item-actions {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
+      gap: 6px;
     }
-    .btn-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+    .item-row-upper {
+      display: grid;
+      grid-template-columns: 1.1fr 1.6fr 1.1fr 0.9fr 1.2fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .item-row-lower {
+      display: grid;
+      grid-template-columns: 1fr 0.8fr 0.8fr 1.4fr;
+      gap: 8px;
+    }
+    @media (max-width: 860px) {
+      .item-row-upper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .item-row-lower { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .item-row-upper, .item-row-lower { grid-template-columns: 1fr; }
     }
     button {
       border: none;
-      border-radius: 7px;
-      padding: 9px 14px;
+      border-radius: 6px;
+      padding: 8px 13px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
     }
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-    }
+    .btn-primary { background: var(--primary); color: #fff; }
     .btn-primary:hover { background: var(--primary-hover); }
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #111827;
+    .btn-secondary { background: #e2e8f0; color: #0f172a; }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-ghost { background: #fff; border: 1px solid var(--border); color: #334155; padding: 4px 9px; font-size: 12px; }
+    .btn-ghost:hover { background: #f1f5f9; }
+    .btn-danger { background: #fee2e2; color: var(--danger); padding: 4px 9px; font-size: 12px; }
+    .btn-danger:hover { background: #fecaca; }
+    .footer-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
     }
-    .btn-danger {
-      background: #fee2e2;
-      color: var(--danger);
-      padding: 5px 10px;
-      font-size: 12px;
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     pre {
-      background: #111827;
-      color: #f9fafb;
-      padding: 14px;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px;
       border-radius: 8px;
+      font-size: 12px;
       overflow-x: auto;
-      font-size: 12px;
       margin: 10px 0 0;
-    }
-    .hint {
-      color: var(--muted);
-      font-size: 12px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
+    <div class="topbar">
       <div>
-        <h1>受注フォーム（仮UI）</h1>
-        <div class="hint">受注入力シートの項目構成に合わせた入力・流し込み確認用画面</div>
+        <h1>受注フォーム（仮UI・改訂版）</h1>
+        <div class="sub">入力補助・2段明細レイアウト・送信ペイロード確認用</div>
       </div>
-      <span class="badge">最大6明細 / 仮プレビュー</span>
+      <span class="badge">明細 1〜6行対応</span>
     </div>
 
     <form id="orderForm">
+      <!-- 基本・納品情報 -->
       <div class="card">
-        <h2 class="card-title">1. 基本・納品情報</h2>
-        <div class="grid-3">
+        <div class="card-head">
+          <h2 class="card-title">1. 基本・納品情報</h2>
+          <div class="btn-group">
+            <button type="button" class="btn-ghost" id="clearBasicBtn">基本情報をクリア</button>
+          </div>
+        </div>
+
+        <div class="grid-4">
           <div class="field">
             <label for="issuer">発行者</label>
-            <input id="issuer" name="発行者" type="text" value="今井" />
+            <input id="issuer" name="発行者" type="text" list="issuerList" value="今井" />
           </div>
           <div class="field">
-            <label for="userName">ユーザー名（得意先）</label>
-            <input id="userName" name="ユーザー名" type="text" placeholder="例：中澤塗装㈱" required />
+            <label for="userName">ユーザー名（得意先・在庫）</label>
+            <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="例：中澤塗装㈱ / 在庫" required />
           </div>
           <div class="field">
             <label for="contactPerson">担当者</label>
-            <input id="contactPerson" name="担当者" type="text" placeholder="例：青柳 / 主任" />
+            <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="例：青柳 / 主任 / 根岸" />
           </div>
+          <div class="field">
+            <label for="phone">電話番号</label>
+            <input id="phone" name="電話番号" type="tel" list="phoneList" placeholder="例：090-0000-0000" />
+          </div>
+        </div>
 
+        <div class="grid-3" style="margin-top: 10px;">
           <div class="field">
             <label for="siteName">現場名</label>
-            <input id="siteName" name="現場名" type="text" placeholder="例：〇〇邸 / 倉庫" />
+            <input id="siteName" name="現場名" type="text" placeholder="例：〇〇邸 / 倉庫 / 〇〇工場" />
           </div>
           <div class="field">
             <label for="deliveryDate">希望納期</label>
@@ -230,7 +296,9 @@
               <option value="至急">至急</option>
             </select>
           </div>
+        </div>
 
+        <div class="grid-3" style="margin-top: 10px;">
           <div class="field">
             <label for="destination">届け先</label>
             <select id="destination" name="届け先">
@@ -238,86 +306,209 @@
               <option value="現場">現場</option>
               <option value="店渡し">店渡し</option>
               <option value="直送">直送</option>
+              <option value="現場直送">現場直送</option>
               <option value="その他">その他</option>
             </select>
           </div>
           <div class="field">
             <label for="deliveryRequest">配達依頼</label>
-            <input id="deliveryRequest" name="配達依頼" type="text" placeholder="例：前橋配達依頼 / 現場直送" />
-          </div>
-          <div class="field">
-            <label for="phone">電話番号</label>
-            <input id="phone" name="電話番号" type="tel" placeholder="例：090-0000-0000" />
-          </div>
-        </div>
-
-        <div class="grid-2" style="margin-top: 12px;">
-          <div class="field">
-            <label for="siteAddress">現場住所</label>
-            <input id="siteAddress" name="現場住所" type="text" placeholder="例：〒360-0000 埼玉県熊谷市..." />
+            <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="例：前橋 / 現場直送 / 白岡引き取り" />
           </div>
           <div class="field">
             <label for="orderSource">発注先</label>
-            <input id="orderSource" name="発注先" type="text" placeholder="例：メーカー名 / 仕入先" />
+            <input id="orderSource" name="発注先" type="text" list="makerList" placeholder="例：メーカー名・仕入先" />
           </div>
         </div>
 
-        <div class="field" style="margin-top: 12px;">
-          <label for="etcNote">etc.（備考・追加／引き取り／特記事項）</label>
-          <textarea id="etcNote" name="etc." placeholder="例：追加分、引き取り予定、納品条件など"></textarea>
+        <div class="field" style="margin-top: 10px;">
+          <label for="siteAddress">現場住所</label>
+          <input id="siteAddress" name="現場住所" type="text" placeholder="例：〒360-0000 埼玉県熊谷市..." />
+        </div>
+
+        <div class="field" style="margin-top: 10px;">
+          <label for="etcNote">etc.（備考・追加／引き取り／納品条件）</label>
+          <textarea id="etcNote" name="etc." placeholder="例：追加分、引き取り予定、納品条件、不可時の代替案など"></textarea>
+        </div>
+
+        <div class="chips">
+          <span class="chips-label">クイック入力:</span>
+          <button type="button" class="chip" data-preset="stock">在庫（貴社）</button>
+          <button type="button" class="chip" data-preset="store">店渡し（本日）</button>
+          <button type="button" class="chip" data-preset="site">現場納品</button>
+          <button type="button" class="chip" data-preset="direct">直送</button>
+          <button type="button" class="chip" data-preset="tomorrow-am">明日AM</button>
         </div>
       </div>
 
+      <!-- 受注明細 -->
       <div class="card">
-        <div class="actions" style="margin-bottom: 12px;">
-          <h2 class="card-title" style="margin: 0;">2. 受注明細（1〜6行）</h2>
-          <button type="button" class="btn-secondary" id="addItemBtn">＋ 明細行を追加</button>
+        <div class="card-head">
+          <h2 class="card-title">2. 受注明細（1〜6行）</h2>
+          <div class="btn-group">
+            <button type="button" class="btn-secondary" id="addItemBtn">＋ 明細を追加</button>
+          </div>
         </div>
         <div id="itemsContainer"></div>
       </div>
 
+      <!-- 送信・プレビュー -->
       <div class="card">
-        <h2 class="card-title">3. 流し込み先（GAS WebアプリURL・任意）</h2>
-        <div class="field">
-          <label for="gasUrl">GAS デプロイURL（空欄の場合は画面プレビューのみ）</label>
+        <h2 class="card-title">3. 送信・流し込み確認</h2>
+        <div class="field" style="margin-top: 10px;">
+          <label for="gasUrl">GAS WebアプリURL（任意・空欄なら画面プレビューのみ）</label>
           <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/xxxxx/exec" />
         </div>
-        <div class="actions" style="margin-top: 14px;">
+        <div class="footer-bar">
           <div class="btn-group">
-            <button type="button" class="btn-secondary" id="previewBtn">送信データ（JSON）をプレビュー</button>
-            <button type="submit" class="btn-primary" id="submitBtn">フォームを送信する</button>
+            <button type="button" class="btn-secondary" id="previewBtn">JSONプレビュー更新</button>
+            <button type="submit" class="btn-primary" id="submitBtn">フォーム送信</button>
           </div>
-          <span id="statusText" class="hint"></span>
+          <span id="statusText" class="sub">準備完了</span>
         </div>
         <pre id="jsonPreview">{}</pre>
       </div>
     </form>
   </div>
 
+  <!-- 入力補助リスト -->
+  <datalist id="issuerList">
+    <option value="今井"></option>
+    <option value="佐々木"></option>
+  </datalist>
+  <datalist id="userList">
+    <option value="在庫"></option>
+    <option value="中澤塗装㈱"></option>
+    <option value="ケイスタイル㈱"></option>
+    <option value="㈱彩心"></option>
+    <option value="㈱おんだ塗装"></option>
+    <option value="㈲アベル"></option>
+    <option value="川村塗装"></option>
+    <option value="木下塗装興業"></option>
+    <option value="㈱ハシ塗装工業"></option>
+    <option value="吉岡塗装工業"></option>
+    <option value="佐藤塗装"></option>
+    <option value="眞﨑吹付塗装"></option>
+    <option value="内藤塗装工業㈱"></option>
+    <option value="復巧舎"></option>
+    <option value="㈱プラスタ･サービス"></option>
+  </datalist>
+  <datalist id="contactList">
+    <option value="青柳"></option>
+    <option value="主任"></option>
+    <option value="横沢"></option>
+    <option value="根岸"></option>
+    <option value="川端"></option>
+    <option value="飯塚"></option>
+  </datalist>
+  <datalist id="phoneList">
+    <option value="049-573-1234"></option>
+    <option value="090-3346-3470"></option>
+    <option value="090-8642-8309"></option>
+    <option value="090-2465-9291"></option>
+    <option value="090-7255-0061"></option>
+    <option value="090-8877-3317"></option>
+  </datalist>
+  <datalist id="deliveryReqList">
+    <option value="前橋"></option>
+    <option value="現場直送"></option>
+    <option value="直送"></option>
+    <option value="白岡引き取り"></option>
+    <option value="マルテー行田引き取り"></option>
+    <option value="第一貨物熊谷止め"></option>
+  </datalist>
+  <datalist id="makerList">
+    <option value="エスケー"></option>
+    <option value="ニッペ"></option>
+    <option value="カンペ"></option>
+    <option value="キクスイ"></option>
+    <option value="大塚"></option>
+    <option value="東日本"></option>
+    <option value="日特"></option>
+    <option value="フジワラ"></option>
+    <option value="カモ井"></option>
+    <option value="PIA"></option>
+    <option value="デルタ"></option>
+    <option value="精和"></option>
+    <option value="和信"></option>
+    <option value="大阪ガス"></option>
+  </datalist>
+  <datalist id="glossList">
+    <option value="艶有"></option>
+    <option value="艶消し"></option>
+    <option value="5F"></option>
+    <option value="3F"></option>
+    <option value="つや有"></option>
+  </datalist>
+  <datalist id="sizeList">
+    <option value="15kg"></option>
+    <option value="16kg"></option>
+    <option value="15ks"></option>
+    <option value="16ks"></option>
+    <option value="14ks"></option>
+    <option value="16L"></option>
+    <option value="4kg"></option>
+    <option value="3kg"></option>
+    <option value="1L"></option>
+    <option value="20kg"></option>
+    <option value="20×30"></option>
+  </datalist>
+  <datalist id="unitList">
+    <option value="缶"></option>
+    <option value="本"></option>
+    <option value="袋"></option>
+    <option value="ケース"></option>
+    <option value="枚"></option>
+    <option value="パック"></option>
+    <option value="個"></option>
+    <option value="セット"></option>
+    <option value="巻"></option>
+    <option value="丁"></option>
+    <option value="部"></option>
+  </datalist>
+  <datalist id="remarkList">
+    <option value="在庫"></option>
+    <option value="追加"></option>
+    <option value="生ネタサンプル"></option>
+    <option value="塗板"></option>
+  </datalist>
+
   <script>
     const MAX_ITEMS = 6;
+    const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
+
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItemBtn');
     const previewBtn = document.getElementById('previewBtn');
+    const clearBasicBtn = document.getElementById('clearBasicBtn');
     const jsonPreview = document.getElementById('jsonPreview');
     const statusText = document.getElementById('statusText');
     const orderForm = document.getElementById('orderForm');
 
-    let itemCount = 0;
+    function formatDateYmd(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
 
-    function createItemCard(index) {
-      const div = document.createElement('div');
-      div.className = 'item-box';
-      div.dataset.index = index;
-      div.innerHTML = `
-        <div class="item-head">
-          <span>明細 ${index}</span>
-          ${index > 1 ? `<button type="button" class="btn-danger remove-item-btn">削除</button>` : ''}
+    function createItemCard(index, initial = {}) {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.dataset.index = index;
+
+      card.innerHTML = `
+        <div class="item-top">
+          <span class="item-badge">明細 ${index}</span>
+          <div class="item-actions">
+            <button type="button" class="btn-ghost copy-item-btn">複製</button>
+            ${index > 1 ? `<button type="button" class="btn-danger remove-item-btn">削除</button>` : ''}
+          </div>
         </div>
-        <div class="item-grid">
+
+        <div class="item-row-upper">
           <div class="field">
             <label>メーカー${index}</label>
-            <input type="text" data-field="メーカー" placeholder="例：エスケー" />
+            <input type="text" data-field="メーカー" list="makerList" placeholder="例：エスケー" />
           </div>
           <div class="field">
             <label>品名${index}</label>
@@ -329,15 +520,18 @@
           </div>
           <div class="field">
             <label>艶${index}</label>
-            <input type="text" data-field="艶" placeholder="例：5F / 艶有" />
+            <input type="text" data-field="艶" list="glossList" placeholder="例：5F / 艶有" />
           </div>
           <div class="field">
             <label>色${index}</label>
             <input type="text" data-field="色" placeholder="例：SR-178 / N-90" />
           </div>
+        </div>
+
+        <div class="item-row-lower">
           <div class="field">
             <label>容量${index}</label>
-            <input type="text" data-field="容量" placeholder="例：15kg / 16L" />
+            <input type="text" data-field="容量" list="sizeList" placeholder="例：15kg / 16L" />
           </div>
           <div class="field">
             <label>数量${index}</label>
@@ -345,45 +539,84 @@
           </div>
           <div class="field">
             <label>単位${index}</label>
-            <input type="text" data-field="単位" placeholder="例：缶 / 袋 / 本" />
+            <input type="text" data-field="単位" list="unitList" placeholder="例：缶" />
           </div>
           <div class="field">
             <label>摘要${index}</label>
-            <input type="text" data-field="摘要" placeholder="例：在庫 / 追加" />
+            <input type="text" data-field="摘要" list="remarkList" placeholder="例：在庫 / 追加" />
           </div>
         </div>
       `;
 
-      const removeBtn = div.querySelector('.remove-item-btn');
+      ITEM_FIELDS.forEach((field) => {
+        const input = card.querySelector(`[data-field="${field}"]`);
+        if (input && initial[field] !== undefined) {
+          input.value = initial[field];
+        }
+      });
+
+      card.querySelector('.copy-item-btn').addEventListener('click', () => {
+        const currentCards = itemsContainer.querySelectorAll('.item-card').length;
+        if (currentCards >= MAX_ITEMS) {
+          statusText.textContent = `明細は最大${MAX_ITEMS}行までです`;
+          return;
+        }
+        const values = {};
+        ITEM_FIELDS.forEach((field) => {
+          values[field] = card.querySelector(`[data-field="${field}"]`).value;
+        });
+        itemsContainer.appendChild(createItemCard(currentCards + 1, values));
+        renumberItems();
+        updatePreview();
+      });
+
+      const removeBtn = card.querySelector('.remove-item-btn');
       if (removeBtn) {
         removeBtn.addEventListener('click', () => {
-          div.remove();
+          card.remove();
           renumberItems();
+          updatePreview();
         });
       }
-      return div;
+
+      return card;
     }
 
     function renumberItems() {
-      const cards = Array.from(itemsContainer.querySelectorAll('.item-box'));
-      itemCount = cards.length;
+      const cards = Array.from(itemsContainer.querySelectorAll('.item-card'));
       cards.forEach((card, idx) => {
         const num = idx + 1;
         card.dataset.index = num;
-        card.querySelector('.item-head span').textContent = `明細 ${num}`;
+        card.querySelector('.item-badge').textContent = `明細 ${num}`;
         card.querySelectorAll('label').forEach((lbl) => {
           const base = lbl.textContent.replace(/[1-6]$/, '');
           lbl.textContent = `${base}${num}`;
         });
+        let actions = card.querySelector('.item-actions');
+        const hasRemove = Boolean(actions.querySelector('.remove-item-btn'));
+        if (num > 1 && !hasRemove) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn-danger remove-item-btn';
+          btn.textContent = '削除';
+          btn.addEventListener('click', () => {
+            card.remove();
+            renumberItems();
+            updatePreview();
+          });
+          actions.appendChild(btn);
+        } else if (num === 1 && hasRemove) {
+          actions.querySelector('.remove-item-btn').remove();
+        }
       });
-      addItemBtn.disabled = itemCount >= MAX_ITEMS;
+      addItemBtn.disabled = cards.length >= MAX_ITEMS;
     }
 
-    function addItemRow() {
-      if (itemCount >= MAX_ITEMS) return;
-      itemCount += 1;
-      itemsContainer.appendChild(createItemCard(itemCount));
-      addItemBtn.disabled = itemCount >= MAX_ITEMS;
+    function addItemRow(initial = {}) {
+      const currentCards = itemsContainer.querySelectorAll('.item-card').length;
+      if (currentCards >= MAX_ITEMS) return;
+      itemsContainer.appendChild(createItemCard(currentCards + 1, initial));
+      renumberItems();
     }
 
     function buildPayload() {
@@ -392,24 +625,69 @@
       for (const [key, value] of formData.entries()) {
         payload[key] = value;
       }
+      // 希望納期（YYYY-MM-DD）をシート表記（YYYY/MM/DD）に揃える場合
+      if (payload['希望納期']) {
+        payload['希望納期'] = payload['希望納期'].replace(/-/g, '/');
+      }
 
-      const cards = Array.from(itemsContainer.querySelectorAll('.item-box'));
+      const cards = Array.from(itemsContainer.querySelectorAll('.item-card'));
       for (let i = 1; i <= MAX_ITEMS; i++) {
         const card = cards[i - 1];
-        const fields = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
-        fields.forEach((f) => {
-          const input = card ? card.querySelector(`[data-field="${f}"]`) : null;
-          payload[`${f}${i}`] = input ? input.value : '';
+        ITEM_FIELDS.forEach((field) => {
+          const input = card ? card.querySelector(`[data-field="${field}"]`) : null;
+          payload[`${field}${i}`] = input ? input.value : '';
         });
       }
       return payload;
     }
 
-    addItemBtn.addEventListener('click', addItemRow);
+    function updatePreview() {
+      jsonPreview.textContent = JSON.stringify(buildPayload(), null, 2);
+    }
+
+    document.querySelectorAll('.chip[data-preset]').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const preset = chip.dataset.preset;
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        if (preset === 'stock') {
+          document.getElementById('userName').value = '在庫';
+          document.getElementById('destination').value = '貴社';
+        } else if (preset === 'store') {
+          document.getElementById('destination').value = '店渡し';
+          document.getElementById('deliveryDate').value = formatDateYmd(today);
+        } else if (preset === 'site') {
+          document.getElementById('destination').value = '現場';
+        } else if (preset === 'direct') {
+          document.getElementById('destination').value = '直送';
+        } else if (preset === 'tomorrow-am') {
+          document.getElementById('deliveryDate').value = formatDateYmd(tomorrow);
+          document.getElementById('deliveryTime').value = 'AM';
+        }
+        updatePreview();
+        statusText.textContent = `プリセット「${chip.textContent}」を反映しました`;
+      });
+    });
+
+    clearBasicBtn.addEventListener('click', () => {
+      ['userName', 'contactPerson', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('deliveryTime').value = '';
+      document.getElementById('destination').value = '貴社';
+      updatePreview();
+      statusText.textContent = '基本情報をクリアしました';
+    });
+
+    addItemBtn.addEventListener('click', () => {
+      addItemRow({ 単位: '缶' });
+      updatePreview();
+    });
 
     previewBtn.addEventListener('click', () => {
-      const data = buildPayload();
-      jsonPreview.textContent = JSON.stringify(data, null, 2);
+      updatePreview();
       statusText.textContent = 'JSONプレビューを更新しました';
     });
 
@@ -420,7 +698,7 @@
 
       const gasUrl = document.getElementById('gasUrl').value.trim();
       if (!gasUrl) {
-        statusText.textContent = 'GAS URL未入力のため、画面プレビューのみ出力しました';
+        statusText.textContent = 'GAS URL未入力のため、画面プレビューのみ更新しました';
         return;
       }
 
@@ -432,15 +710,14 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(data)
         });
-        statusText.textContent = '送信リクエストを実行しました（シート側の反映を確認してください）';
+        statusText.textContent = '送信リクエストを実行しました（シート反映を確認してください）';
       } catch (err) {
         statusText.textContent = `送信エラー: ${err.message}`;
       }
     });
 
-    // 初期表示は明細1行
-    addItemRow();
-    jsonPreview.textContent = JSON.stringify(buildPayload(), null, 2);
+    addItemRow({ 単位: '缶' });
+    updatePreview();
   </script>
 </body>
 </html>
