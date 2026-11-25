@@ -1,1 +1,446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>受注フォーム（仮UI）</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --danger: #dc2626;
+      --soft: #eff6ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+    .header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--soft);
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      margin: 0 0 14px;
+      font-size: 15px;
+      font-weight: 700;
+      border-left: 4px solid var(--primary);
+      padding-left: 10px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 768px) {
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--text);
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid #93c5fd;
+      border-color: var(--primary);
+    }
+    textarea {
+      min-height: 64px;
+      resize: vertical;
+    }
+    .item-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #fafafa;
+    }
+    .item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .item-grid {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 8px;
+    }
+    @media (max-width: 960px) {
+      .item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    button {
+      border: none;
+      border-radius: 7px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+    pre {
+      background: #111827;
+      color: #f9fafb;
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+      margin: 10px 0 0;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>受注フォーム（仮UI）</h1>
+        <div class="hint">受注入力シートの項目構成に合わせた入力・流し込み確認用画面</div>
+      </div>
+      <span class="badge">最大6明細 / 仮プレビュー</span>
+    </div>
 
+    <form id="orderForm">
+      <div class="card">
+        <h2 class="card-title">1. 基本・納品情報</h2>
+        <div class="grid-3">
+          <div class="field">
+            <label for="issuer">発行者</label>
+            <input id="issuer" name="発行者" type="text" value="今井" />
+          </div>
+          <div class="field">
+            <label for="userName">ユーザー名（得意先）</label>
+            <input id="userName" name="ユーザー名" type="text" placeholder="例：中澤塗装㈱" required />
+          </div>
+          <div class="field">
+            <label for="contactPerson">担当者</label>
+            <input id="contactPerson" name="担当者" type="text" placeholder="例：青柳 / 主任" />
+          </div>
+
+          <div class="field">
+            <label for="siteName">現場名</label>
+            <input id="siteName" name="現場名" type="text" placeholder="例：〇〇邸 / 倉庫" />
+          </div>
+          <div class="field">
+            <label for="deliveryDate">希望納期</label>
+            <input id="deliveryDate" name="希望納期" type="date" />
+          </div>
+          <div class="field">
+            <label for="deliveryTime">納期時間帯</label>
+            <select id="deliveryTime" name="納期時間帯">
+              <option value="">指定なし</option>
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+              <option value="至急">至急</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="destination">届け先</label>
+            <select id="destination" name="届け先">
+              <option value="貴社">貴社</option>
+              <option value="現場">現場</option>
+              <option value="店渡し">店渡し</option>
+              <option value="直送">直送</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="deliveryRequest">配達依頼</label>
+            <input id="deliveryRequest" name="配達依頼" type="text" placeholder="例：前橋配達依頼 / 現場直送" />
+          </div>
+          <div class="field">
+            <label for="phone">電話番号</label>
+            <input id="phone" name="電話番号" type="tel" placeholder="例：090-0000-0000" />
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="field">
+            <label for="siteAddress">現場住所</label>
+            <input id="siteAddress" name="現場住所" type="text" placeholder="例：〒360-0000 埼玉県熊谷市..." />
+          </div>
+          <div class="field">
+            <label for="orderSource">発注先</label>
+            <input id="orderSource" name="発注先" type="text" placeholder="例：メーカー名 / 仕入先" />
+          </div>
+        </div>
+
+        <div class="field" style="margin-top: 12px;">
+          <label for="etcNote">etc.（備考・追加／引き取り／特記事項）</label>
+          <textarea id="etcNote" name="etc." placeholder="例：追加分、引き取り予定、納品条件など"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="actions" style="margin-bottom: 12px;">
+          <h2 class="card-title" style="margin: 0;">2. 受注明細（1〜6行）</h2>
+          <button type="button" class="btn-secondary" id="addItemBtn">＋ 明細行を追加</button>
+        </div>
+        <div id="itemsContainer"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">3. 流し込み先（GAS WebアプリURL・任意）</h2>
+        <div class="field">
+          <label for="gasUrl">GAS デプロイURL（空欄の場合は画面プレビューのみ）</label>
+          <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/xxxxx/exec" />
+        </div>
+        <div class="actions" style="margin-top: 14px;">
+          <div class="btn-group">
+            <button type="button" class="btn-secondary" id="previewBtn">送信データ（JSON）をプレビュー</button>
+            <button type="submit" class="btn-primary" id="submitBtn">フォームを送信する</button>
+          </div>
+          <span id="statusText" class="hint"></span>
+        </div>
+        <pre id="jsonPreview">{}</pre>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const MAX_ITEMS = 6;
+    const itemsContainer = document.getElementById('itemsContainer');
+    const addItemBtn = document.getElementById('addItemBtn');
+    const previewBtn = document.getElementById('previewBtn');
+    const jsonPreview = document.getElementById('jsonPreview');
+    const statusText = document.getElementById('statusText');
+    const orderForm = document.getElementById('orderForm');
+
+    let itemCount = 0;
+
+    function createItemCard(index) {
+      const div = document.createElement('div');
+      div.className = 'item-box';
+      div.dataset.index = index;
+      div.innerHTML = `
+        <div class="item-head">
+          <span>明細 ${index}</span>
+          ${index > 1 ? `<button type="button" class="btn-danger remove-item-btn">削除</button>` : ''}
+        </div>
+        <div class="item-grid">
+          <div class="field">
+            <label>メーカー${index}</label>
+            <input type="text" data-field="メーカー" placeholder="例：エスケー" />
+          </div>
+          <div class="field">
+            <label>品名${index}</label>
+            <input type="text" data-field="品名" placeholder="例：プレミアムシリコン" />
+          </div>
+          <div class="field">
+            <label>詳細${index}</label>
+            <input type="text" data-field="詳細" placeholder="例：生ネタサンプル" />
+          </div>
+          <div class="field">
+            <label>艶${index}</label>
+            <input type="text" data-field="艶" placeholder="例：5F / 艶有" />
+          </div>
+          <div class="field">
+            <label>色${index}</label>
+            <input type="text" data-field="色" placeholder="例：SR-178 / N-90" />
+          </div>
+          <div class="field">
+            <label>容量${index}</label>
+            <input type="text" data-field="容量" placeholder="例：15kg / 16L" />
+          </div>
+          <div class="field">
+            <label>数量${index}</label>
+            <input type="number" step="any" data-field="数量" placeholder="1" />
+          </div>
+          <div class="field">
+            <label>単位${index}</label>
+            <input type="text" data-field="単位" placeholder="例：缶 / 袋 / 本" />
+          </div>
+          <div class="field">
+            <label>摘要${index}</label>
+            <input type="text" data-field="摘要" placeholder="例：在庫 / 追加" />
+          </div>
+        </div>
+      `;
+
+      const removeBtn = div.querySelector('.remove-item-btn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+          div.remove();
+          renumberItems();
+        });
+      }
+      return div;
+    }
+
+    function renumberItems() {
+      const cards = Array.from(itemsContainer.querySelectorAll('.item-box'));
+      itemCount = cards.length;
+      cards.forEach((card, idx) => {
+        const num = idx + 1;
+        card.dataset.index = num;
+        card.querySelector('.item-head span').textContent = `明細 ${num}`;
+        card.querySelectorAll('label').forEach((lbl) => {
+          const base = lbl.textContent.replace(/[1-6]$/, '');
+          lbl.textContent = `${base}${num}`;
+        });
+      });
+      addItemBtn.disabled = itemCount >= MAX_ITEMS;
+    }
+
+    function addItemRow() {
+      if (itemCount >= MAX_ITEMS) return;
+      itemCount += 1;
+      itemsContainer.appendChild(createItemCard(itemCount));
+      addItemBtn.disabled = itemCount >= MAX_ITEMS;
+    }
+
+    function buildPayload() {
+      const payload = {};
+      const formData = new FormData(orderForm);
+      for (const [key, value] of formData.entries()) {
+        payload[key] = value;
+      }
+
+      const cards = Array.from(itemsContainer.querySelectorAll('.item-box'));
+      for (let i = 1; i <= MAX_ITEMS; i++) {
+        const card = cards[i - 1];
+        const fields = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
+        fields.forEach((f) => {
+          const input = card ? card.querySelector(`[data-field="${f}"]`) : null;
+          payload[`${f}${i}`] = input ? input.value : '';
+        });
+      }
+      return payload;
+    }
+
+    addItemBtn.addEventListener('click', addItemRow);
+
+    previewBtn.addEventListener('click', () => {
+      const data = buildPayload();
+      jsonPreview.textContent = JSON.stringify(data, null, 2);
+      statusText.textContent = 'JSONプレビューを更新しました';
+    });
+
+    orderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = buildPayload();
+      jsonPreview.textContent = JSON.stringify(data, null, 2);
+
+      const gasUrl = document.getElementById('gasUrl').value.trim();
+      if (!gasUrl) {
+        statusText.textContent = 'GAS URL未入力のため、画面プレビューのみ出力しました';
+        return;
+      }
+
+      statusText.textContent = '送信中...';
+      try {
+        await fetch(gasUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(data)
+        });
+        statusText.textContent = '送信リクエストを実行しました（シート側の反映を確認してください）';
+      } catch (err) {
+        statusText.textContent = `送信エラー: ${err.message}`;
+      }
+    });
+
+    // 初期表示は明細1行
+    addItemRow();
+    jsonPreview.textContent = JSON.stringify(buildPayload(), null, 2);
+  </script>
+</body>
+</html>
