@@ -199,7 +199,7 @@
     <div class="topbar">
       <div>
         <h1>受注フォーム（GAS連動・v5）</h1>
-        <div class="sub">端末ごとの発行者記憶・GAS連動自動復元・ユーザー名選択で直近履歴自動入力＆明細絞り込み</div>
+        <div class="sub">端末ごとの発行者記憶・発行者マスター自動保管・ユーザー名選択で直近履歴自動入力＆明細絞り込み</div>
       </div>
       <span class="badge" id="syncBadge">未同期（フォールバック使用中）</span>
     </div>
@@ -233,7 +233,7 @@
 
         <div class="grid-4">
           <div class="field">
-            <label for="issuer">発行者（端末ごとに記憶）</label>
+            <label for="issuer">発行者（端末ごとに記憶・自動保管）</label>
             <input id="issuer" name="発行者" type="text" list="issuerList" placeholder="例：今井 / 佐々木" />
           </div>
           <div class="field">
@@ -473,6 +473,8 @@
       customerOrders: [...FALLBACK_DATA.customerOrders]
     };
 
+    let lastSyncedIssuerKey = '';
+
     function getOrCreateDeviceId() {
       let id = '';
       try {
@@ -513,7 +515,7 @@
     const statusText = document.getElementById('statusText');
     const orderForm = document.getElementById('orderForm');
 
-    deviceIdInfo.textContent = `端末ID: ${deviceId}（発行者マスターの「端末ID」列に登録するとlocalStorage消失時も自動復元）`;
+    deviceIdInfo.textContent = `端末ID: ${deviceId}（発行者入力・読み込み時に端末IDと名前を「発行者マスター」へ自動保管）`;
 
     function uniqueValues(arr) {
       return Array.from(new Set((arr || []).map((v) => String(v || '').trim()).filter(Boolean)));
@@ -553,6 +555,34 @@
             localStorage.setItem(STORAGE_KEY_DEVICE_ISSUER, recovered);
           } catch (e) {}
         }
+      }
+    }
+
+    // 端末IDと発行者名を「発行者マスター」シートへ自動保管
+    async function syncIssuerToSheet(force = false) {
+      const url = gasUrlInput.value.trim();
+      const issuerVal = issuerInput.value.trim();
+      if (!url || !issuerVal || !deviceId) return;
+
+      const syncKey = `${url}::${deviceId}::${issuerVal}`;
+      if (!force && lastSyncedIssuerKey === syncKey) return;
+
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'registerDevice',
+            deviceId: deviceId,
+            issuer: issuerVal,
+            発行者: issuerVal,
+            端末ID: deviceId
+          })
+        });
+        lastSyncedIssuerKey = syncKey;
+      } catch (e) {
+        // 自動保管の通信失敗時は次回操作時に再試行
       }
     }
 
@@ -662,6 +692,11 @@
         syncBadge.style.color = '#166534';
         lastUpdatedText.textContent = `最終同期: ${data.updatedAt || new Date().toLocaleString('ja-JP')}`;
         updatePreview();
+
+        if (issuerInput.value.trim()) {
+          syncIssuerToSheet(false);
+        }
+
         if (showMessage) {
           statusText.textContent = '商品マスターと受注履歴を最新化しました';
         }
@@ -931,13 +966,14 @@
       return `${y}-${m}-${d}`;
     }
 
-    issuerInput.addEventListener('change', () => {
+    issuerInput.addEventListener('change', async () => {
       const val = issuerInput.value.trim();
       if (val) {
         try {
           localStorage.setItem(STORAGE_KEY_DEVICE_ISSUER, val);
         } catch (e) {}
-        statusText.textContent = `この端末の発行者を「${val}」として保存しました`;
+        await syncIssuerToSheet(true);
+        statusText.textContent = `この端末の発行者を「${val}」として保存し、発行者マスターへ保管しました`;
       } else {
         try {
           localStorage.removeItem(STORAGE_KEY_DEVICE_ISSUER);
@@ -1030,6 +1066,7 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(data)
         });
+        lastSyncedIssuerKey = `${gasUrl}::${deviceId}::${issuerInput.value.trim()}`;
         statusText.textContent = '送信リクエストを実行しました（シート反映を確認してください）';
       } catch (err) {
         statusText.textContent = `送信エラー: ${err.message}`;
