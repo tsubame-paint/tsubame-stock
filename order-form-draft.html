@@ -383,6 +383,7 @@
     const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
     const STORAGE_KEY_DEVICE_ISSUER = 'tsubame_device_issuer_v1';
     const STORAGE_KEY_DEVICE_ID = 'tsubame_device_id_v1';
+    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbzm90lWQziIqNVPqeThucWMkRm84HJ-hZCbjDXOyR8hxIWueGwEJViiPR28qNLm9Q/exec';
 
     const FALLBACK_DATA = {
       ok: true,
@@ -531,7 +532,6 @@
       });
     }
 
-    // 端末保存の発行者が消えた場合でも、GAS側の issuerByDeviceId / suggestedIssuer から復元し再保存
     function restoreIssuerIfMissing(data = {}) {
       let savedIssuer = '';
       try {
@@ -558,7 +558,6 @@
       }
     }
 
-    // 端末IDと発行者名を「発行者マスター」シートへ自動保管
     async function syncIssuerToSheet(force = false) {
       const url = gasUrlInput.value.trim();
       const issuerVal = issuerInput.value.trim();
@@ -1075,18 +1074,19 @@
 
     let savedUrl = '';
     try {
-      savedUrl = localStorage.getItem(STORAGE_KEY_GAS_URL) || '';
+      savedUrl = (localStorage.getItem(STORAGE_KEY_GAS_URL) || '').trim();
     } catch (e) {
       savedUrl = '';
     }
-    if (savedUrl) {
-      gasUrlInput.value = savedUrl;
+    const activeGasUrl = savedUrl || DEFAULT_GAS_URL.trim();
+    if (activeGasUrl) {
+      gasUrlInput.value = activeGasUrl;
     }
     restoreIssuerIfMissing({});
     refreshGlobalSuggestions();
     addItemRow({ 単位: '缶' });
     updatePreview();
-    if (savedUrl) {
+    if (activeGasUrl) {
       loadCatalogFromGas(false);
     }
   </script>
