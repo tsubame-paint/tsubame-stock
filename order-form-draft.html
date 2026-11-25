@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>受注フォーム（仮UI・改訂版）</title>
+  <title>受注フォーム（仮UI・v3）</title>
   <style>
     :root {
       --bg: #f1f5f9;
@@ -13,7 +13,6 @@
       --border: #cbd5e1;
       --primary: #1d4ed8;
       --primary-hover: #1e40af;
-      --accent: #0f766e;
       --danger: #dc2626;
       --chip-bg: #f8fafc;
       --chip-border: #cbd5e1;
@@ -44,14 +43,8 @@
       align-items: center;
       gap: 10px;
     }
-    .topbar h1 {
-      margin: 0;
-      font-size: 18px;
-    }
-    .sub {
-      color: var(--muted);
-      font-size: 12px;
-    }
+    .topbar h1 { margin: 0; font-size: 18px; }
+    .sub { color: var(--muted); font-size: 12px; }
     .badge {
       background: #dbeafe;
       color: #1e40af;
@@ -82,37 +75,13 @@
       border-left: 4px solid var(--primary);
       padding-left: 10px;
     }
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-    @media (max-width: 900px) {
-      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 640px) {
-      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
-    }
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    label {
-      font-size: 12px;
-      font-weight: 700;
-      color: #334155;
-    }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 900px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 640px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    label { font-size: 12px; font-weight: 700; color: #334155; }
     input, select, textarea {
       width: 100%;
       padding: 8px 10px;
@@ -126,10 +95,7 @@
       outline: 2px solid #93c5fd;
       border-color: var(--primary);
     }
-    textarea {
-      min-height: 58px;
-      resize: vertical;
-    }
+    textarea { min-height: 58px; resize: vertical; }
     .chips {
       display: flex;
       flex-wrap: wrap;
@@ -137,12 +103,7 @@
       margin-top: 8px;
       align-items: center;
     }
-    .chips-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--muted);
-      margin-right: 2px;
-    }
+    .chips-label { font-size: 11px; font-weight: 700; color: var(--muted); margin-right: 2px; }
     .chip {
       background: var(--chip-bg);
       border: 1px solid var(--chip-border);
@@ -152,11 +113,7 @@
       font-size: 12px;
       cursor: pointer;
     }
-    .chip:hover {
-      background: #eff6ff;
-      border-color: #93c5fd;
-      color: var(--primary);
-    }
+    .chip:hover { background: #eff6ff; border-color: #93c5fd; color: var(--primary); }
     .item-card {
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -171,15 +128,8 @@
       margin-bottom: 10px;
       gap: 8px;
     }
-    .item-badge {
-      font-weight: 700;
-      font-size: 13px;
-      color: #0f172a;
-    }
-    .item-actions {
-      display: flex;
-      gap: 6px;
-    }
+    .item-badge { font-weight: 700; font-size: 13px; color: #0f172a; }
+    .item-actions { display: flex; gap: 6px; align-items: center; }
     .item-row-upper {
       display: grid;
       grid-template-columns: 1.1fr 1.6fr 1.1fr 0.9fr 1.2fr;
@@ -223,11 +173,7 @@
       gap: 10px;
       margin-top: 12px;
     }
-    .btn-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
     pre {
       background: #0f172a;
       color: #f8fafc;
@@ -243,14 +189,14 @@
   <div class="container">
     <div class="topbar">
       <div>
-        <h1>受注フォーム（仮UI・改訂版）</h1>
-        <div class="sub">入力補助・2段明細レイアウト・送信ペイロード確認用</div>
+        <h1>受注フォーム（仮UI・v3）</h1>
+        <div class="sub">メーカー→商品マスター絞り込み / 品名→履歴から艶・色・容量絞り込み＆前回値自動初期値化</div>
       </div>
       <span class="badge">明細 1〜6行対応</span>
     </div>
 
     <form id="orderForm">
-      <!-- 基本・納品情報 -->
+      <!-- 1. 基本・納品情報 -->
       <div class="card">
         <div class="card-head">
           <h2 class="card-title">1. 基本・納品情報</h2>
@@ -270,7 +216,7 @@
           </div>
           <div class="field">
             <label for="contactPerson">担当者</label>
-            <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="例：青柳 / 主任 / 根岸" />
+            <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="例：青柳 / 主任" />
           </div>
           <div class="field">
             <label for="phone">電話番号</label>
@@ -281,7 +227,7 @@
         <div class="grid-3" style="margin-top: 10px;">
           <div class="field">
             <label for="siteName">現場名</label>
-            <input id="siteName" name="現場名" type="text" placeholder="例：〇〇邸 / 倉庫 / 〇〇工場" />
+            <input id="siteName" name="現場名" type="text" placeholder="例：〇〇邸 / 倉庫" />
           </div>
           <div class="field">
             <label for="deliveryDate">希望納期</label>
@@ -327,7 +273,7 @@
 
         <div class="field" style="margin-top: 10px;">
           <label for="etcNote">etc.（備考・追加／引き取り／納品条件）</label>
-          <textarea id="etcNote" name="etc." placeholder="例：追加分、引き取り予定、納品条件、不可時の代替案など"></textarea>
+          <textarea id="etcNote" name="etc." placeholder="例：追加分、引き取り予定、納品条件など"></textarea>
         </div>
 
         <div class="chips">
@@ -340,7 +286,7 @@
         </div>
       </div>
 
-      <!-- 受注明細 -->
+      <!-- 2. 受注明細 -->
       <div class="card">
         <div class="card-head">
           <h2 class="card-title">2. 受注明細（1〜6行）</h2>
@@ -351,7 +297,7 @@
         <div id="itemsContainer"></div>
       </div>
 
-      <!-- 送信・プレビュー -->
+      <!-- 3. 送信・流し込み確認 -->
       <div class="card">
         <h2 class="card-title">3. 送信・流し込み確認</h2>
         <div class="field" style="margin-top: 10px;">
@@ -370,7 +316,7 @@
     </form>
   </div>
 
-  <!-- 入力補助リスト -->
+  <!-- 共通サジェスト -->
   <datalist id="issuerList">
     <option value="今井"></option>
     <option value="佐々木"></option>
@@ -386,11 +332,6 @@
     <option value="木下塗装興業"></option>
     <option value="㈱ハシ塗装工業"></option>
     <option value="吉岡塗装工業"></option>
-    <option value="佐藤塗装"></option>
-    <option value="眞﨑吹付塗装"></option>
-    <option value="内藤塗装工業㈱"></option>
-    <option value="復巧舎"></option>
-    <option value="㈱プラスタ･サービス"></option>
   </datalist>
   <datalist id="contactList">
     <option value="青柳"></option>
@@ -406,7 +347,6 @@
     <option value="090-8642-8309"></option>
     <option value="090-2465-9291"></option>
     <option value="090-7255-0061"></option>
-    <option value="090-8877-3317"></option>
   </datalist>
   <datalist id="deliveryReqList">
     <option value="前橋"></option>
@@ -414,7 +354,6 @@
     <option value="直送"></option>
     <option value="白岡引き取り"></option>
     <option value="マルテー行田引き取り"></option>
-    <option value="第一貨物熊谷止め"></option>
   </datalist>
   <datalist id="makerList">
     <option value="エスケー"></option>
@@ -426,31 +365,14 @@
     <option value="日特"></option>
     <option value="フジワラ"></option>
     <option value="カモ井"></option>
-    <option value="PIA"></option>
     <option value="デルタ"></option>
     <option value="精和"></option>
     <option value="和信"></option>
     <option value="大阪ガス"></option>
   </datalist>
-  <datalist id="glossList">
-    <option value="艶有"></option>
-    <option value="艶消し"></option>
-    <option value="5F"></option>
-    <option value="3F"></option>
-    <option value="つや有"></option>
-  </datalist>
-  <datalist id="sizeList">
-    <option value="15kg"></option>
-    <option value="16kg"></option>
-    <option value="15ks"></option>
-    <option value="16ks"></option>
-    <option value="14ks"></option>
-    <option value="16L"></option>
-    <option value="4kg"></option>
-    <option value="3kg"></option>
-    <option value="1L"></option>
-    <option value="20kg"></option>
-    <option value="20×30"></option>
+  <datalist id="detailList">
+    <option value="生ネタサンプル"></option>
+    <option value="塗板"></option>
   </datalist>
   <datalist id="unitList">
     <option value="缶"></option>
@@ -463,18 +385,58 @@
     <option value="セット"></option>
     <option value="巻"></option>
     <option value="丁"></option>
-    <option value="部"></option>
   </datalist>
   <datalist id="remarkList">
     <option value="在庫"></option>
     <option value="追加"></option>
-    <option value="生ネタサンプル"></option>
-    <option value="塗板"></option>
   </datalist>
 
   <script>
     const MAX_ITEMS = 6;
     const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
+
+    // 商品マスター（仮データ：GASやJSONから取得した配列に差し替え可能）
+    const PRODUCT_MASTER = [
+      { maker: 'エスケー', name: 'プレミアムシリコン', defaultUnit: '缶' },
+      { maker: 'エスケー', name: 'プレミアム無機', defaultUnit: '缶' },
+      { maker: 'エスケー', name: '水性SDサーフエポプレミアム', defaultUnit: '缶' },
+      { maker: 'エスケー', name: '水性ミラクシーラーエコ', defaultUnit: '缶' },
+      { maker: 'エスケー', name: 'マイルドシーラーEPO', defaultUnit: '缶' },
+      { maker: 'エスケー', name: 'クリーンマイルドウレタン', defaultUnit: '缶' },
+      { maker: 'ニッペ', name: 'ケンエースGⅡ', defaultUnit: '缶' },
+      { maker: 'ニッペ', name: '水性ケンエース', defaultUnit: '缶' },
+      { maker: 'ニッペ', name: '1液ファインウレタンU100', defaultUnit: '缶' },
+      { maker: 'ニッペ', name: 'パーフェクトフィラー', defaultUnit: '缶' },
+      { maker: 'ニッペ', name: 'ファインパーフェクトトップSi', defaultUnit: '缶' },
+      { maker: 'カンペ', name: 'ビニデラックス300S', defaultUnit: '缶' },
+      { maker: 'カンペ', name: '1液MレタンHG', defaultUnit: '缶' },
+      { maker: 'カンペ', name: 'ダイナミックMUKI', defaultUnit: '缶' },
+      { maker: 'カンペ', name: 'ダイナミックフィラー', defaultUnit: '缶' },
+      { maker: 'キクスイ', name: 'ビュートップEP', defaultUnit: '缶' },
+      { maker: 'キクスイ', name: 'ロイヤルシリコン', defaultUnit: '缶' },
+      { maker: '大塚', name: '無印目地刷毛油性筋 10号', defaultUnit: '袋' },
+      { maker: '大塚', name: 'ミニマイクロEight 3インチ13㎜', defaultUnit: 'パック' },
+      { maker: 'フジワラ', name: 'ニューアールダンテKISO', defaultUnit: '缶' },
+      { maker: '大阪ガス', name: 'キシラデコール', defaultUnit: '缶' },
+      { maker: 'デルタ', name: 'SANラッカーシンナー', defaultUnit: '缶' }
+    ];
+
+    // 受注履歴サンプル（新しい順になるよう並べる。本番は受注入力シートから生成）
+    const ORDER_HISTORY = [
+      { maker: 'エスケー', name: 'プレミアムシリコン', gloss: '5F', color: 'SR-178', size: '15kg', unit: '缶' },
+      { maker: 'エスケー', name: 'プレミアムシリコン', gloss: '5F', color: '25-65B', size: '15kg', unit: '缶' },
+      { maker: 'エスケー', name: '水性SDサーフエポプレミアム', gloss: '', color: '', size: '15kg', unit: '缶' },
+      { maker: 'エスケー', name: 'マイルドシーラーEPO', gloss: '', color: 'クリヤー', size: '14ks', unit: '缶' },
+      { maker: 'ニッペ', name: 'ケンエースGⅡ', gloss: '', color: 'ND-102', size: '16kg', unit: '缶' },
+      { maker: 'ニッペ', name: 'ケンエースGⅡ', gloss: '', color: 'N-95', size: '16kg', unit: '缶' },
+      { maker: 'ニッペ', name: '1液ファインウレタンU100', gloss: '5F', color: 'ND-104', size: '15kg', unit: '缶' },
+      { maker: 'カンペ', name: '1液MレタンHG', gloss: '', color: '25-92B', size: '3kg', unit: '缶' },
+      { maker: 'カンペ', name: 'ダイナミックMUKI', gloss: '', color: '25-90B', size: '15kg', unit: '缶' },
+      { maker: 'キクスイ', name: 'ビュートップEP', gloss: '', color: '25-85B', size: '200g', unit: '缶' },
+      { maker: '大塚', name: '無印目地刷毛油性筋 10号', gloss: '', color: '', size: '', unit: '袋' },
+      { maker: 'フジワラ', name: 'ニューアールダンテKISO', gloss: '', color: 'No.2', size: '20×30', unit: '枚' },
+      { maker: '大阪ガス', name: 'キシラデコール', gloss: '', color: '#102ピニー', size: '16L', unit: '缶' }
+    ];
 
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItemBtn');
@@ -484,11 +446,100 @@
     const statusText = document.getElementById('statusText');
     const orderForm = document.getElementById('orderForm');
 
-    function formatDateYmd(dateObj) {
-      const y = dateObj.getFullYear();
-      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const d = String(dateObj.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+    function uniqueValues(arr) {
+      return Array.from(new Set(arr.filter((v) => String(v || '').trim() !== '')));
+    }
+
+    function setDatalistOptions(datalistEl, values) {
+      datalistEl.innerHTML = '';
+      uniqueValues(values).forEach((val) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        datalistEl.appendChild(opt);
+      });
+    }
+
+    // メーカー選択時：商品マスターから品名を絞り込み、履歴から直近のメーカー/品名を初期値にセット
+    function applyMakerFilter(card, autoFillLatestProduct = true) {
+      const idx = card.dataset.index;
+      const makerInput = card.querySelector('[data-field="メーカー"]');
+      const nameInput = card.querySelector('[data-field="品名"]');
+      const nameList = card.querySelector(`#itemNameList-${idx}`);
+      const maker = makerInput.value.trim();
+
+      const masterNames = maker
+        ? PRODUCT_MASTER.filter((p) => p.maker === maker).map((p) => p.name)
+        : PRODUCT_MASTER.map((p) => p.name);
+      const historyNames = maker
+        ? ORDER_HISTORY.filter((h) => h.maker === maker).map((h) => h.name)
+        : ORDER_HISTORY.map((h) => h.name);
+
+      setDatalistOptions(nameList, [...masterNames, ...historyNames]);
+
+      if (autoFillLatestProduct && maker) {
+        const latestOrder = ORDER_HISTORY.find((h) => h.maker === maker);
+        const latestMaster = PRODUCT_MASTER.find((p) => p.maker === maker);
+        const nextName = (latestOrder && latestOrder.name) || (latestMaster && latestMaster.name) || '';
+        if (nextName) {
+          nameInput.value = nextName;
+          applyProductHistoryFilter(card, true);
+        }
+      }
+    }
+
+    // 商品名選択時：履歴から艶・色・容量を絞り込み、前回値を初期値としてセット
+    function applyProductHistoryFilter(card, autoFillLatestSpecs = true) {
+      const idx = card.dataset.index;
+      const makerInput = card.querySelector('[data-field="メーカー"]');
+      const nameInput = card.querySelector('[data-field="品名"]');
+      const detailInput = card.querySelector('[data-field="詳細"]');
+      const glossInput = card.querySelector('[data-field="艶"]');
+      const colorInput = card.querySelector('[data-field="色"]');
+      const sizeInput = card.querySelector('[data-field="容量"]');
+      const unitInput = card.querySelector('[data-field="単位"]');
+
+      const glossList = card.querySelector(`#itemGlossList-${idx}`);
+      const colorList = card.querySelector(`#itemColorList-${idx}`);
+      const sizeList = card.querySelector(`#itemSizeList-${idx}`);
+
+      const maker = makerInput.value.trim();
+      const productName = nameInput.value.trim();
+
+      const matchedHistory = ORDER_HISTORY.filter((h) => {
+        const nameMatch = productName ? h.name === productName : true;
+        const makerMatch = maker ? h.maker === maker : true;
+        return nameMatch && makerMatch;
+      });
+
+      const sourceRows = matchedHistory.length > 0
+        ? matchedHistory
+        : (productName ? ORDER_HISTORY.filter((h) => h.name === productName) : ORDER_HISTORY);
+
+      setDatalistOptions(glossList, sourceRows.map((r) => r.gloss));
+      setDatalistOptions(colorList, sourceRows.map((r) => r.color));
+      setDatalistOptions(sizeList, sourceRows.map((r) => r.size));
+
+      if (autoFillLatestSpecs && productName) {
+        const latest = sourceRows[0];
+        if (latest) {
+          glossInput.value = latest.gloss || '';
+          colorInput.value = latest.color || '';
+          sizeInput.value = latest.size || '';
+          if (latest.unit) {
+            unitInput.value = latest.unit;
+          }
+        }
+        const masterItem = PRODUCT_MASTER.find(
+          (p) => p.name === productName && (!maker || p.maker === maker)
+        );
+        if (masterItem && masterItem.defaultUnit && !unitInput.value) {
+          unitInput.value = masterItem.defaultUnit;
+        }
+        // 塗板や生ネタサンプルの案内用（必要時のみ手入力・datalistから選択）
+        if (!detailInput.value && productName.includes('ダンテ')) {
+          detailInput.placeholder = '例：塗板 / 生ネタサンプル';
+        }
+      }
     }
 
     function createItemCard(index, initial = {}) {
@@ -512,26 +563,30 @@
           </div>
           <div class="field">
             <label>品名${index}</label>
-            <input type="text" data-field="品名" placeholder="例：プレミアムシリコン" />
+            <input type="text" data-field="品名" list="itemNameList-${index}" placeholder="メーカー選択で絞り込み" />
+            <datalist id="itemNameList-${index}"></datalist>
           </div>
           <div class="field">
             <label>詳細${index}</label>
-            <input type="text" data-field="詳細" placeholder="例：生ネタサンプル" />
+            <input type="text" data-field="詳細" list="detailList" placeholder="生ネタサンプル / 塗板 など" />
           </div>
           <div class="field">
             <label>艶${index}</label>
-            <input type="text" data-field="艶" list="glossList" placeholder="例：5F / 艶有" />
+            <input type="text" data-field="艶" list="itemGlossList-${index}" placeholder="履歴から絞り込み" />
+            <datalist id="itemGlossList-${index}"></datalist>
           </div>
           <div class="field">
             <label>色${index}</label>
-            <input type="text" data-field="色" placeholder="例：SR-178 / N-90" />
+            <input type="text" data-field="色" list="itemColorList-${index}" placeholder="履歴から絞り込み" />
+            <datalist id="itemColorList-${index}"></datalist>
           </div>
         </div>
 
         <div class="item-row-lower">
           <div class="field">
             <label>容量${index}</label>
-            <input type="text" data-field="容量" list="sizeList" placeholder="例：15kg / 16L" />
+            <input type="text" data-field="容量" list="itemSizeList-${index}" placeholder="履歴から絞り込み" />
+            <datalist id="itemSizeList-${index}"></datalist>
           </div>
           <div class="field">
             <label>数量${index}</label>
@@ -548,11 +603,29 @@
         </div>
       `;
 
+      const makerInput = card.querySelector('[data-field="メーカー"]');
+      const nameInput = card.querySelector('[data-field="品名"]');
+
       ITEM_FIELDS.forEach((field) => {
         const input = card.querySelector(`[data-field="${field}"]`);
         if (input && initial[field] !== undefined) {
           input.value = initial[field];
         }
+      });
+
+      applyMakerFilter(card, false);
+      applyProductHistoryFilter(card, false);
+
+      makerInput.addEventListener('change', () => {
+        applyMakerFilter(card, true);
+        updatePreview();
+        statusText.textContent = `明細${card.dataset.index}：メーカーに合わせて商品マスターを絞り込みました`;
+      });
+
+      nameInput.addEventListener('change', () => {
+        applyProductHistoryFilter(card, true);
+        updatePreview();
+        statusText.textContent = `明細${card.dataset.index}：履歴から艶・色・容量を絞り込み、前回値を反映しました`;
       });
 
       card.querySelector('.copy-item-btn').addEventListener('click', () => {
@@ -592,7 +665,33 @@
           const base = lbl.textContent.replace(/[1-6]$/, '');
           lbl.textContent = `${base}${num}`;
         });
-        let actions = card.querySelector('.item-actions');
+
+        const nameInput = card.querySelector('[data-field="品名"]');
+        const nameList = card.querySelector('datalist[id^="itemNameList-"]');
+        if (nameInput && nameList) {
+          nameList.id = `itemNameList-${num}`;
+          nameInput.setAttribute('list', nameList.id);
+        }
+        const glossInput = card.querySelector('[data-field="艶"]');
+        const glossList = card.querySelector('datalist[id^="itemGlossList-"]');
+        if (glossInput && glossList) {
+          glossList.id = `itemGlossList-${num}`;
+          glossInput.setAttribute('list', glossList.id);
+        }
+        const colorInput = card.querySelector('[data-field="色"]');
+        const colorList = card.querySelector('datalist[id^="itemColorList-"]');
+        if (colorInput && colorList) {
+          colorList.id = `itemColorList-${num}`;
+          colorInput.setAttribute('list', colorList.id);
+        }
+        const sizeInput = card.querySelector('[data-field="容量"]');
+        const sizeList = card.querySelector('datalist[id^="itemSizeList-"]');
+        if (sizeInput && sizeList) {
+          sizeList.id = `itemSizeList-${num}`;
+          sizeInput.setAttribute('list', sizeList.id);
+        }
+
+        const actions = card.querySelector('.item-actions');
         const hasRemove = Boolean(actions.querySelector('.remove-item-btn'));
         if (num > 1 && !hasRemove) {
           const btn = document.createElement('button');
@@ -625,7 +724,6 @@
       for (const [key, value] of formData.entries()) {
         payload[key] = value;
       }
-      // 希望納期（YYYY-MM-DD）をシート表記（YYYY/MM/DD）に揃える場合
       if (payload['希望納期']) {
         payload['希望納期'] = payload['希望納期'].replace(/-/g, '/');
       }
@@ -643,6 +741,13 @@
 
     function updatePreview() {
       jsonPreview.textContent = JSON.stringify(buildPayload(), null, 2);
+    }
+
+    function formatDateYmd(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
     }
 
     document.querySelectorAll('.chip[data-preset]').forEach((chip) => {
