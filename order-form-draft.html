@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>受注フォーム（仮UI・v3）</title>
+  <title>受注フォーム（GAS連動・v4）</title>
   <style>
     :root {
       --bg: #f1f5f9;
@@ -78,7 +78,16 @@
     .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    @media (max-width: 900px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .gas-bar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: end;
+    }
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .gas-bar { grid-template-columns: 1fr; }
+    }
     @media (max-width: 640px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
     .field { display: flex; flex-direction: column; gap: 4px; }
     label { font-size: 12px; font-weight: 700; color: #334155; }
@@ -189,10 +198,26 @@
   <div class="container">
     <div class="topbar">
       <div>
-        <h1>受注フォーム（仮UI・v3）</h1>
-        <div class="sub">メーカー→商品マスター絞り込み / 品名→履歴から艶・色・容量絞り込み＆前回値自動初期値化</div>
+        <h1>受注フォーム（GAS連動・v4）</h1>
+        <div class="sub">GAS（doGet）から商品マスター・履歴を取得し、メーカー／品名／艶・色・容量の絞り込みと前回値初期表示を連動</div>
       </div>
-      <span class="badge">明細 1〜6行対応</span>
+      <span class="badge" id="syncBadge">未同期（フォールバック使用中）</span>
+    </div>
+
+    <!-- 0. GAS連携設定 -->
+    <div class="card">
+      <div class="card-head">
+        <h2 class="card-title">0. GAS Webアプリ連携</h2>
+        <span class="sub" id="lastUpdatedText">最終同期: -</span>
+      </div>
+      <div class="gas-bar">
+        <div class="field">
+          <label for="gasUrl">GAS WebアプリURL（doGet / doPost 共通）</label>
+          <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/xxxxx/exec" />
+        </div>
+        <button type="button" class="btn-primary" id="loadGasBtn">マスター＆履歴を読み込み</button>
+        <button type="button" class="btn-secondary" id="saveGasUrlBtn">URLを保存</button>
+      </div>
     </div>
 
     <form id="orderForm">
@@ -300,10 +325,6 @@
       <!-- 3. 送信・流し込み確認 -->
       <div class="card">
         <h2 class="card-title">3. 送信・流し込み確認</h2>
-        <div class="field" style="margin-top: 10px;">
-          <label for="gasUrl">GAS WebアプリURL（任意・空欄なら画面プレビューのみ）</label>
-          <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/xxxxx/exec" />
-        </div>
         <div class="footer-bar">
           <div class="btn-group">
             <button type="button" class="btn-secondary" id="previewBtn">JSONプレビュー更新</button>
@@ -355,21 +376,7 @@
     <option value="白岡引き取り"></option>
     <option value="マルテー行田引き取り"></option>
   </datalist>
-  <datalist id="makerList">
-    <option value="エスケー"></option>
-    <option value="ニッペ"></option>
-    <option value="カンペ"></option>
-    <option value="キクスイ"></option>
-    <option value="大塚"></option>
-    <option value="東日本"></option>
-    <option value="日特"></option>
-    <option value="フジワラ"></option>
-    <option value="カモ井"></option>
-    <option value="デルタ"></option>
-    <option value="精和"></option>
-    <option value="和信"></option>
-    <option value="大阪ガス"></option>
-  </datalist>
+  <datalist id="makerList"></datalist>
   <datalist id="detailList">
     <option value="生ネタサンプル"></option>
     <option value="塗板"></option>
@@ -394,49 +401,55 @@
   <script>
     const MAX_ITEMS = 6;
     const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
+    const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
 
-    // 商品マスター（仮データ：GASやJSONから取得した配列に差し替え可能）
-    const PRODUCT_MASTER = [
-      { maker: 'エスケー', name: 'プレミアムシリコン', defaultUnit: '缶' },
-      { maker: 'エスケー', name: 'プレミアム無機', defaultUnit: '缶' },
-      { maker: 'エスケー', name: '水性SDサーフエポプレミアム', defaultUnit: '缶' },
-      { maker: 'エスケー', name: '水性ミラクシーラーエコ', defaultUnit: '缶' },
-      { maker: 'エスケー', name: 'マイルドシーラーEPO', defaultUnit: '缶' },
-      { maker: 'エスケー', name: 'クリーンマイルドウレタン', defaultUnit: '缶' },
-      { maker: 'ニッペ', name: 'ケンエースGⅡ', defaultUnit: '缶' },
-      { maker: 'ニッペ', name: '水性ケンエース', defaultUnit: '缶' },
-      { maker: 'ニッペ', name: '1液ファインウレタンU100', defaultUnit: '缶' },
-      { maker: 'ニッペ', name: 'パーフェクトフィラー', defaultUnit: '缶' },
-      { maker: 'ニッペ', name: 'ファインパーフェクトトップSi', defaultUnit: '缶' },
-      { maker: 'カンペ', name: 'ビニデラックス300S', defaultUnit: '缶' },
-      { maker: 'カンペ', name: '1液MレタンHG', defaultUnit: '缶' },
-      { maker: 'カンペ', name: 'ダイナミックMUKI', defaultUnit: '缶' },
-      { maker: 'カンペ', name: 'ダイナミックフィラー', defaultUnit: '缶' },
-      { maker: 'キクスイ', name: 'ビュートップEP', defaultUnit: '缶' },
-      { maker: 'キクスイ', name: 'ロイヤルシリコン', defaultUnit: '缶' },
-      { maker: '大塚', name: '無印目地刷毛油性筋 10号', defaultUnit: '袋' },
-      { maker: '大塚', name: 'ミニマイクロEight 3インチ13㎜', defaultUnit: 'パック' },
-      { maker: 'フジワラ', name: 'ニューアールダンテKISO', defaultUnit: '缶' },
-      { maker: '大阪ガス', name: 'キシラデコール', defaultUnit: '缶' },
-      { maker: 'デルタ', name: 'SANラッカーシンナー', defaultUnit: '缶' }
-    ];
+    // GAS未接続時のフォールバックデータ
+    const FALLBACK_DATA = {
+      ok: true,
+      updatedAt: 'オフライン初期値',
+      makers: ['エスケー', 'ニッペ', 'カンペ', 'キクスイ', '大塚', 'フジワラ', '大阪ガス'],
+      productsByMaker: {
+        'エスケー': ['プレミアムシリコン', 'クリーンマイルドウレタン', 'マイルドシーラーEPO'],
+        'ニッペ': ['ケンエースGⅡ', '水性ケンエース', '1液ファインウレタンU100'],
+        'カンペ': ['1液MレタンHG', 'ビニデラックス300S', 'ダイナミックMUKI'],
+        'キクスイ': ['ビュートップEP', 'ロイヤルシリコン'],
+        '大塚': ['無印目地刷毛油性筋 10号'],
+        'フジワラ': ['ニューアールダンテKISO'],
+        '大阪ガス': ['キシラデコール']
+      },
+      historyByProduct: {
+        'プレミアムシリコン': {
+          makers: ['エスケー'],
+          defaultUnit: '缶',
+          options: { gloss: ['5F', '艶有'], color: ['SR-178', '25-65B'], size: ['15kg', '16ks'], unit: ['缶'] },
+          latest: { maker: 'エスケー', gloss: '5F', color: 'SR-178', size: '15kg', unit: '缶', detail: '' }
+        },
+        'ケンエースGⅡ': {
+          makers: ['ニッペ'],
+          defaultUnit: '缶',
+          options: { gloss: [], color: ['白', 'ND-102', 'N-95'], size: ['16kg', '4kg'], unit: ['缶'] },
+          latest: { maker: 'ニッペ', gloss: '', color: '白', size: '16kg', unit: '缶', detail: '' }
+        },
+        '1液MレタンHG': {
+          makers: ['カンペ'],
+          defaultUnit: '缶',
+          options: { gloss: [], color: ['赤さび', '黄', '25-92B'], size: ['3kg', '15kg'], unit: ['缶'] },
+          latest: { maker: 'カンペ', gloss: '', color: '赤さび', size: '3kg', unit: '缶', detail: '' }
+        }
+      }
+    };
 
-    // 受注履歴サンプル（新しい順になるよう並べる。本番は受注入力シートから生成）
-    const ORDER_HISTORY = [
-      { maker: 'エスケー', name: 'プレミアムシリコン', gloss: '5F', color: 'SR-178', size: '15kg', unit: '缶' },
-      { maker: 'エスケー', name: 'プレミアムシリコン', gloss: '5F', color: '25-65B', size: '15kg', unit: '缶' },
-      { maker: 'エスケー', name: '水性SDサーフエポプレミアム', gloss: '', color: '', size: '15kg', unit: '缶' },
-      { maker: 'エスケー', name: 'マイルドシーラーEPO', gloss: '', color: 'クリヤー', size: '14ks', unit: '缶' },
-      { maker: 'ニッペ', name: 'ケンエースGⅡ', gloss: '', color: 'ND-102', size: '16kg', unit: '缶' },
-      { maker: 'ニッペ', name: 'ケンエースGⅡ', gloss: '', color: 'N-95', size: '16kg', unit: '缶' },
-      { maker: 'ニッペ', name: '1液ファインウレタンU100', gloss: '5F', color: 'ND-104', size: '15kg', unit: '缶' },
-      { maker: 'カンペ', name: '1液MレタンHG', gloss: '', color: '25-92B', size: '3kg', unit: '缶' },
-      { maker: 'カンペ', name: 'ダイナミックMUKI', gloss: '', color: '25-90B', size: '15kg', unit: '缶' },
-      { maker: 'キクスイ', name: 'ビュートップEP', gloss: '', color: '25-85B', size: '200g', unit: '缶' },
-      { maker: '大塚', name: '無印目地刷毛油性筋 10号', gloss: '', color: '', size: '', unit: '袋' },
-      { maker: 'フジワラ', name: 'ニューアールダンテKISO', gloss: '', color: 'No.2', size: '20×30', unit: '枚' },
-      { maker: '大阪ガス', name: 'キシラデコール', gloss: '', color: '#102ピニー', size: '16L', unit: '缶' }
-    ];
+    let catalogState = {
+      makers: [...FALLBACK_DATA.makers],
+      productsByMaker: { ...FALLBACK_DATA.productsByMaker },
+      historyByProduct: { ...FALLBACK_DATA.historyByProduct }
+    };
+
+    const gasUrlInput = document.getElementById('gasUrl');
+    const loadGasBtn = document.getElementById('loadGasBtn');
+    const saveGasUrlBtn = document.getElementById('saveGasUrlBtn');
+    const syncBadge = document.getElementById('syncBadge');
+    const lastUpdatedText = document.getElementById('lastUpdatedText');
 
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItemBtn');
@@ -447,10 +460,11 @@
     const orderForm = document.getElementById('orderForm');
 
     function uniqueValues(arr) {
-      return Array.from(new Set(arr.filter((v) => String(v || '').trim() !== '')));
+      return Array.from(new Set((arr || []).map((v) => String(v || '').trim()).filter(Boolean)));
     }
 
     function setDatalistOptions(datalistEl, values) {
+      if (!datalistEl) return;
       datalistEl.innerHTML = '';
       uniqueValues(values).forEach((val) => {
         const opt = document.createElement('option');
@@ -459,7 +473,67 @@
       });
     }
 
-    // メーカー選択時：商品マスターから品名を絞り込み、履歴から直近のメーカー/品名を初期値にセット
+    function refreshGlobalMakerList() {
+      const makerListEl = document.getElementById('makerList');
+      setDatalistOptions(makerListEl, catalogState.makers);
+    }
+
+    // GASの doGet エンドポイントからメーカー・商品名・履歴を取得
+    async function loadCatalogFromGas(showMessage = true) {
+      const url = gasUrlInput.value.trim();
+      if (!url) {
+        if (showMessage) {
+          statusText.textContent = 'GAS WebアプリURLを入力してください';
+        }
+        return;
+      }
+
+      if (showMessage) {
+        statusText.textContent = 'GASから商品マスター・履歴を読み込み中...';
+      }
+
+      try {
+        const res = await fetch(url, { method: 'GET' });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        if (!data || !data.ok) {
+          throw new Error((data && data.error) || 'データの取得に失敗しました');
+        }
+
+        catalogState = {
+          makers: uniqueValues(data.makers),
+          productsByMaker: data.productsByMaker || {},
+          historyByProduct: data.historyByProduct || {}
+        };
+
+        refreshGlobalMakerList();
+
+        // 既存の各明細行の候補リストを更新（手入力中の値や初期値は保持）
+        Array.from(itemsContainer.querySelectorAll('.item-card')).forEach((card) => {
+          applyMakerFilter(card, false);
+          applyProductHistoryFilter(card, false);
+        });
+
+        syncBadge.textContent = 'GAS同期済み';
+        syncBadge.style.background = '#dcfce7';
+        syncBadge.style.color = '#166534';
+        lastUpdatedText.textContent = `最終同期: ${data.updatedAt || new Date().toLocaleString('ja-JP')}`;
+        if (showMessage) {
+          statusText.textContent = '商品マスターと受注履歴を最新化しました';
+        }
+      } catch (err) {
+        syncBadge.textContent = '同期エラー（フォールバック使用中）';
+        syncBadge.style.background = '#fee2e2';
+        syncBadge.style.color = '#991b1b';
+        if (showMessage) {
+          statusText.textContent = `読み込みエラー: ${err.message}`;
+        }
+      }
+    }
+
+    // メーカー選択時：商品マスターから品名を絞り込み、直近履歴の品名と連動
     function applyMakerFilter(card, autoFillLatestProduct = true) {
       const idx = card.dataset.index;
       const makerInput = card.querySelector('[data-field="メーカー"]');
@@ -467,19 +541,20 @@
       const nameList = card.querySelector(`#itemNameList-${idx}`);
       const maker = makerInput.value.trim();
 
-      const masterNames = maker
-        ? PRODUCT_MASTER.filter((p) => p.maker === maker).map((p) => p.name)
-        : PRODUCT_MASTER.map((p) => p.name);
-      const historyNames = maker
-        ? ORDER_HISTORY.filter((h) => h.maker === maker).map((h) => h.name)
-        : ORDER_HISTORY.map((h) => h.name);
+      const candidates = maker
+        ? (catalogState.productsByMaker[maker] || [])
+        : Object.values(catalogState.productsByMaker).flat();
 
-      setDatalistOptions(nameList, [...masterNames, ...historyNames]);
+      setDatalistOptions(nameList, candidates);
 
       if (autoFillLatestProduct && maker) {
-        const latestOrder = ORDER_HISTORY.find((h) => h.maker === maker);
-        const latestMaster = PRODUCT_MASTER.find((p) => p.maker === maker);
-        const nextName = (latestOrder && latestOrder.name) || (latestMaster && latestMaster.name) || '';
+        const productCandidates = uniqueValues(candidates);
+        // 履歴がある品名を優先して直近のものを初期値にする
+        const historyMatch = productCandidates.find((prodName) => {
+          const hist = catalogState.historyByProduct[prodName];
+          return hist && hist.latest && (!hist.latest.maker || hist.latest.maker === maker);
+        });
+        const nextName = historyMatch || productCandidates[0] || '';
         if (nextName) {
           nameInput.value = nextName;
           applyProductHistoryFilter(card, true);
@@ -487,12 +562,10 @@
       }
     }
 
-    // 商品名選択時：履歴から艶・色・容量を絞り込み、前回値を初期値としてセット
+    // 商品名選択時：履歴から艶・色・容量を絞り込み、前回値（latest）を初期値にセット
     function applyProductHistoryFilter(card, autoFillLatestSpecs = true) {
       const idx = card.dataset.index;
-      const makerInput = card.querySelector('[data-field="メーカー"]');
       const nameInput = card.querySelector('[data-field="品名"]');
-      const detailInput = card.querySelector('[data-field="詳細"]');
       const glossInput = card.querySelector('[data-field="艶"]');
       const colorInput = card.querySelector('[data-field="色"]');
       const sizeInput = card.querySelector('[data-field="容量"]');
@@ -502,42 +575,25 @@
       const colorList = card.querySelector(`#itemColorList-${idx}`);
       const sizeList = card.querySelector(`#itemSizeList-${idx}`);
 
-      const maker = makerInput.value.trim();
       const productName = nameInput.value.trim();
+      const hist = productName ? catalogState.historyByProduct[productName] : null;
 
-      const matchedHistory = ORDER_HISTORY.filter((h) => {
-        const nameMatch = productName ? h.name === productName : true;
-        const makerMatch = maker ? h.maker === maker : true;
-        return nameMatch && makerMatch;
-      });
+      if (hist && hist.options) {
+        setDatalistOptions(glossList, hist.options.gloss || []);
+        setDatalistOptions(colorList, hist.options.color || []);
+        setDatalistOptions(sizeList, hist.options.size || []);
+      } else {
+        setDatalistOptions(glossList, []);
+        setDatalistOptions(colorList, []);
+        setDatalistOptions(sizeList, []);
+      }
 
-      const sourceRows = matchedHistory.length > 0
-        ? matchedHistory
-        : (productName ? ORDER_HISTORY.filter((h) => h.name === productName) : ORDER_HISTORY);
-
-      setDatalistOptions(glossList, sourceRows.map((r) => r.gloss));
-      setDatalistOptions(colorList, sourceRows.map((r) => r.color));
-      setDatalistOptions(sizeList, sourceRows.map((r) => r.size));
-
-      if (autoFillLatestSpecs && productName) {
-        const latest = sourceRows[0];
-        if (latest) {
-          glossInput.value = latest.gloss || '';
-          colorInput.value = latest.color || '';
-          sizeInput.value = latest.size || '';
-          if (latest.unit) {
-            unitInput.value = latest.unit;
-          }
-        }
-        const masterItem = PRODUCT_MASTER.find(
-          (p) => p.name === productName && (!maker || p.maker === maker)
-        );
-        if (masterItem && masterItem.defaultUnit && !unitInput.value) {
-          unitInput.value = masterItem.defaultUnit;
-        }
-        // 塗板や生ネタサンプルの案内用（必要時のみ手入力・datalistから選択）
-        if (!detailInput.value && productName.includes('ダンテ')) {
-          detailInput.placeholder = '例：塗板 / 生ネタサンプル';
+      if (autoFillLatestSpecs && hist && hist.latest) {
+        glossInput.value = hist.latest.gloss || '';
+        colorInput.value = hist.latest.color || '';
+        sizeInput.value = hist.latest.size || '';
+        if (hist.latest.unit || hist.defaultUnit) {
+          unitInput.value = hist.latest.unit || hist.defaultUnit;
         }
       }
     }
@@ -666,30 +722,15 @@
           lbl.textContent = `${base}${num}`;
         });
 
-        const nameInput = card.querySelector('[data-field="品名"]');
-        const nameList = card.querySelector('datalist[id^="itemNameList-"]');
-        if (nameInput && nameList) {
-          nameList.id = `itemNameList-${num}`;
-          nameInput.setAttribute('list', nameList.id);
-        }
-        const glossInput = card.querySelector('[data-field="艶"]');
-        const glossList = card.querySelector('datalist[id^="itemGlossList-"]');
-        if (glossInput && glossList) {
-          glossList.id = `itemGlossList-${num}`;
-          glossInput.setAttribute('list', glossList.id);
-        }
-        const colorInput = card.querySelector('[data-field="色"]');
-        const colorList = card.querySelector('datalist[id^="itemColorList-"]');
-        if (colorInput && colorList) {
-          colorList.id = `itemColorList-${num}`;
-          colorInput.setAttribute('list', colorList.id);
-        }
-        const sizeInput = card.querySelector('[data-field="容量"]');
-        const sizeList = card.querySelector('datalist[id^="itemSizeList-"]');
-        if (sizeInput && sizeList) {
-          sizeList.id = `itemSizeList-${num}`;
-          sizeInput.setAttribute('list', sizeList.id);
-        }
+        ['品名:itemNameList', '艶:itemGlossList', '色:itemColorList', '容量:itemSizeList'].forEach((pair) => {
+          const [fieldName, prefix] = pair.split(':');
+          const input = card.querySelector(`[data-field="${fieldName}"]`);
+          const dl = card.querySelector(`datalist[id^="${prefix}-"]`);
+          if (input && dl) {
+            dl.id = `${prefix}-${num}`;
+            input.setAttribute('list', dl.id);
+          }
+        });
 
         const actions = card.querySelector('.item-actions');
         const hasRemove = Boolean(actions.querySelector('.remove-item-btn'));
@@ -750,6 +791,16 @@
       return `${y}-${m}-${d}`;
     }
 
+    saveGasUrlBtn.addEventListener('click', () => {
+      const url = gasUrlInput.value.trim();
+      localStorage.setItem(STORAGE_KEY_GAS_URL, url);
+      statusText.textContent = url ? 'GAS URLをブラウザに保存しました' : '保存済みGAS URLをクリアしました';
+    });
+
+    loadGasBtn.addEventListener('click', () => {
+      loadCatalogFromGas(true);
+    });
+
     document.querySelectorAll('.chip[data-preset]').forEach((chip) => {
       chip.addEventListener('click', () => {
         const preset = chip.dataset.preset;
@@ -801,7 +852,7 @@
       const data = buildPayload();
       jsonPreview.textContent = JSON.stringify(data, null, 2);
 
-      const gasUrl = document.getElementById('gasUrl').value.trim();
+      const gasUrl = gasUrlInput.value.trim();
       if (!gasUrl) {
         statusText.textContent = 'GAS URL未入力のため、画面プレビューのみ更新しました';
         return;
@@ -821,8 +872,17 @@
       }
     });
 
+    // 初期化
+    const savedUrl = localStorage.getItem(STORAGE_KEY_GAS_URL) || '';
+    if (savedUrl) {
+      gasUrlInput.value = savedUrl;
+    }
+    refreshGlobalMakerList();
     addItemRow({ 単位: '缶' });
     updatePreview();
+    if (savedUrl) {
+      loadCatalogFromGas(false);
+    }
   </script>
 </body>
 </html>
