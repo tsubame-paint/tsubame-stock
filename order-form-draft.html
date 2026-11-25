@@ -199,7 +199,7 @@
     <div class="topbar">
       <div>
         <h1>受注フォーム（GAS連動・v5）</h1>
-        <div class="sub">ユーザー名選択で直近履歴から担当者・電話番号・現場名・現場住所を自動入力＆明細絞り込み</div>
+        <div class="sub">端末ごとの発行者記憶・ユーザー名選択で直近履歴自動入力＆明細絞り込み</div>
       </div>
       <span class="badge" id="syncBadge">未同期（フォールバック使用中）</span>
     </div>
@@ -232,8 +232,8 @@
 
         <div class="grid-4">
           <div class="field">
-            <label for="issuer">発行者</label>
-            <input id="issuer" name="発行者" type="text" list="issuerList" value="今井" />
+            <label for="issuer">発行者（端末ごとに記憶）</label>
+            <input id="issuer" name="発行者" type="text" list="issuerList" placeholder="例：今井 / 佐々木" />
           </div>
           <div class="field">
             <label for="userName">ユーザー名（得意先・在庫）</label>
@@ -380,8 +380,8 @@
     const MAX_ITEMS = 6;
     const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
     const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
+    const STORAGE_KEY_DEVICE_ISSUER = 'tsubame_device_issuer_v1';
 
-    // フォールバックデータ（新しい履歴が先頭になるよう並べる）
     const FALLBACK_DATA = {
       ok: true,
       updatedAt: 'オフライン初期値',
@@ -477,6 +477,7 @@
     const syncBadge = document.getElementById('syncBadge');
     const lastUpdatedText = document.getElementById('lastUpdatedText');
 
+    const issuerInput = document.getElementById('issuer');
     const userNameInput = document.getElementById('userName');
     const contactPersonInput = document.getElementById('contactPerson');
     const phoneInput = document.getElementById('phone');
@@ -507,6 +508,15 @@
       });
     }
 
+    // 端末に保存された発行者、またはGASから返った候補を反映（固定値にはしない）
+    function applyDeviceOrGasIssuer(gasSuggestedIssuer = '') {
+      const savedDeviceIssuer = (localStorage.getItem(STORAGE_KEY_DEVICE_ISSUER) || '').trim();
+      const target = savedDeviceIssuer || String(gasSuggestedIssuer || '').trim();
+      if (target) {
+        issuerInput.value = target;
+      }
+    }
+
     function refreshGlobalSuggestions() {
       setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
 
@@ -518,7 +528,6 @@
       setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
     }
 
-    // ユーザー名（得意先）選択時：直近の履歴から担当者・電話番号・現場名・現場住所を自動入力
     function applyCustomerHistoryAutofill() {
       const selectedUser = userNameInput.value.trim();
       if (!selectedUser) return;
@@ -531,7 +540,6 @@
         return;
       }
 
-      // 同一得意先の過去行に部分的に入っている値があれば補完用として拾う
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       const latestContact = latestOrder.contactPerson || (sameUserRows.find((r) => r.contactPerson) || {}).contactPerson || '';
       const latestPhone = latestOrder.phone || (sameUserRows.find((r) => r.phone) || {}).phone || '';
@@ -553,7 +561,6 @@
         deliveryRequestInput.value = latestOrder.deliveryRequest || '';
       }
 
-      // 現場名・現場住所の候補リストをその得意先の履歴順に優先表示
       setDatalistOptions(
         document.getElementById('siteNameList'),
         uniqueValues(sameUserRows.map((r) => r.siteName).concat(orders.map((o) => o.siteName)))
@@ -598,6 +605,7 @@
         };
 
         refreshGlobalSuggestions();
+        applyDeviceOrGasIssuer(data.suggestedIssuer || '');
 
         if (userNameInput.value.trim()) {
           applyCustomerHistoryAutofill();
@@ -612,6 +620,7 @@
         syncBadge.style.background = '#dcfce7';
         syncBadge.style.color = '#166534';
         lastUpdatedText.textContent = `最終同期: ${data.updatedAt || new Date().toLocaleString('ja-JP')}`;
+        updatePreview();
         if (showMessage) {
           statusText.textContent = '商品マスターと受注履歴を最新化しました';
         }
@@ -880,6 +889,18 @@
       return `${y}-${m}-${d}`;
     }
 
+    issuerInput.addEventListener('change', () => {
+      const val = issuerInput.value.trim();
+      if (val) {
+        localStorage.setItem(STORAGE_KEY_DEVICE_ISSUER, val);
+        statusText.textContent = `この端末の発行者を「${val}」として保存しました`;
+      } else {
+        localStorage.removeItem(STORAGE_KEY_DEVICE_ISSUER);
+        statusText.textContent = '端末の発行者記憶をクリアしました';
+      }
+      updatePreview();
+    });
+
     userNameInput.addEventListener('change', () => {
       applyCustomerHistoryAutofill();
     });
@@ -922,6 +943,7 @@
     });
 
     clearBasicBtn.addEventListener('click', () => {
+      // 端末記憶の発行者（issuer）は維持し、それ以外の基本情報をクリア
       ['userName', 'contactPerson', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
         document.getElementById(id).value = '';
       });
@@ -929,7 +951,7 @@
       destinationSelect.value = '貴社';
       refreshGlobalSuggestions();
       updatePreview();
-      statusText.textContent = '基本情報をクリアしました';
+      statusText.textContent = '基本情報をクリアしました（端末の発行者設定は維持）';
     });
 
     addItemBtn.addEventListener('click', () => {
@@ -971,6 +993,7 @@
     if (savedUrl) {
       gasUrlInput.value = savedUrl;
     }
+    applyDeviceOrGasIssuer('');
     refreshGlobalSuggestions();
     addItemRow({ 単位: '缶' });
     updatePreview();
