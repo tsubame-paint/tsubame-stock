@@ -10,9 +10,12 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background-color: #f0f2f5;
       margin: 0;
-      padding: 0 0 84px 0;
+      padding: 0 0 24px 0;
       color: #1c1e21;
       -webkit-tap-highlight-color: transparent;
+    }
+    body.order-pick-mode {
+      padding-bottom: 84px;
     }
 
     .container { max-width: 500px; margin: 0 auto; padding: 12px; }
@@ -139,6 +142,7 @@
     }
 
     .select-item-btn {
+      display: none;
       padding: 6px 12px;
       font-size: 0.82rem;
       font-weight: 700;
@@ -148,6 +152,11 @@
       color: #1a73e8;
       cursor: pointer;
       transition: all 0.12s ease;
+    }
+    body.order-pick-mode .select-item-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .select-item-btn:hover {
       background: #e8f0fe;
@@ -174,8 +183,9 @@
     #loading { text-align: center; padding: 40px 0; color: #5f6368; display: none; }
     #no-result { text-align: center; padding: 30px; color: #70757a; background: #fff; border-radius: 12px; display: none; }
 
-    /* 選択バー（画面下部固定） */
+    /* 選択バー（注文フォーム経由時のみ表示） */
     .selection-bar {
+      display: none;
       position: fixed;
       left: 0;
       right: 0;
@@ -185,6 +195,9 @@
       color: #ffffff;
       padding: 10px 14px;
       box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.18);
+    }
+    body.order-pick-mode .selection-bar {
+      display: block;
     }
     .selection-bar-inner {
       max-width: 500px;
@@ -278,7 +291,7 @@
   <div id="item-list"></div>
 </div>
 
-<!-- 選択バー（画面下部固定） -->
+<!-- 選択バー（注文フォーム経由時のみ表示） -->
 <div id="selectionBar" class="selection-bar">
   <div class="selection-bar-inner">
     <div id="selectionCountText" class="selection-info">選択中：0 件</div>
@@ -308,11 +321,18 @@
 
   const selectedItemsMap = new Map();
   const urlParams = new URLSearchParams(window.location.search);
+  const isOrderPickMode = urlParams.get("fromOrder") === "1";
   const returnUrlFromParam = urlParams.get("returnUrl") || "";
+
+  if (isOrderPickMode) {
+    document.body.classList.add('order-pick-mode');
+  }
 
   window.addEventListener('DOMContentLoaded', () => {
     loadCustomerData();
-    updateSelectionBar();
+    if (isOrderPickMode) {
+      updateSelectionBar();
+    }
     setInterval(updateTimeDisplay, 60000);
 
     window.addEventListener('scroll', () => {
@@ -328,6 +348,7 @@
   }
 
   function toggleSelectItem(itemKey) {
+    if (!isOrderPickMode) return;
     const item = allItems.find(it => getItemKey(it) === itemKey);
     if (!item) return;
 
@@ -350,7 +371,7 @@
   }
 
   function updateCardSelectionState(itemKey) {
-    const isSel = selectedItemsMap.has(itemKey);
+    const isSel = isOrderPickMode && selectedItemsMap.has(itemKey);
     const card = document.querySelector(`.item-card[data-item-key="${CSS.escape(itemKey)}"]`);
     const btn = document.querySelector(`.select-item-btn[data-item-key="${CSS.escape(itemKey)}"]`);
     if (card) {
@@ -363,6 +384,7 @@
   }
 
   function clearSelectedItems() {
+    if (!isOrderPickMode) return;
     const keys = Array.from(selectedItemsMap.keys());
     selectedItemsMap.clear();
     keys.forEach(k => updateCardSelectionState(k));
@@ -370,6 +392,7 @@
   }
 
   function updateSelectionBar() {
+    if (!isOrderPickMode) return;
     const countEl = document.getElementById('selectionCountText');
     const returnBtn = document.getElementById('returnToOrderBtn');
     const count = selectedItemsMap.size;
@@ -378,6 +401,7 @@
   }
 
   function returnToOrderForm() {
+    if (!isOrderPickMode) return;
     const itemsToSend = Array.from(selectedItemsMap.values());
     try {
       localStorage.setItem(SELECTED_STOCK_KEY, JSON.stringify(itemsToSend));
@@ -520,7 +544,7 @@
 
     targetItems.forEach(item => {
       const itemKey = getItemKey(item);
-      const isSel = selectedItemsMap.has(itemKey);
+      const isSel = isOrderPickMode && selectedItemsMap.has(itemKey);
 
       const card = document.createElement('div');
       card.className = 'item-card' + (isSel ? ' is-selected' : '');
