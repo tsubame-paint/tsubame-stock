@@ -243,7 +243,7 @@
             <label for="contactSelect">担当者（選択・空白・手入力）</label>
             <div class="contact-stack">
               <select id="contactSelect" aria-label="担当者候補選択">
-                <option value="__BLANK__">（担当者なし・空白）</option>
+                <option value=""></option>
                 <option value="__CUSTOM__">（手入力・その他）</option>
               </select>
               <div id="contactCustomWrap" class="input-clear-wrap" style="display: none;">
@@ -406,7 +406,6 @@
   <script>
     const MAX_ITEMS = 6;
     const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
-    const CONTACT_BLANK_TOKEN = '__BLANK__';
     const CONTACT_CUSTOM_TOKEN = '__CUSTOM__';
     const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
     const STORAGE_KEY_DEVICE_ISSUER = 'tsubame_device_issuer_v1';
@@ -694,7 +693,7 @@
     }
 
     /**
-     * 担当者セレクトの選択肢を更新する（担当者あり・空白・手入力を常に明示）
+     * 担当者セレクトの選択肢を更新する（空白選択肢は表示も値も文字なし `""`）
      */
     function rebuildContactSelectOptions(names = [], desiredValue = '', forceCustom = false) {
       contactSelect.innerHTML = '';
@@ -707,8 +706,8 @@
       });
 
       const blankOpt = document.createElement('option');
-      blankOpt.value = CONTACT_BLANK_TOKEN;
-      blankOpt.textContent = '（担当者なし・空白）';
+      blankOpt.value = '';
+      blankOpt.textContent = '';
       contactSelect.appendChild(blankOpt);
 
       const customOpt = document.createElement('option');
@@ -730,14 +729,14 @@
         contactCustomWrap.style.display = 'flex';
         contactPersonInput.value = cleanDesired;
       } else {
-        contactSelect.value = CONTACT_BLANK_TOKEN;
+        contactSelect.value = '';
         contactCustomWrap.style.display = 'none';
         contactPersonInput.value = '';
       }
     }
 
     function getActiveContactValue() {
-      if (contactSelect.value === CONTACT_BLANK_TOKEN) return '';
+      if (contactSelect.value === '') return '';
       if (contactSelect.value === CONTACT_CUSTOM_TOKEN) {
         return contactPersonInput.value.trim();
       }
@@ -774,7 +773,6 @@
       }
 
       const contactInfo = getMasterContactEntries(selectedUser);
-      // 担当者ありの登録があれば先頭を初期反映、空白行のみなら「（担当者なし・空白）」にする
       const defaultContact = contactInfo.names.length > 0 ? contactInfo.names[0] : '';
       rebuildContactSelectOptions(contactInfo.names, defaultContact, false);
 
@@ -832,7 +830,7 @@
       const selectedUser = userNameInput.value.trim();
       const selectedMode = contactSelect.value;
 
-      if (selectedMode === CONTACT_BLANK_TOKEN) {
+      if (selectedMode === '') {
         contactCustomWrap.style.display = 'none';
         contactPersonInput.value = '';
       } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
@@ -844,7 +842,7 @@
       }
 
       if (!selectedUser) {
-        if (selectedMode === CONTACT_BLANK_TOKEN) {
+        if (selectedMode === '') {
           statusText.textContent = '担当者を空白に設定しました';
         } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
           statusText.textContent = '担当者を手入力するモードに切り替えました';
@@ -891,9 +889,9 @@
         uniqueValues(pool.map((r) => r.siteAddress).concat(sameUserRows.map((r) => r.siteAddress)).concat(orders.map((o) => o.siteAddress)))
       );
 
-      if (selectedMode === CONTACT_BLANK_TOKEN && exactRows.length > 0) {
+      if (selectedMode === '' && exactRows.length > 0) {
         statusText.textContent = `「${selectedUser} / 担当者空白」に一致する現場名・電話番号・現場住所を反映しました`;
-      } else if (selectedMode === CONTACT_BLANK_TOKEN) {
+      } else if (selectedMode === '') {
         statusText.textContent = `「${selectedUser}」の担当者を空白に設定しました`;
       } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
         statusText.textContent = `「${selectedUser}」の担当者を手入力できます`;
@@ -930,7 +928,7 @@
         siteAddressInput.value = nextAddress;
       }
 
-      if (selectedSite && !contactPersonInput.value.trim() && targetRow.contactPerson && contactSelect.value !== CONTACT_BLANK_TOKEN) {
+      if (selectedSite && !contactPersonInput.value.trim() && targetRow.contactPerson && contactSelect.value !== '') {
         const contactInfo = getMasterContactEntries(selectedUser);
         rebuildContactSelectOptions(contactInfo.names, targetRow.contactPerson, false);
       }
@@ -1308,7 +1306,7 @@
         if (!el) return;
         el.value = '';
         if (targetId === 'contactPerson') {
-          contactSelect.value = CONTACT_BLANK_TOKEN;
+          contactSelect.value = '';
           contactCustomWrap.style.display = 'none';
           applyCustomerByContactAutofill();
         } else {
