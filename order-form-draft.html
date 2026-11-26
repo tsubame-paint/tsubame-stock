@@ -254,7 +254,7 @@
           <div class="field">
             <label for="phone">電話番号</label>
             <div class="input-clear-wrap">
-              <input id="phone" name="電話番号" type="tel" list="phoneList" placeholder="例：090-2524-8332" />
+              <input id="phone" name="電話番号" type="tel" list="phoneList" placeholder="顧客マスター連動または手入力" />
               <button type="button" class="field-clear-btn" data-clear-target="phone" data-label="電話番号" title="電話番号を削除">×</button>
             </div>
           </div>
@@ -555,6 +555,7 @@
     const contactCustomWrap = document.getElementById('contactCustomWrap');
     const contactPersonInput = document.getElementById('contactPerson');
     const phoneInput = document.getElementById('phone');
+    const phoneListEl = document.getElementById('phoneList');
     const siteNameInput = document.getElementById('siteName');
     const siteAddressInput = document.getElementById('siteAddress');
     const destinationSelect = document.getElementById('destination');
@@ -578,6 +579,40 @@
         opt.value = val;
         datalistEl.appendChild(opt);
       });
+    }
+
+    /**
+     * 現在選択されているユーザー名・担当者に紐づく電話番号のみを候補として返す
+     * （全顧客の番号は出さず、担当者の番号のみに限定する）
+     */
+    function getScopedPhoneCandidates(selectedUser, selectedContact = '') {
+      const user = String(selectedUser || '').trim();
+      const contact = String(selectedContact || '').trim();
+      if (!user) return [];
+
+      const sameUserRows = (catalogState.customerOrders || []).filter(
+        (o) => String(o.userName || '').trim() === user
+      );
+      if (sameUserRows.length === 0) return [];
+
+      const exactContactRows = sameUserRows.filter(
+        (o) => String(o.contactPerson || '').trim() === contact
+      );
+      const targetRows = exactContactRows.length > 0 ? exactContactRows : sameUserRows;
+      return uniqueValues(targetRows.map((r) => r.phone));
+    }
+
+    function syncScopedPhoneList(autoSelectIfSingle = false) {
+      const selectedUser = userNameInput.value.trim();
+      const selectedContact = getActiveContactValue();
+      const scopedPhones = getScopedPhoneCandidates(selectedUser, selectedContact);
+
+      setDatalistOptions(phoneListEl, scopedPhones);
+
+      if (autoSelectIfSingle && !phoneInput.value.trim() && scopedPhones.length === 1) {
+        phoneInput.value = scopedPhones[0];
+      }
+      return scopedPhones;
     }
 
     function restoreIssuerIfMissing(data = {}) {
@@ -648,14 +683,11 @@
         : masterUsers;
 
       setDatalistOptions(document.getElementById('userList'), userCandidates);
-      setDatalistOptions(document.getElementById('phoneList'), orders.map((o) => o.phone));
       setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
       setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
+      syncScopedPhoneList(false);
     }
 
-    /**
-     * 「顧客マスター」からユーザー名ごとの担当者一覧（空白行の有無を含む）を返す
-     */
     function getMasterContactEntries(selectedUser) {
       const user = String(selectedUser || '').trim();
       if (!user) return { names: [], hasBlank: false };
@@ -691,10 +723,6 @@
       return { names, hasBlank };
     }
 
-    /**
-     * 担当者セレクトの選択肢を更新する
-     * 顧客マスターに空白行がある場合（hasBlank === true）のみ <option value=""></option> を追加する
-     */
     function rebuildContactSelectOptions(names = [], hasBlank = false, desiredValue = '', forceCustom = false) {
       contactSelect.innerHTML = '';
 
@@ -778,6 +806,7 @@
 
       if (!selectedUser) {
         rebuildContactSelectOptions([], false, '', false);
+        setDatalistOptions(phoneListEl, []);
         setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
         setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
         return;
@@ -791,6 +820,7 @@
       const latestOrder = sameUserRows[0];
 
       if (!latestOrder && contactInfo.names.length === 0 && !contactInfo.hasBlank) {
+        setDatalistOptions(phoneListEl, []);
         statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（手入力を選択可能）`;
         return;
       }
@@ -820,6 +850,7 @@
         deliveryRequestInput.value = targetForMeta.deliveryRequest || '';
       }
 
+      syncScopedPhoneList(false);
       setDatalistOptions(
         document.getElementById('siteNameList'),
         getFilteredSiteNames(selectedUser, activeContact)
@@ -856,6 +887,7 @@
       }
 
       if (!selectedUser) {
+        setDatalistOptions(phoneListEl, []);
         if (selectedMode === '') {
           statusText.textContent = '担当者を空白に設定しました';
         } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
@@ -867,7 +899,10 @@
       const selectedContact = getActiveContactValue();
       const orders = catalogState.customerOrders || [];
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
-      if (sameUserRows.length === 0) return;
+      if (sameUserRows.length === 0) {
+        setDatalistOptions(phoneListEl, []);
+        return;
+      }
 
       const exactRows = sameUserRows.filter(
         (o) => String(o.contactPerson || '').trim() === selectedContact
@@ -894,6 +929,7 @@
         deliveryRequestInput.value = targetRow.deliveryRequest || '';
       }
 
+      syncScopedPhoneList(false);
       setDatalistOptions(
         document.getElementById('siteNameList'),
         getFilteredSiteNames(selectedUser, selectedContact)
@@ -946,7 +982,7 @@
         const contactInfo = getMasterContactEntries(selectedUser);
         rebuildContactSelectOptions(contactInfo.names, contactInfo.hasBlank, targetRow.contactPerson, false);
       }
-      if (selectedSite && !phoneInput.value.trim() && targetRow.phone) {
+      if (targetRow.phone) {
         phoneInput.value = targetRow.phone;
       }
       if (targetRow.destination) {
@@ -959,13 +995,14 @@
         deliveryRequestInput.value = targetRow.deliveryRequest || '';
       }
 
+      syncScopedPhoneList(false);
       setDatalistOptions(
         document.getElementById('siteAddressList'),
         uniqueValues(pool.map((r) => r.siteAddress).concat(sameUserRows.map((r) => r.siteAddress)).concat(orders.map((o) => o.siteAddress)))
       );
 
       if (selectedSite && siteRows.length > 0) {
-        statusText.textContent = `「${selectedUser} / ${selectedSite}」に一致する現場住所を反映しました`;
+        statusText.textContent = `「${selectedUser} / ${selectedSite}」に一致する現場住所・電話番号を反映しました`;
       } else if (selectedSite) {
         statusText.textContent = `「${selectedSite}」の登録住所がないため、「${selectedUser}」の登録情報を維持しました`;
       }
@@ -1324,10 +1361,18 @@
           contactSelect.value = hasBlankOption ? '' : CONTACT_CUSTOM_TOKEN;
           contactCustomWrap.style.display = hasBlankOption ? 'none' : 'flex';
           applyCustomerByContactAutofill();
+        } else if (targetId === 'phone') {
+          const scopedPhones = syncScopedPhoneList(false);
+          phoneInput.focus();
+          if (scopedPhones.length > 0) {
+            statusText.textContent = `「電話番号」をクリアしました（選択中担当者の番号候補 ${scopedPhones.length}件を表示・手入力可）`;
+          } else {
+            statusText.textContent = '「電話番号」をクリアしました（手入力してください）';
+          }
         } else {
           el.dispatchEvent(new Event('change', { bubbles: true }));
+          statusText.textContent = `「${labelText}」を削除しました`;
         }
-        statusText.textContent = `「${labelText}」を削除しました`;
       });
     });
 
@@ -1394,6 +1439,7 @@
         document.getElementById(id).value = '';
       });
       rebuildContactSelectOptions([], false, '', false);
+      setDatalistOptions(phoneListEl, []);
       document.getElementById('deliveryTime').value = '';
       destinationSelect.value = '貴社';
       refreshGlobalSuggestions();
