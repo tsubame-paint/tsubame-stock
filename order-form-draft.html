@@ -416,6 +416,7 @@
       updatedAt: 'オフライン初期値',
       makers: ['エスケー', 'ニッペ', 'カンペ', 'キクスイ', '大塚', 'フジワラ', '大阪ガス'],
       issuers: ['今井', '佐々木'],
+      deliveryRequests: ['前橋', '現場直送', '直送', '白岡引き取り', 'マルテー行田引き取り'],
       productsByMaker: {
         'エスケー': ['プレミアムシリコン', 'クリーンマイルドウレタン', 'マイルドシーラーEPO'],
         'ニッペ': ['ケンエースGⅡ', '水性ケンエース', '1液ファインウレタンU100'],
@@ -514,6 +515,8 @@
     let catalogState = {
       makers: [...FALLBACK_DATA.makers],
       issuers: [...FALLBACK_DATA.issuers],
+      deliveryRequests: [...FALLBACK_DATA.deliveryRequests],
+      hasSheetDeliveryRequests: false,
       productsByMaker: { ...FALLBACK_DATA.productsByMaker },
       historyByProduct: { ...FALLBACK_DATA.historyByProduct },
       rankedUsers: [...FALLBACK_DATA.rankedUsers],
@@ -523,7 +526,6 @@
 
     let lastSyncedIssuerKey = '';
 
-    // 電話番号・届け先の自動連動キャンセル（ロック）状態
     const linkCancelled = {
       phone: false,
       destination: false
@@ -567,6 +569,7 @@
     const siteAddressInput = document.getElementById('siteAddress');
     const destinationSelect = document.getElementById('destination');
     const deliveryRequestInput = document.getElementById('deliveryRequest');
+    const deliveryReqListEl = document.getElementById('deliveryReqList');
 
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItemBtn');
@@ -601,9 +604,6 @@
       }
     }
 
-    /**
-     * 現在選択されているユーザー名・担当者に紐づく電話番号のみを候補として返す
-     */
     function getScopedPhoneCandidates(selectedUser, selectedContact = '') {
       const user = String(selectedUser || '').trim();
       const contact = String(selectedContact || '').trim();
@@ -688,6 +688,11 @@
         uniqueValues([...FALLBACK_DATA.issuers, ...(catalogState.issuers || [])])
       );
       setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
+
+      const deliveryReqCandidates = catalogState.hasSheetDeliveryRequests
+        ? uniqueValues(catalogState.deliveryRequests || [])
+        : uniqueValues([...FALLBACK_DATA.deliveryRequests, ...(catalogState.deliveryRequests || [])]);
+      setDatalistOptions(deliveryReqListEl, deliveryReqCandidates);
 
       const orders = catalogState.customerOrders || [];
       const ranked = uniqueValues(catalogState.rankedUsers || []);
@@ -796,9 +801,6 @@
       return contactSelect.value.trim();
     }
 
-    /**
-     * 選択されたユーザー名・担当者に紐づく現場名一覧を返す
-     */
     function getFilteredSiteNames(selectedUser, selectedContact = '') {
       const orders = catalogState.customerOrders || [];
       const user = String(selectedUser || '').trim();
@@ -819,9 +821,6 @@
       return uniqueValues(sameUserRows.map((r) => r.siteName));
     }
 
-    /**
-     * ユーザー名選択時：現場名は初期値でセットせず、ユーザー名に紐づく現場名候補だけを用意する
-     */
     function applyCustomerHistoryAutofill() {
       const selectedUser = userNameInput.value.trim();
       const orders = catalogState.customerOrders || [];
@@ -841,7 +840,6 @@
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       const latestOrder = sameUserRows[0];
 
-      // 現場名は初期値で自動セットしない（空欄のまま選択・入力できるようにする）
       siteNameInput.value = '';
 
       if (!latestOrder && contactInfo.names.length === 0 && !contactInfo.hasBlank) {
@@ -884,9 +882,6 @@
       }
     }
 
-    /**
-     * 担当者変更時：現場名は自動セットせず、選択中担当者に紐づく現場名候補を更新する
-     */
     function applyCustomerByContactAutofill() {
       const selectedUser = userNameInput.value.trim();
       const selectedMode = contactSelect.value;
@@ -962,10 +957,6 @@
       }
     }
 
-    /**
-     * 現場名選択時：ユーザー名・現場名に紐づく 現場住所・電話番号・届け先・配達依頼 を反映
-     * （電話番号・届け先がキャンセルされている場合は反映しない）
-     */
     function applyAddressBySiteAutofill() {
       const selectedUser = userNameInput.value.trim();
       const selectedContact = getActiveContactValue();
@@ -1041,9 +1032,16 @@
           throw new Error((data && data.error) || 'データの取得に失敗しました');
         }
 
+        const rawDeliveryRequests = Array.isArray(data.deliveryRequests)
+          ? data.deliveryRequests
+          : (Array.isArray(data.formAdminDeliveryRequests) ? data.formAdminDeliveryRequests : []);
+        const cleanedDeliveryRequests = uniqueValues(rawDeliveryRequests);
+
         catalogState = {
           makers: uniqueValues(data.makers),
           issuers: uniqueValues(data.issuers),
+          deliveryRequests: cleanedDeliveryRequests.length > 0 ? cleanedDeliveryRequests : [...FALLBACK_DATA.deliveryRequests],
+          hasSheetDeliveryRequests: cleanedDeliveryRequests.length > 0,
           productsByMaker: data.productsByMaker || {},
           historyByProduct: data.historyByProduct || {},
           rankedUsers: Array.isArray(data.rankedUsers) ? uniqueValues(data.rankedUsers) : [],
@@ -1068,7 +1066,7 @@
         }
 
         if (showMessage) {
-          statusText.textContent = '顧客ランキング・商品マスター・顧客マスターを最新化しました';
+          statusText.textContent = '顧客ランキング・商品マスター・顧客マスター・フォーム管理を最新化しました';
         }
       } catch (err) {
         if (showMessage) {
