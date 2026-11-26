@@ -107,11 +107,6 @@
       background: #fee2e2;
       color: var(--danger);
     }
-    .contact-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
     input, select, textarea {
       width: 100%;
       padding: 8px 10px;
@@ -210,7 +205,7 @@
     <div class="topbar">
       <div>
         <h1>受注フォーム（GAS連動・v5）</h1>
-        <div class="sub">端末ごとの発行者記憶・発行者マスター自動保管・ユーザー名選択で顧客マスター連動＆明細絞り込み</div>
+        <div class="sub">端末ごとの発行者記憶・発行者マスター自動保管・候補選択と自由入力を1欄に集約</div>
       </div>
     </div>
 
@@ -233,27 +228,17 @@
             </div>
           </div>
           <div class="field">
-            <label for="userSelect">ユーザー名（選択・手入力）</label>
-            <div class="contact-stack">
-              <select id="userSelect" aria-label="ユーザー名候補選択">
-                <option value="__CUSTOM__">（手入力・その他）</option>
-              </select>
-              <div class="input-clear-wrap">
-                <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="例：中澤塗装㈱ / ㈲アベル" required />
-                <button type="button" class="field-clear-btn" data-clear-target="userName" data-label="ユーザー名" title="ユーザー名を削除">×</button>
-              </div>
+            <label for="userName">ユーザー名（選択・入力）</label>
+            <div class="input-clear-wrap">
+              <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="選択または入力（例：中澤塗装㈱ / ㈲アベル）" required />
+              <button type="button" class="field-clear-btn" data-clear-target="userName" data-label="ユーザー名" title="ユーザー名を削除">×</button>
             </div>
           </div>
           <div class="field">
-            <label for="contactSelect">担当者（選択・空白・手入力）</label>
-            <div class="contact-stack">
-              <select id="contactSelect" aria-label="担当者候補選択">
-                <option value="__CUSTOM__">（手入力・その他）</option>
-              </select>
-              <div id="contactCustomWrap" class="input-clear-wrap" style="display: none;">
-                <input id="contactPerson" name="担当者" type="text" placeholder="担当者名を手入力" />
-                <button type="button" class="field-clear-btn" data-clear-target="contactPerson" data-label="担当者" title="担当者を削除">×</button>
-              </div>
+            <label for="contactPerson">担当者（選択・空白・入力）</label>
+            <div class="input-clear-wrap">
+              <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="選択・空白・手入力" />
+              <button type="button" class="field-clear-btn" data-clear-target="contactPerson" data-label="担当者" title="担当者を削除">×</button>
             </div>
           </div>
           <div class="field">
@@ -267,15 +252,10 @@
 
         <div class="grid-3" style="margin-top: 10px;">
           <div class="field">
-            <label for="siteSelect">現場名（選択・手入力）</label>
-            <div class="contact-stack">
-              <select id="siteSelect" aria-label="現場名候補選択">
-                <option value="__CUSTOM__">（手入力・その他）</option>
-              </select>
-              <div class="input-clear-wrap">
-                <input id="siteName" name="現場名" type="text" list="siteNameList" placeholder="ユーザー名を選ぶと現場名を選べます" />
-                <button type="button" class="field-clear-btn" data-clear-target="siteName" data-label="現場名" title="現場名を削除">×</button>
-              </div>
+            <label for="siteName">現場名（選択・入力）</label>
+            <div class="input-clear-wrap">
+              <input id="siteName" name="現場名" type="text" list="siteNameList" placeholder="選択または入力" />
+              <button type="button" class="field-clear-btn" data-clear-target="siteName" data-label="現場名" title="現場名を削除">×</button>
             </div>
           </div>
           <div class="field">
@@ -315,41 +295,26 @@
             </div>
           </div>
           <div class="field">
-            <label for="deliveryReqSelect">配達依頼（選択・手入力）</label>
-            <div class="contact-stack">
-              <select id="deliveryReqSelect" aria-label="配達依頼候補選択">
-                <option value="__CUSTOM__">（手入力・その他）</option>
-              </select>
-              <div class="input-clear-wrap">
-                <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="選択または入力" />
-                <button type="button" class="field-clear-btn" data-clear-target="deliveryRequest" data-label="配達依頼" title="配達依頼を削除">×</button>
-              </div>
+            <label for="deliveryRequest">配達依頼（選択・入力）</label>
+            <div class="input-clear-wrap">
+              <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="選択または入力" />
+              <button type="button" class="field-clear-btn" data-clear-target="deliveryRequest" data-label="配達依頼" title="配達依頼を削除">×</button>
             </div>
           </div>
           <div class="field">
-            <label for="orderSourceSelect">発注先（選択・手入力）</label>
-            <div class="contact-stack">
-              <select id="orderSourceSelect" aria-label="発注先候補選択">
-                <option value="__CUSTOM__">（手入力・その他）</option>
-              </select>
-              <div class="input-clear-wrap">
-                <input id="orderSource" name="発注先" type="text" list="orderSourceList" placeholder="選択または入力" />
-                <button type="button" class="field-clear-btn" data-clear-target="orderSource" data-label="発注先" title="発注先を削除">×</button>
-              </div>
+            <label for="orderSource">発注先（選択・入力）</label>
+            <div class="input-clear-wrap">
+              <input id="orderSource" name="発注先" type="text" list="orderSourceList" placeholder="選択または入力" />
+              <button type="button" class="field-clear-btn" data-clear-target="orderSource" data-label="発注先" title="発注先を削除">×</button>
             </div>
           </div>
         </div>
 
         <div class="field" style="margin-top: 10px;">
-          <label for="siteAddressSelect">現場住所（選択・手入力）</label>
-          <div class="contact-stack">
-            <select id="siteAddressSelect" aria-label="現場住所候補選択">
-              <option value="__CUSTOM__">（手入力・その他）</option>
-            </select>
-            <div class="input-clear-wrap">
-              <input id="siteAddress" name="現場住所" type="text" list="siteAddressList" placeholder="例：〒272-0133 千葉県市川市行徳駅前2丁目11−2" />
-              <button type="button" class="field-clear-btn" data-clear-target="siteAddress" data-label="現場住所" title="現場住所を削除">×</button>
-            </div>
+          <label for="siteAddress">現場住所（選択・入力）</label>
+          <div class="input-clear-wrap">
+            <input id="siteAddress" name="現場住所" type="text" list="siteAddressList" placeholder="選択または入力（例：〒272-0133 千葉県市川市行徳駅前2丁目11−2）" />
+            <button type="button" class="field-clear-btn" data-clear-target="siteAddress" data-label="現場住所" title="現場住所を削除">×</button>
           </div>
         </div>
 
@@ -395,6 +360,7 @@
     <option value="佐々木"></option>
   </datalist>
   <datalist id="userList"></datalist>
+  <datalist id="contactList"></datalist>
   <datalist id="phoneList"></datalist>
   <datalist id="siteNameList"></datalist>
   <datalist id="siteAddressList"></datalist>
@@ -425,7 +391,6 @@
   <script>
     const MAX_ITEMS = 6;
     const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
-    const CONTACT_CUSTOM_TOKEN = '__CUSTOM__';
     const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
     const STORAGE_KEY_DEVICE_ISSUER = 'tsubame_device_issuer_v1';
     const STORAGE_KEY_DEVICE_ID = 'tsubame_device_id_v1';
@@ -537,9 +502,7 @@
       makers: [...FALLBACK_DATA.makers],
       issuers: [...FALLBACK_DATA.issuers],
       deliveryRequests: [...FALLBACK_DATA.deliveryRequests],
-      hasSheetDeliveryRequests: false,
       orderSources: [...FALLBACK_DATA.orderSources],
-      hasSheetOrderSources: false,
       productsByMaker: { ...FALLBACK_DATA.productsByMaker },
       historyByProduct: { ...FALLBACK_DATA.historyByProduct },
       rankedUsers: [...FALLBACK_DATA.rankedUsers],
@@ -581,23 +544,18 @@
     const deviceId = getOrCreateDeviceId();
 
     const issuerInput = document.getElementById('issuer');
-    const userSelect = document.getElementById('userSelect');
     const userNameInput = document.getElementById('userName');
-    const contactSelect = document.getElementById('contactSelect');
-    const contactCustomWrap = document.getElementById('contactCustomWrap');
+    const contactListEl = document.getElementById('contactList');
     const contactPersonInput = document.getElementById('contactPerson');
     const phoneInput = document.getElementById('phone');
     const phoneListEl = document.getElementById('phoneList');
-    const siteSelect = document.getElementById('siteSelect');
     const siteNameInput = document.getElementById('siteName');
     const siteNameListEl = document.getElementById('siteNameList');
-    const siteAddressSelect = document.getElementById('siteAddressSelect');
     const siteAddressInput = document.getElementById('siteAddress');
+    const siteAddressListEl = document.getElementById('siteAddressList');
     const destinationSelect = document.getElementById('destination');
-    const deliveryReqSelect = document.getElementById('deliveryReqSelect');
     const deliveryRequestInput = document.getElementById('deliveryRequest');
     const deliveryReqListEl = document.getElementById('deliveryReqList');
-    const orderSourceSelect = document.getElementById('orderSourceSelect');
     const orderSourceInput = document.getElementById('orderSource');
     const orderSourceListEl = document.getElementById('orderSourceList');
 
@@ -619,51 +577,6 @@
         opt.value = val;
         datalistEl.appendChild(opt);
       });
-    }
-
-    function rebuildSelectorOptions(selectEl, values = [], currentVal = '', placeholderLabel = '（候補から選択）') {
-      if (!selectEl) return;
-      const list = uniqueValues(values);
-      const cleanCurrent = String(currentVal || '').trim();
-
-      selectEl.innerHTML = '';
-      const emptyOpt = document.createElement('option');
-      emptyOpt.value = '';
-      emptyOpt.textContent = placeholderLabel;
-      selectEl.appendChild(emptyOpt);
-
-      list.forEach((item) => {
-        const opt = document.createElement('option');
-        opt.value = item;
-        opt.textContent = item;
-        selectEl.appendChild(opt);
-      });
-
-      const customOpt = document.createElement('option');
-      customOpt.value = CONTACT_CUSTOM_TOKEN;
-      customOpt.textContent = '（手入力・その他）';
-      selectEl.appendChild(customOpt);
-
-      if (!cleanCurrent) {
-        selectEl.value = '';
-      } else if (list.includes(cleanCurrent)) {
-        selectEl.value = cleanCurrent;
-      } else {
-        selectEl.value = CONTACT_CUSTOM_TOKEN;
-      }
-    }
-
-    function syncSelectorFromInput(selectEl, inputEl, values = []) {
-      if (!selectEl || !inputEl) return;
-      const list = uniqueValues(values);
-      const val = String(inputEl.value || '').trim();
-      if (!val) {
-        selectEl.value = '';
-      } else if (list.includes(val)) {
-        selectEl.value = val;
-      } else {
-        selectEl.value = CONTACT_CUSTOM_TOKEN;
-      }
     }
 
     function getAllUserCandidates() {
@@ -692,24 +605,89 @@
       );
     }
 
-    function refreshFieldSelectorsAndLists() {
-      const userCandidates = getAllUserCandidates();
-      const siteCandidates = getFilteredSiteNames(userNameInput.value.trim(), getActiveContactValue());
-      const deliveryReqCandidates = uniqueValues(catalogState.deliveryRequests || []);
-      const orderSourceCandidates = uniqueValues(catalogState.orderSources || []);
-      const addressCandidates = getAllSiteAddressCandidates();
+    function getMasterContactEntries(selectedUser) {
+      const user = String(selectedUser || '').trim();
+      if (!user) return { names: [], hasBlank: false };
 
-      setDatalistOptions(document.getElementById('userList'), userCandidates);
-      setDatalistOptions(siteNameListEl, siteCandidates);
-      setDatalistOptions(deliveryReqListEl, deliveryReqCandidates);
-      setDatalistOptions(orderSourceListEl, orderSourceCandidates);
-      setDatalistOptions(document.getElementById('siteAddressList'), addressCandidates);
+      const sameUserRows = (catalogState.customerOrders || []).filter(
+        (o) => String(o.userName || '').trim() === user
+      );
 
-      rebuildSelectorOptions(userSelect, userCandidates, userNameInput.value.trim(), '（ユーザー名を選択）');
-      rebuildSelectorOptions(siteSelect, siteCandidates, siteNameInput.value.trim(), '（現場名を選択）');
-      rebuildSelectorOptions(deliveryReqSelect, deliveryReqCandidates, deliveryRequestInput.value.trim(), '（配達依頼を選択）');
-      rebuildSelectorOptions(orderSourceSelect, orderSourceCandidates, orderSourceInput.value.trim(), '（発注先を選択）');
-      rebuildSelectorOptions(siteAddressSelect, addressCandidates, siteAddressInput.value.trim(), '（現場住所を選択）');
+      let names = [];
+      let hasBlank = false;
+
+      if (catalogState.contactsByUser && Object.prototype.hasOwnProperty.call(catalogState.contactsByUser, user)) {
+        const rawList = Array.isArray(catalogState.contactsByUser[user]) ? catalogState.contactsByUser[user] : [];
+        rawList.forEach((item) => {
+          const trimmed = String(item || '').trim();
+          if (trimmed) {
+            if (!names.includes(trimmed)) names.push(trimmed);
+          } else {
+            hasBlank = true;
+          }
+        });
+      }
+
+      sameUserRows.forEach((r) => {
+        const trimmed = String(r.contactPerson || '').trim();
+        if (trimmed) {
+          if (!names.includes(trimmed)) names.push(trimmed);
+        } else {
+          hasBlank = true;
+        }
+      });
+
+      return { names, hasBlank };
+    }
+
+    function syncContactDatalist(selectedUser) {
+      const user = String(selectedUser || '').trim();
+      if (!user) {
+        const allContacts = uniqueValues(
+          Object.values(catalogState.contactsByUser || {})
+            .flat()
+            .concat((catalogState.customerOrders || []).map((o) => o.contactPerson))
+        );
+        setDatalistOptions(contactListEl, allContacts);
+        return;
+      }
+      const info = getMasterContactEntries(user);
+      setDatalistOptions(contactListEl, info.names);
+    }
+
+    function getFilteredSiteNames(selectedUser, selectedContact = '') {
+      const orders = catalogState.customerOrders || [];
+      const user = String(selectedUser || '').trim();
+      const contact = String(selectedContact || '').trim();
+      if (!user) return uniqueValues(orders.map((o) => o.siteName));
+
+      const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === user);
+      if (sameUserRows.length === 0) return [];
+
+      const exactRows = contact
+        ? sameUserRows.filter((o) => String(o.contactPerson || '').trim() === contact)
+        : sameUserRows;
+
+      if (exactRows.length > 0) {
+        return uniqueValues(exactRows.map((r) => r.siteName).concat(sameUserRows.map((r) => r.siteName)));
+      }
+
+      return uniqueValues(sameUserRows.map((r) => r.siteName));
+    }
+
+    function refreshGlobalSuggestions() {
+      setDatalistOptions(
+        document.getElementById('issuerList'),
+        uniqueValues([...FALLBACK_DATA.issuers, ...(catalogState.issuers || [])])
+      );
+      setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
+      setDatalistOptions(document.getElementById('userList'), getAllUserCandidates());
+      syncContactDatalist(userNameInput.value.trim());
+      setDatalistOptions(siteNameListEl, getFilteredSiteNames(userNameInput.value.trim(), contactPersonInput.value.trim()));
+      setDatalistOptions(siteAddressListEl, getAllSiteAddressCandidates());
+      setDatalistOptions(deliveryReqListEl, uniqueValues(catalogState.deliveryRequests || []));
+      setDatalistOptions(orderSourceListEl, uniqueValues(catalogState.orderSources || []));
+      syncScopedPhoneList();
     }
 
     function applyPhoneIfAllowed(nextPhone) {
@@ -744,7 +722,7 @@
 
     function syncScopedPhoneList() {
       const selectedUser = userNameInput.value.trim();
-      const selectedContact = getActiveContactValue();
+      const selectedContact = contactPersonInput.value.trim();
       const scopedPhones = getScopedPhoneCandidates(selectedUser, selectedContact);
       setDatalistOptions(phoneListEl, scopedPhones);
       return scopedPhones;
@@ -803,146 +781,22 @@
       }
     }
 
-    function refreshGlobalSuggestions() {
-      setDatalistOptions(
-        document.getElementById('issuerList'),
-        uniqueValues([...FALLBACK_DATA.issuers, ...(catalogState.issuers || [])])
-      );
-      setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
-
-      refreshFieldSelectorsAndLists();
-      syncScopedPhoneList();
-    }
-
-    function getMasterContactEntries(selectedUser) {
-      const user = String(selectedUser || '').trim();
-      if (!user) return { names: [], hasBlank: false };
-
-      const sameUserRows = (catalogState.customerOrders || []).filter(
-        (o) => String(o.userName || '').trim() === user
-      );
-
-      let names = [];
-      let hasBlank = false;
-
-      if (catalogState.contactsByUser && Object.prototype.hasOwnProperty.call(catalogState.contactsByUser, user)) {
-        const rawList = Array.isArray(catalogState.contactsByUser[user]) ? catalogState.contactsByUser[user] : [];
-        rawList.forEach((item) => {
-          const trimmed = String(item || '').trim();
-          if (trimmed) {
-            if (!names.includes(trimmed)) names.push(trimmed);
-          } else {
-            hasBlank = true;
-          }
-        });
-      }
-
-      sameUserRows.forEach((r) => {
-        const trimmed = String(r.contactPerson || '').trim();
-        if (trimmed) {
-          if (!names.includes(trimmed)) names.push(trimmed);
-        } else {
-          hasBlank = true;
-        }
-      });
-
-      return { names, hasBlank };
-    }
-
-    function rebuildContactSelectOptions(names = [], hasBlank = false, desiredValue = '', forceCustom = false) {
-      contactSelect.innerHTML = '';
-
-      uniqueValues(names).forEach((name) => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        contactSelect.appendChild(opt);
-      });
-
-      if (hasBlank) {
-        const blankOpt = document.createElement('option');
-        blankOpt.value = '';
-        blankOpt.textContent = '';
-        contactSelect.appendChild(blankOpt);
-      }
-
-      const customOpt = document.createElement('option');
-      customOpt.value = CONTACT_CUSTOM_TOKEN;
-      customOpt.textContent = '（手入力・その他）';
-      contactSelect.appendChild(customOpt);
-
-      const cleanDesired = String(desiredValue || '').trim();
-      if (forceCustom) {
-        contactSelect.value = CONTACT_CUSTOM_TOKEN;
-        contactCustomWrap.style.display = 'flex';
-        contactPersonInput.value = cleanDesired;
-      } else if (cleanDesired && uniqueValues(names).includes(cleanDesired)) {
-        contactSelect.value = cleanDesired;
-        contactCustomWrap.style.display = 'none';
-        contactPersonInput.value = cleanDesired;
-      } else if (cleanDesired) {
-        contactSelect.value = CONTACT_CUSTOM_TOKEN;
-        contactCustomWrap.style.display = 'flex';
-        contactPersonInput.value = cleanDesired;
-      } else if (hasBlank) {
-        contactSelect.value = '';
-        contactCustomWrap.style.display = 'none';
-        contactPersonInput.value = '';
-      } else if (uniqueValues(names).length > 0) {
-        const firstName = uniqueValues(names)[0];
-        contactSelect.value = firstName;
-        contactCustomWrap.style.display = 'none';
-        contactPersonInput.value = firstName;
-      } else {
-        contactSelect.value = CONTACT_CUSTOM_TOKEN;
-        contactCustomWrap.style.display = 'flex';
-        contactPersonInput.value = '';
-      }
-    }
-
-    function getActiveContactValue() {
-      if (contactSelect.value === '') return '';
-      if (contactSelect.value === CONTACT_CUSTOM_TOKEN) {
-        return contactPersonInput.value.trim();
-      }
-      return contactSelect.value.trim();
-    }
-
-    function getFilteredSiteNames(selectedUser, selectedContact = '') {
-      const orders = catalogState.customerOrders || [];
-      const user = String(selectedUser || '').trim();
-      const contact = String(selectedContact || '').trim();
-      if (!user) return uniqueValues(orders.map((o) => o.siteName));
-
-      const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === user);
-      if (sameUserRows.length === 0) return [];
-
-      const exactRows = contact
-        ? sameUserRows.filter((o) => String(o.contactPerson || '').trim() === contact)
-        : sameUserRows;
-
-      if (exactRows.length > 0) {
-        return uniqueValues(exactRows.map((r) => r.siteName).concat(sameUserRows.map((r) => r.siteName)));
-      }
-
-      return uniqueValues(sameUserRows.map((r) => r.siteName));
-    }
-
     function applyCustomerHistoryAutofill() {
       const selectedUser = userNameInput.value.trim();
       const orders = catalogState.customerOrders || [];
-      syncSelectorFromInput(userSelect, userNameInput, getAllUserCandidates());
 
       if (!selectedUser) {
-        rebuildContactSelectOptions([], false, '', false);
+        contactPersonInput.value = '';
+        siteNameInput.value = '';
         setDatalistOptions(phoneListEl, []);
-        refreshFieldSelectorsAndLists();
+        refreshGlobalSuggestions();
         return;
       }
 
+      syncContactDatalist(selectedUser);
       const contactInfo = getMasterContactEntries(selectedUser);
       const defaultContact = contactInfo.names.length > 0 ? contactInfo.names[0] : '';
-      rebuildContactSelectOptions(contactInfo.names, contactInfo.hasBlank, defaultContact, false);
+      contactPersonInput.value = defaultContact;
 
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       const latestOrder = sameUserRows[0];
@@ -951,12 +805,12 @@
 
       if (!latestOrder && contactInfo.names.length === 0 && !contactInfo.hasBlank) {
         setDatalistOptions(phoneListEl, []);
-        refreshFieldSelectorsAndLists();
-        statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（手入力を選択可能）`;
+        refreshGlobalSuggestions();
+        statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（手入力可）`;
         return;
       }
 
-      const activeContact = getActiveContactValue();
+      const activeContact = contactPersonInput.value.trim();
       const exactContactRows = sameUserRows.filter(
         (r) => String(r.contactPerson || '').trim() === activeContact
       );
@@ -976,47 +830,30 @@
 
       const siteCandidates = getFilteredSiteNames(selectedUser, activeContact);
       syncScopedPhoneList();
-      refreshFieldSelectorsAndLists();
+      refreshGlobalSuggestions();
 
       if (siteCandidates.length > 0) {
-        statusText.textContent = `「${selectedUser}」の現場名候補（${siteCandidates.length}件）から選択できます（現場名は未選択）`;
+        statusText.textContent = `「${selectedUser}」の現場名候補（${siteCandidates.length}件）から選択または入力できます`;
       } else {
-        statusText.textContent = `「${selectedUser}」の登録情報を反映しました（現場名は手入力可）`;
+        statusText.textContent = `「${selectedUser}」の登録情報を反映しました（現場名は選択・入力可）`;
       }
     }
 
     function applyCustomerByContactAutofill() {
       const selectedUser = userNameInput.value.trim();
-      const selectedMode = contactSelect.value;
-
-      if (selectedMode === '') {
-        contactCustomWrap.style.display = 'none';
-        contactPersonInput.value = '';
-      } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
-        contactCustomWrap.style.display = 'flex';
-        contactPersonInput.focus();
-      } else {
-        contactCustomWrap.style.display = 'none';
-        contactPersonInput.value = selectedMode;
-      }
+      const selectedContact = contactPersonInput.value.trim();
 
       if (!selectedUser) {
         setDatalistOptions(phoneListEl, []);
-        refreshFieldSelectorsAndLists();
-        if (selectedMode === '') {
-          statusText.textContent = '担当者を空白に設定しました';
-        } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
-          statusText.textContent = '担当者を手入力するモードに切り替えました';
-        }
+        refreshGlobalSuggestions();
         return;
       }
 
-      const selectedContact = getActiveContactValue();
       const orders = catalogState.customerOrders || [];
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       if (sameUserRows.length === 0) {
         setDatalistOptions(phoneListEl, []);
-        refreshFieldSelectorsAndLists();
+        refreshGlobalSuggestions();
         return;
       }
 
@@ -1039,16 +876,12 @@
       }
 
       syncScopedPhoneList();
-      refreshFieldSelectorsAndLists();
+      refreshGlobalSuggestions();
 
-      if (selectedMode === '' && exactRows.length > 0) {
-        statusText.textContent = `「${selectedUser} / 担当者空白」に一致する電話番号・現場住所を反映しました`;
-      } else if (selectedMode === '') {
-        statusText.textContent = `「${selectedUser}」の担当者を空白に設定しました`;
-      } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
-        statusText.textContent = `「${selectedUser}」の担当者を手入力できます`;
-      } else if (selectedContact && exactRows.length > 0) {
+      if (selectedContact && exactRows.length > 0) {
         statusText.textContent = `「${selectedUser} / ${selectedContact}」に一致する電話番号・現場住所を反映しました`;
+      } else if (!selectedContact) {
+        statusText.textContent = `「${selectedUser}」の担当者を空白に設定しました`;
       } else {
         statusText.textContent = `「${selectedContact}」の個別一致データがないため、「${selectedUser}」の登録情報を反映しました`;
       }
@@ -1056,15 +889,10 @@
 
     function applyAddressBySiteAutofill() {
       const selectedUser = userNameInput.value.trim();
-      const selectedContact = getActiveContactValue();
+      const selectedContact = contactPersonInput.value.trim();
       const selectedSite = siteNameInput.value.trim();
-      syncSelectorFromInput(
-        siteSelect,
-        siteNameInput,
-        getFilteredSiteNames(selectedUser, selectedContact)
-      );
       if (!selectedUser) {
-        refreshFieldSelectorsAndLists();
+        refreshGlobalSuggestions();
         return;
       }
 
@@ -1088,9 +916,8 @@
         siteAddressInput.value = nextAddress;
       }
 
-      if (selectedSite && !contactPersonInput.value.trim() && targetRow.contactPerson && contactSelect.value !== '') {
-        const contactInfo = getMasterContactEntries(selectedUser);
-        rebuildContactSelectOptions(contactInfo.names, contactInfo.hasBlank, targetRow.contactPerson, false);
+      if (selectedSite && !contactPersonInput.value.trim() && targetRow.contactPerson) {
+        contactPersonInput.value = targetRow.contactPerson;
       }
 
       const nextPhone = targetRow.phone || (pool.find((r) => r.phone) || {}).phone || '';
@@ -1109,7 +936,7 @@
       }
 
       syncScopedPhoneList();
-      refreshFieldSelectorsAndLists();
+      refreshGlobalSuggestions();
 
       if (selectedSite && siteRows.length > 0) {
         statusText.textContent = `「${selectedUser} / ${selectedSite}」に紐づく現場住所・電話番号・届け先・配達依頼を反映しました`;
@@ -1148,9 +975,7 @@
           makers: uniqueValues(data.makers),
           issuers: uniqueValues(data.issuers),
           deliveryRequests: cleanedDeliveryRequests,
-          hasSheetDeliveryRequests: cleanedDeliveryRequests.length > 0,
           orderSources: cleanedOrderSources,
-          hasSheetOrderSources: cleanedOrderSources.length > 0,
           productsByMaker: data.productsByMaker || {},
           historyByProduct: data.historyByProduct || {},
           rankedUsers: Array.isArray(data.rankedUsers) ? uniqueValues(data.rankedUsers) : [],
@@ -1449,7 +1274,7 @@
       for (const [key, value] of formData.entries()) {
         payload[key] = value;
       }
-      payload['担当者'] = getActiveContactValue();
+      payload['担当者'] = contactPersonInput.value.trim();
       if (payload['希望納期']) {
         payload['希望納期'] = payload['希望納期'].replace(/-/g, '/');
       }
@@ -1501,15 +1326,8 @@
         }
 
         el.value = '';
-        if (targetId === 'contactPerson') {
-          const hasBlankOption = Array.from(contactSelect.options).some((opt) => opt.value === '');
-          contactSelect.value = hasBlankOption ? '' : CONTACT_CUSTOM_TOKEN;
-          contactCustomWrap.style.display = hasBlankOption ? 'none' : 'flex';
-          applyCustomerByContactAutofill();
-        } else {
-          el.dispatchEvent(new Event('change', { bubbles: true }));
-          statusText.textContent = `「${labelText}」を削除しました`;
-        }
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        statusText.textContent = `「${labelText}」を削除しました`;
       });
     });
 
@@ -1537,91 +1355,18 @@
       }
     });
 
-    userSelect.addEventListener('change', () => {
-      const mode = userSelect.value;
-      if (mode === CONTACT_CUSTOM_TOKEN) {
-        userNameInput.focus();
-        statusText.textContent = 'ユーザー名を手入力できます';
-        return;
-      }
-      userNameInput.value = mode;
-      linkCancelled.phone = false;
-      linkCancelled.destination = false;
-      applyCustomerHistoryAutofill();
-    });
-
     userNameInput.addEventListener('change', () => {
       linkCancelled.phone = false;
       linkCancelled.destination = false;
       applyCustomerHistoryAutofill();
     });
 
-    contactSelect.addEventListener('change', () => {
-      applyCustomerByContactAutofill();
-    });
-
     contactPersonInput.addEventListener('change', () => {
       applyCustomerByContactAutofill();
     });
 
-    siteSelect.addEventListener('change', () => {
-      const mode = siteSelect.value;
-      if (mode === CONTACT_CUSTOM_TOKEN) {
-        siteNameInput.focus();
-        statusText.textContent = '現場名を手入力できます';
-        return;
-      }
-      siteNameInput.value = mode;
-      applyAddressBySiteAutofill();
-    });
-
     siteNameInput.addEventListener('change', () => {
       applyAddressBySiteAutofill();
-    });
-
-    deliveryReqSelect.addEventListener('change', () => {
-      const mode = deliveryReqSelect.value;
-      if (mode === CONTACT_CUSTOM_TOKEN) {
-        deliveryRequestInput.focus();
-        statusText.textContent = '配達依頼を手入力できます';
-        return;
-      }
-      deliveryRequestInput.value = mode;
-      statusText.textContent = mode ? `配達依頼に「${mode}」を反映しました` : '配達依頼をクリアしました';
-    });
-
-    deliveryRequestInput.addEventListener('change', () => {
-      syncSelectorFromInput(deliveryReqSelect, deliveryRequestInput, catalogState.deliveryRequests || []);
-    });
-
-    orderSourceSelect.addEventListener('change', () => {
-      const mode = orderSourceSelect.value;
-      if (mode === CONTACT_CUSTOM_TOKEN) {
-        orderSourceInput.focus();
-        statusText.textContent = '発注先を手入力できます';
-        return;
-      }
-      orderSourceInput.value = mode;
-      statusText.textContent = mode ? `発注先に「${mode}」を反映しました` : '発注先をクリアしました';
-    });
-
-    orderSourceInput.addEventListener('change', () => {
-      syncSelectorFromInput(orderSourceSelect, orderSourceInput, catalogState.orderSources || []);
-    });
-
-    siteAddressSelect.addEventListener('change', () => {
-      const mode = siteAddressSelect.value;
-      if (mode === CONTACT_CUSTOM_TOKEN) {
-        siteAddressInput.focus();
-        statusText.textContent = '現場住所を手入力できます';
-        return;
-      }
-      siteAddressInput.value = mode;
-      statusText.textContent = mode ? `現場住所に「${mode}」を反映しました` : '現場住所をクリアしました';
-    });
-
-    siteAddressInput.addEventListener('change', () => {
-      syncSelectorFromInput(siteAddressSelect, siteAddressInput, getAllSiteAddressCandidates());
     });
 
     document.querySelectorAll('.chip[data-preset]').forEach((chip) => {
@@ -1659,10 +1404,9 @@
     clearBasicBtn.addEventListener('click', () => {
       linkCancelled.phone = false;
       linkCancelled.destination = false;
-      ['userName', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
+      ['userName', 'contactPerson', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
         document.getElementById(id).value = '';
       });
-      rebuildContactSelectOptions([], false, '', false);
       setDatalistOptions(phoneListEl, []);
       document.getElementById('deliveryTime').value = '';
       destinationSelect.value = '貴社';
@@ -1700,7 +1444,6 @@
 
     restoreIssuerIfMissing({});
     refreshGlobalSuggestions();
-    rebuildContactSelectOptions([], false, '', false);
     addItemRow({ 数量: '1', 単位: '缶' });
     if (getGasUrl()) {
       loadCatalogFromGas(false);
