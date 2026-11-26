@@ -107,6 +107,11 @@
       background: #fee2e2;
       color: var(--danger);
     }
+    .contact-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
     input, select, textarea {
       width: 100%;
       padding: 8px 10px;
@@ -235,10 +240,16 @@
             </div>
           </div>
           <div class="field">
-            <label for="contactPerson">担当者</label>
-            <div class="input-clear-wrap">
-              <input id="contactPerson" name="担当者" type="text" list="contactList" placeholder="担当者名または（担当者なし・空白）" />
-              <button type="button" class="field-clear-btn" data-clear-target="contactPerson" data-label="担当者" title="担当者を削除">×</button>
+            <label for="contactSelect">担当者（選択・空白・手入力）</label>
+            <div class="contact-stack">
+              <select id="contactSelect" aria-label="担当者候補選択">
+                <option value="__BLANK__">（担当者なし・空白）</option>
+                <option value="__CUSTOM__">（手入力・その他）</option>
+              </select>
+              <div id="contactCustomWrap" class="input-clear-wrap" style="display: none;">
+                <input id="contactPerson" name="担当者" type="text" placeholder="担当者名を手入力" />
+                <button type="button" class="field-clear-btn" data-clear-target="contactPerson" data-label="担当者" title="担当者を削除">×</button>
+              </div>
             </div>
           </div>
           <div class="field">
@@ -360,7 +371,6 @@
     <option value="佐々木"></option>
   </datalist>
   <datalist id="userList"></datalist>
-  <datalist id="contactList"></datalist>
   <datalist id="phoneList"></datalist>
   <datalist id="siteNameList"></datalist>
   <datalist id="siteAddressList"></datalist>
@@ -396,7 +406,8 @@
   <script>
     const MAX_ITEMS = 6;
     const ITEM_FIELDS = ['メーカー', '品名', '詳細', '艶', '色', '容量', '数量', '単位', '摘要'];
-    const BLANK_CONTACT_LABEL = '（担当者なし・空白）';
+    const CONTACT_BLANK_TOKEN = '__BLANK__';
+    const CONTACT_CUSTOM_TOKEN = '__CUSTOM__';
     const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
     const STORAGE_KEY_DEVICE_ISSUER = 'tsubame_device_issuer_v1';
     const STORAGE_KEY_DEVICE_ID = 'tsubame_device_id_v1';
@@ -542,6 +553,8 @@
 
     const issuerInput = document.getElementById('issuer');
     const userNameInput = document.getElementById('userName');
+    const contactSelect = document.getElementById('contactSelect');
+    const contactCustomWrap = document.getElementById('contactCustomWrap');
     const contactPersonInput = document.getElementById('contactPerson');
     const phoneInput = document.getElementById('phone');
     const siteNameInput = document.getElementById('siteName');
@@ -557,17 +570,6 @@
 
     function uniqueValues(arr) {
       return Array.from(new Set((arr || []).map((v) => String(v || '').trim()).filter(Boolean)));
-    }
-
-    function normalizeContactInputValue(rawVal) {
-      const trimmed = String(rawVal || '').trim();
-      if (!trimmed || trimmed === BLANK_CONTACT_LABEL) return '';
-      return trimmed;
-    }
-
-    function formatContactOptionLabel(contactVal) {
-      const trimmed = String(contactVal || '').trim();
-      return trimmed ? trimmed : BLANK_CONTACT_LABEL;
     }
 
     function setDatalistOptions(datalistEl, values) {
@@ -648,7 +650,6 @@
         : masterUsers;
 
       setDatalistOptions(document.getElementById('userList'), userCandidates);
-      setDatalistOptions(document.getElementById('contactList'), []);
       setDatalistOptions(document.getElementById('phoneList'), orders.map((o) => o.phone));
       setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
       setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
@@ -659,7 +660,7 @@
      */
     function getMasterContactEntries(selectedUser) {
       const user = String(selectedUser || '').trim();
-      if (!user) return { names: [], hasBlank: false, optionLabels: [] };
+      if (!user) return { names: [], hasBlank: false };
 
       const sameUserRows = (catalogState.customerOrders || []).filter(
         (o) => String(o.userName || '').trim() === user
@@ -689,12 +690,58 @@
         }
       });
 
-      const optionLabels = [...names];
-      if (hasBlank && !optionLabels.includes(BLANK_CONTACT_LABEL)) {
-        optionLabels.push(BLANK_CONTACT_LABEL);
-      }
+      return { names, hasBlank };
+    }
 
-      return { names, hasBlank, optionLabels };
+    /**
+     * 担当者セレクトの選択肢を更新する（担当者あり・空白・手入力を常に明示）
+     */
+    function rebuildContactSelectOptions(names = [], desiredValue = '', forceCustom = false) {
+      contactSelect.innerHTML = '';
+
+      uniqueValues(names).forEach((name) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        contactSelect.appendChild(opt);
+      });
+
+      const blankOpt = document.createElement('option');
+      blankOpt.value = CONTACT_BLANK_TOKEN;
+      blankOpt.textContent = '（担当者なし・空白）';
+      contactSelect.appendChild(blankOpt);
+
+      const customOpt = document.createElement('option');
+      customOpt.value = CONTACT_CUSTOM_TOKEN;
+      customOpt.textContent = '（手入力・その他）';
+      contactSelect.appendChild(customOpt);
+
+      const cleanDesired = String(desiredValue || '').trim();
+      if (forceCustom) {
+        contactSelect.value = CONTACT_CUSTOM_TOKEN;
+        contactCustomWrap.style.display = 'flex';
+        contactPersonInput.value = cleanDesired;
+      } else if (cleanDesired && uniqueValues(names).includes(cleanDesired)) {
+        contactSelect.value = cleanDesired;
+        contactCustomWrap.style.display = 'none';
+        contactPersonInput.value = cleanDesired;
+      } else if (cleanDesired) {
+        contactSelect.value = CONTACT_CUSTOM_TOKEN;
+        contactCustomWrap.style.display = 'flex';
+        contactPersonInput.value = cleanDesired;
+      } else {
+        contactSelect.value = CONTACT_BLANK_TOKEN;
+        contactCustomWrap.style.display = 'none';
+        contactPersonInput.value = '';
+      }
+    }
+
+    function getActiveContactValue() {
+      if (contactSelect.value === CONTACT_BLANK_TOKEN) return '';
+      if (contactSelect.value === CONTACT_CUSTOM_TOKEN) {
+        return contactPersonInput.value.trim();
+      }
+      return contactSelect.value.trim();
     }
 
     function getFilteredSiteNames(selectedUser, selectedContact = '') {
@@ -718,34 +765,29 @@
     function applyCustomerHistoryAutofill() {
       const selectedUser = userNameInput.value.trim();
       const orders = catalogState.customerOrders || [];
-      const contactListEl = document.getElementById('contactList');
 
       if (!selectedUser) {
-        contactPersonInput.value = '';
-        setDatalistOptions(contactListEl, []);
+        rebuildContactSelectOptions([], '', false);
         setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
         setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
         return;
       }
 
       const contactInfo = getMasterContactEntries(selectedUser);
-      // 登録済み担当者に加えて、空白行がある場合は「（担当者なし・空白）」も候補に表示
-      setDatalistOptions(contactListEl, contactInfo.optionLabels);
-
-      // 担当者ありの登録があれば先頭を初期反映、空白行のみなら空文字（''）にする
-      const nextContact = contactInfo.names.length > 0 ? contactInfo.names[0] : '';
-      contactPersonInput.value = nextContact;
+      // 担当者ありの登録があれば先頭を初期反映、空白行のみなら「（担当者なし・空白）」にする
+      const defaultContact = contactInfo.names.length > 0 ? contactInfo.names[0] : '';
+      rebuildContactSelectOptions(contactInfo.names, defaultContact, false);
 
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       const latestOrder = sameUserRows[0];
 
-      if (!latestOrder && contactInfo.optionLabels.length === 0) {
-        statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（担当者欄は空欄）`;
+      if (!latestOrder && contactInfo.names.length === 0 && !contactInfo.hasBlank) {
+        statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（空白・手入力を選択可能）`;
         return;
       }
 
       const exactContactRows = sameUserRows.filter(
-        (r) => String(r.contactPerson || '').trim() === nextContact
+        (r) => String(r.contactPerson || '').trim() === defaultContact
       );
       const basePool = exactContactRows.length > 0 ? exactContactRows : sameUserRows;
 
@@ -770,7 +812,7 @@
 
       setDatalistOptions(
         document.getElementById('siteNameList'),
-        getFilteredSiteNames(selectedUser, nextContact)
+        getFilteredSiteNames(selectedUser, defaultContact)
       );
       setDatalistOptions(
         document.getElementById('siteAddressList'),
@@ -778,31 +820,43 @@
       );
 
       if (contactInfo.names.length > 0 && contactInfo.hasBlank) {
-        statusText.textContent = `「${selectedUser}」の担当者候補（登録名・${BLANK_CONTACT_LABEL}）を表示しました`;
+        statusText.textContent = `「${selectedUser}」は担当者あり・空白の両方が登録されています（ドロップダウンで切替可能）`;
       } else if (contactInfo.names.length > 0) {
-        statusText.textContent = `「${selectedUser}」の顧客マスター担当者（${contactInfo.names.length}件）と連動情報を反映しました`;
+        statusText.textContent = `「${selectedUser}」の担当者候補（${contactInfo.names.length}件・空白・手入力）を表示しました`;
       } else {
-        statusText.textContent = `「${selectedUser}」は担当者空白として反映しました`;
+        statusText.textContent = `「${selectedUser}」は担当者空白として反映しました（手入力も選択可能）`;
       }
     }
 
     function applyCustomerByContactAutofill() {
       const selectedUser = userNameInput.value.trim();
-      const rawContact = contactPersonInput.value;
-      const isBlankSelected = rawContact.trim() === BLANK_CONTACT_LABEL;
-      const selectedContact = normalizeContactInputValue(rawContact);
+      const selectedMode = contactSelect.value;
 
-      if (isBlankSelected) {
+      if (selectedMode === CONTACT_BLANK_TOKEN) {
+        contactCustomWrap.style.display = 'none';
         contactPersonInput.value = '';
+      } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
+        contactCustomWrap.style.display = 'flex';
+        contactPersonInput.focus();
+      } else {
+        contactCustomWrap.style.display = 'none';
+        contactPersonInput.value = selectedMode;
       }
 
-      if (!selectedUser) return;
+      if (!selectedUser) {
+        if (selectedMode === CONTACT_BLANK_TOKEN) {
+          statusText.textContent = '担当者を空白に設定しました';
+        } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
+          statusText.textContent = '担当者を手入力するモードに切り替えました';
+        }
+        return;
+      }
 
+      const selectedContact = getActiveContactValue();
       const orders = catalogState.customerOrders || [];
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       if (sameUserRows.length === 0) return;
 
-      // 空白が選ばれた場合は「担当者欄が空の行」を厳密に優先、名前が選ばれた場合は「その担当者の行」を優先
       const exactRows = sameUserRows.filter(
         (o) => String(o.contactPerson || '').trim() === selectedContact
       );
@@ -837,20 +891,22 @@
         uniqueValues(pool.map((r) => r.siteAddress).concat(sameUserRows.map((r) => r.siteAddress)).concat(orders.map((o) => o.siteAddress)))
       );
 
-      if (selectedContact && exactRows.length > 0) {
-        statusText.textContent = `「${selectedUser} / ${selectedContact}」に一致する現場名・電話番号・現場住所を反映しました`;
-      } else if (!selectedContact && exactRows.length > 0) {
+      if (selectedMode === CONTACT_BLANK_TOKEN && exactRows.length > 0) {
         statusText.textContent = `「${selectedUser} / 担当者空白」に一致する現場名・電話番号・現場住所を反映しました`;
-      } else if (selectedContact) {
-        statusText.textContent = `「${selectedContact}」の個別一致データがないため、「${selectedUser}」の登録情報を反映しました`;
-      } else {
+      } else if (selectedMode === CONTACT_BLANK_TOKEN) {
         statusText.textContent = `「${selectedUser}」の担当者を空白に設定しました`;
+      } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
+        statusText.textContent = `「${selectedUser}」の担当者を手入力できます`;
+      } else if (selectedContact && exactRows.length > 0) {
+        statusText.textContent = `「${selectedUser} / ${selectedContact}」に一致する現場名・電話番号・現場住所を反映しました`;
+      } else {
+        statusText.textContent = `「${selectedContact}」の個別一致データがないため、「${selectedUser}」の登録情報を反映しました`;
       }
     }
 
     function applyAddressBySiteAutofill() {
       const selectedUser = userNameInput.value.trim();
-      const selectedContact = normalizeContactInputValue(contactPersonInput.value);
+      const selectedContact = getActiveContactValue();
       const selectedSite = siteNameInput.value.trim();
       if (!selectedUser) return;
 
@@ -874,8 +930,9 @@
         siteAddressInput.value = nextAddress;
       }
 
-      if (selectedSite && !contactPersonInput.value.trim() && targetRow.contactPerson) {
-        contactPersonInput.value = targetRow.contactPerson;
+      if (selectedSite && !contactPersonInput.value.trim() && targetRow.contactPerson && contactSelect.value !== CONTACT_BLANK_TOKEN) {
+        const contactInfo = getMasterContactEntries(selectedUser);
+        rebuildContactSelectOptions(contactInfo.names, targetRow.contactPerson, false);
       }
       if (selectedSite && !phoneInput.value.trim() && targetRow.phone) {
         phoneInput.value = targetRow.phone;
@@ -1219,7 +1276,7 @@
       for (const [key, value] of formData.entries()) {
         payload[key] = value;
       }
-      payload['担当者'] = normalizeContactInputValue(payload['担当者']);
+      payload['担当者'] = getActiveContactValue();
       if (payload['希望納期']) {
         payload['希望納期'] = payload['希望納期'].replace(/-/g, '/');
       }
@@ -1250,7 +1307,13 @@
         const el = document.getElementById(targetId);
         if (!el) return;
         el.value = '';
-        el.dispatchEvent(new Event('change', { bubbles: true }));
+        if (targetId === 'contactPerson') {
+          contactSelect.value = CONTACT_BLANK_TOKEN;
+          contactCustomWrap.style.display = 'none';
+          applyCustomerByContactAutofill();
+        } else {
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
         statusText.textContent = `「${labelText}」を削除しました`;
       });
     });
@@ -1275,10 +1338,8 @@
       applyCustomerHistoryAutofill();
     });
 
-    contactPersonInput.addEventListener('input', () => {
-      if (contactPersonInput.value.trim() === BLANK_CONTACT_LABEL) {
-        applyCustomerByContactAutofill();
-      }
+    contactSelect.addEventListener('change', () => {
+      applyCustomerByContactAutofill();
     });
 
     contactPersonInput.addEventListener('change', () => {
@@ -1316,9 +1377,10 @@
     });
 
     clearBasicBtn.addEventListener('click', () => {
-      ['userName', 'contactPerson', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
+      ['userName', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
         document.getElementById(id).value = '';
       });
+      rebuildContactSelectOptions([], '', false);
       document.getElementById('deliveryTime').value = '';
       destinationSelect.value = '貴社';
       refreshGlobalSuggestions();
@@ -1355,6 +1417,7 @@
 
     restoreIssuerIfMissing({});
     refreshGlobalSuggestions();
+    rebuildContactSelectOptions([], '', false);
     addItemRow({ 数量: '1', 単位: '缶' });
     if (getGasUrl()) {
       loadCatalogFromGas(false);
