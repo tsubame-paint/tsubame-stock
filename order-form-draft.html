@@ -669,6 +669,7 @@
       const contactListEl = document.getElementById('contactList');
 
       if (!selectedUser) {
+        contactPersonInput.value = '';
         setDatalistOptions(contactListEl, []);
         setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
         setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
@@ -679,17 +680,17 @@
       // 顧客マスター由来の担当者のみを候補に設定
       setDatalistOptions(contactListEl, userContacts);
 
+      // 顧客マスターに担当者が1件もない場合は必ず空欄にする
+      const nextContact = userContacts.length > 0 ? userContacts[0] : '';
+      contactPersonInput.value = nextContact;
+
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       const latestOrder = sameUserRows[0];
 
       if (!latestOrder && userContacts.length === 0) {
-        contactPersonInput.value = '';
-        statusText.textContent = `「${selectedUser}」の顧客マスターデータが見つかりませんでした`;
+        statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（担当者欄は空欄）`;
         return;
       }
-
-      const nextContact = userContacts[0] || '';
-      contactPersonInput.value = nextContact;
 
       const contactRows = nextContact
         ? sameUserRows.filter((r) => String(r.contactPerson || '').trim() === nextContact)
@@ -724,7 +725,11 @@
         uniqueValues(basePool.map((r) => r.siteAddress).concat(sameUserRows.map((r) => r.siteAddress)).concat(orders.map((o) => o.siteAddress)))
       );
 
-      statusText.textContent = `「${selectedUser}」の顧客マスター担当者（${userContacts.length}件）と連動情報を反映しました`;
+      if (userContacts.length > 0) {
+        statusText.textContent = `「${selectedUser}」の顧客マスター担当者（${userContacts.length}件）と連動情報を反映しました`;
+      } else {
+        statusText.textContent = `「${selectedUser}」の担当者は顧客マスターに未登録のため空欄にしました`;
+      }
     }
 
     function applyCustomerByContactAutofill() {
