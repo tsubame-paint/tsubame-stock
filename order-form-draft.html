@@ -223,7 +223,7 @@
           <div class="field">
             <label for="issuer">発行者（端末ごとに記憶・自動保管）</label>
             <div class="input-clear-wrap">
-              <input id="issuer" name="発行者" type="text" list="issuerList" placeholder="例：今井 / 佐々木" />
+              <input id="issuer" name="発行者" type="text" list="issuerList" placeholder="選択または入力（例：今井 / 佐々木）" />
               <button type="button" class="field-clear-btn" data-clear-target="issuer" data-label="発行者" title="発行者を削除">×</button>
             </div>
           </div>
@@ -405,6 +405,7 @@
       ok: true,
       updatedAt: 'オフライン初期値',
       makers: ['エスケー', 'ニッペ', 'カンペ', 'キクスイ', '大塚', 'フジワラ', '大阪ガス'],
+      issuers: ['今井', '佐々木'],
       productsByMaker: {
         'エスケー': ['プレミアムシリコン', 'クリーンマイルドウレタン', 'マイルドシーラーEPO'],
         'ニッペ': ['ケンエースGⅡ', '水性ケンエース', '1液ファインウレタンU100'],
@@ -485,6 +486,7 @@
 
     let catalogState = {
       makers: [...FALLBACK_DATA.makers],
+      issuers: [...FALLBACK_DATA.issuers],
       productsByMaker: { ...FALLBACK_DATA.productsByMaker },
       historyByProduct: { ...FALLBACK_DATA.historyByProduct },
       customerOrders: [...FALLBACK_DATA.customerOrders]
@@ -601,6 +603,10 @@
     }
 
     function refreshGlobalSuggestions() {
+      setDatalistOptions(
+        document.getElementById('issuerList'),
+        uniqueValues([...FALLBACK_DATA.issuers, ...(catalogState.issuers || [])])
+      );
       setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
 
       const orders = catalogState.customerOrders || [];
@@ -674,6 +680,7 @@
 
         catalogState = {
           makers: uniqueValues(data.makers),
+          issuers: uniqueValues(data.issuers),
           productsByMaker: data.productsByMaker || {},
           historyByProduct: data.historyByProduct || {},
           customerOrders: Array.isArray(data.customerOrders) ? data.customerOrders : []
