@@ -307,7 +307,7 @@
           <div class="field">
             <label for="deliveryRequest">配達依頼</label>
             <div class="input-clear-wrap">
-              <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="例：前橋 / 現場直送 / 白岡引き取り" />
+              <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="選択または入力" />
               <button type="button" class="field-clear-btn" data-clear-target="deliveryRequest" data-label="配達依頼" title="配達依頼を削除">×</button>
             </div>
           </div>
@@ -373,8 +373,7 @@
   <datalist id="phoneList"></datalist>
   <datalist id="siteNameList"></datalist>
   <datalist id="siteAddressList"></datalist>
-  <datalist id="deliveryReqList">
-  </datalist>
+  <datalist id="deliveryReqList"></datalist>
   <datalist id="makerList"></datalist>
   <datalist id="detailList">
     <option value="生ネタサンプル"></option>
@@ -411,7 +410,7 @@
       updatedAt: 'オフライン初期値',
       makers: ['エスケー', 'ニッペ', 'カンペ', 'キクスイ', '大塚', 'フジワラ', '大阪ガス'],
       issuers: ['今井', '佐々木'],
-      deliveryRequests: ['前橋', '現場直送', '直送', '白岡引き取り', 'マルテー行田引き取り'],
+      deliveryRequests: [],
       productsByMaker: {
         'エスケー': ['プレミアムシリコン', 'クリーンマイルドウレタン', 'マイルドシーラーEPO'],
         'ニッペ': ['ケンエースGⅡ', '水性ケンエース', '1液ファインウレタンU100'],
@@ -684,9 +683,7 @@
       );
       setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
 
-      const deliveryReqCandidates = catalogState.hasSheetDeliveryRequests
-        ? uniqueValues(catalogState.deliveryRequests || [])
-        : uniqueValues([...FALLBACK_DATA.deliveryRequests, ...(catalogState.deliveryRequests || [])]);
+      const deliveryReqCandidates = uniqueValues(catalogState.deliveryRequests || []);
       setDatalistOptions(deliveryReqListEl, deliveryReqCandidates);
 
       const orders = catalogState.customerOrders || [];
@@ -1035,7 +1032,7 @@
         catalogState = {
           makers: uniqueValues(data.makers),
           issuers: uniqueValues(data.issuers),
-          deliveryRequests: cleanedDeliveryRequests.length > 0 ? cleanedDeliveryRequests : [...FALLBACK_DATA.deliveryRequests],
+          deliveryRequests: cleanedDeliveryRequests,
           hasSheetDeliveryRequests: cleanedDeliveryRequests.length > 0,
           productsByMaker: data.productsByMaker || {},
           historyByProduct: data.historyByProduct || {},
