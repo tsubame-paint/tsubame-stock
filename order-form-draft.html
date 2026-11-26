@@ -233,10 +233,15 @@
             </div>
           </div>
           <div class="field">
-            <label for="userName">ユーザー名（得意先・在庫）</label>
-            <div class="input-clear-wrap">
-              <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="例：中澤塗装㈱ / ㈲アベル" required />
-              <button type="button" class="field-clear-btn" data-clear-target="userName" data-label="ユーザー名" title="ユーザー名を削除">×</button>
+            <label for="userSelect">ユーザー名（選択・手入力）</label>
+            <div class="contact-stack">
+              <select id="userSelect" aria-label="ユーザー名候補選択">
+                <option value="__CUSTOM__">（手入力・その他）</option>
+              </select>
+              <div class="input-clear-wrap">
+                <input id="userName" name="ユーザー名" type="text" list="userList" placeholder="例：中澤塗装㈱ / ㈲アベル" required />
+                <button type="button" class="field-clear-btn" data-clear-target="userName" data-label="ユーザー名" title="ユーザー名を削除">×</button>
+              </div>
             </div>
           </div>
           <div class="field">
@@ -262,10 +267,15 @@
 
         <div class="grid-3" style="margin-top: 10px;">
           <div class="field">
-            <label for="siteName">現場名（ユーザー名から選択・入力）</label>
-            <div class="input-clear-wrap">
-              <input id="siteName" name="現場名" type="text" list="siteNameList" placeholder="ユーザー名を選ぶと現場名を選べます" />
-              <button type="button" class="field-clear-btn" data-clear-target="siteName" data-label="現場名" title="現場名を削除">×</button>
+            <label for="siteSelect">現場名（選択・手入力）</label>
+            <div class="contact-stack">
+              <select id="siteSelect" aria-label="現場名候補選択">
+                <option value="__CUSTOM__">（手入力・その他）</option>
+              </select>
+              <div class="input-clear-wrap">
+                <input id="siteName" name="現場名" type="text" list="siteNameList" placeholder="ユーザー名を選ぶと現場名を選べます" />
+                <button type="button" class="field-clear-btn" data-clear-target="siteName" data-label="現場名" title="現場名を削除">×</button>
+              </div>
             </div>
           </div>
           <div class="field">
@@ -305,26 +315,41 @@
             </div>
           </div>
           <div class="field">
-            <label for="deliveryRequest">配達依頼</label>
-            <div class="input-clear-wrap">
-              <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="選択または入力" />
-              <button type="button" class="field-clear-btn" data-clear-target="deliveryRequest" data-label="配達依頼" title="配達依頼を削除">×</button>
+            <label for="deliveryReqSelect">配達依頼（選択・手入力）</label>
+            <div class="contact-stack">
+              <select id="deliveryReqSelect" aria-label="配達依頼候補選択">
+                <option value="__CUSTOM__">（手入力・その他）</option>
+              </select>
+              <div class="input-clear-wrap">
+                <input id="deliveryRequest" name="配達依頼" type="text" list="deliveryReqList" placeholder="選択または入力" />
+                <button type="button" class="field-clear-btn" data-clear-target="deliveryRequest" data-label="配達依頼" title="配達依頼を削除">×</button>
+              </div>
             </div>
           </div>
           <div class="field">
-            <label for="orderSource">発注先</label>
-            <div class="input-clear-wrap">
-              <input id="orderSource" name="発注先" type="text" list="orderSourceList" placeholder="選択または入力" />
-              <button type="button" class="field-clear-btn" data-clear-target="orderSource" data-label="発注先" title="発注先を削除">×</button>
+            <label for="orderSourceSelect">発注先（選択・手入力）</label>
+            <div class="contact-stack">
+              <select id="orderSourceSelect" aria-label="発注先候補選択">
+                <option value="__CUSTOM__">（手入力・その他）</option>
+              </select>
+              <div class="input-clear-wrap">
+                <input id="orderSource" name="発注先" type="text" list="orderSourceList" placeholder="選択または入力" />
+                <button type="button" class="field-clear-btn" data-clear-target="orderSource" data-label="発注先" title="発注先を削除">×</button>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="field" style="margin-top: 10px;">
-          <label for="siteAddress">現場住所</label>
-          <div class="input-clear-wrap">
-            <input id="siteAddress" name="現場住所" type="text" list="siteAddressList" placeholder="例：〒272-0133 千葉県市川市行徳駅前2丁目11−2" />
-            <button type="button" class="field-clear-btn" data-clear-target="siteAddress" data-label="現場住所" title="現場住所を削除">×</button>
+          <label for="siteAddressSelect">現場住所（選択・手入力）</label>
+          <div class="contact-stack">
+            <select id="siteAddressSelect" aria-label="現場住所候補選択">
+              <option value="__CUSTOM__">（手入力・その他）</option>
+            </select>
+            <div class="input-clear-wrap">
+              <input id="siteAddress" name="現場住所" type="text" list="siteAddressList" placeholder="例：〒272-0133 千葉県市川市行徳駅前2丁目11−2" />
+              <button type="button" class="field-clear-btn" data-clear-target="siteAddress" data-label="現場住所" title="現場住所を削除">×</button>
+            </div>
           </div>
         </div>
 
@@ -556,18 +581,23 @@
     const deviceId = getOrCreateDeviceId();
 
     const issuerInput = document.getElementById('issuer');
+    const userSelect = document.getElementById('userSelect');
     const userNameInput = document.getElementById('userName');
     const contactSelect = document.getElementById('contactSelect');
     const contactCustomWrap = document.getElementById('contactCustomWrap');
     const contactPersonInput = document.getElementById('contactPerson');
     const phoneInput = document.getElementById('phone');
     const phoneListEl = document.getElementById('phoneList');
+    const siteSelect = document.getElementById('siteSelect');
     const siteNameInput = document.getElementById('siteName');
     const siteNameListEl = document.getElementById('siteNameList');
+    const siteAddressSelect = document.getElementById('siteAddressSelect');
     const siteAddressInput = document.getElementById('siteAddress');
     const destinationSelect = document.getElementById('destination');
+    const deliveryReqSelect = document.getElementById('deliveryReqSelect');
     const deliveryRequestInput = document.getElementById('deliveryRequest');
     const deliveryReqListEl = document.getElementById('deliveryReqList');
+    const orderSourceSelect = document.getElementById('orderSourceSelect');
     const orderSourceInput = document.getElementById('orderSource');
     const orderSourceListEl = document.getElementById('orderSourceList');
 
@@ -589,6 +619,97 @@
         opt.value = val;
         datalistEl.appendChild(opt);
       });
+    }
+
+    function rebuildSelectorOptions(selectEl, values = [], currentVal = '', placeholderLabel = '（候補から選択）') {
+      if (!selectEl) return;
+      const list = uniqueValues(values);
+      const cleanCurrent = String(currentVal || '').trim();
+
+      selectEl.innerHTML = '';
+      const emptyOpt = document.createElement('option');
+      emptyOpt.value = '';
+      emptyOpt.textContent = placeholderLabel;
+      selectEl.appendChild(emptyOpt);
+
+      list.forEach((item) => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        selectEl.appendChild(opt);
+      });
+
+      const customOpt = document.createElement('option');
+      customOpt.value = CONTACT_CUSTOM_TOKEN;
+      customOpt.textContent = '（手入力・その他）';
+      selectEl.appendChild(customOpt);
+
+      if (!cleanCurrent) {
+        selectEl.value = '';
+      } else if (list.includes(cleanCurrent)) {
+        selectEl.value = cleanCurrent;
+      } else {
+        selectEl.value = CONTACT_CUSTOM_TOKEN;
+      }
+    }
+
+    function syncSelectorFromInput(selectEl, inputEl, values = []) {
+      if (!selectEl || !inputEl) return;
+      const list = uniqueValues(values);
+      const val = String(inputEl.value || '').trim();
+      if (!val) {
+        selectEl.value = '';
+      } else if (list.includes(val)) {
+        selectEl.value = val;
+      } else {
+        selectEl.value = CONTACT_CUSTOM_TOKEN;
+      }
+    }
+
+    function getAllUserCandidates() {
+      const orders = catalogState.customerOrders || [];
+      const ranked = uniqueValues(catalogState.rankedUsers || []);
+      const masterUsers = uniqueValues(orders.map((o) => o.userName));
+      return ranked.length > 0 ? uniqueValues([...ranked, ...masterUsers]) : masterUsers;
+    }
+
+    function getAllSiteAddressCandidates() {
+      const orders = catalogState.customerOrders || [];
+      const selectedUser = userNameInput.value.trim();
+      const selectedSite = siteNameInput.value.trim();
+      if (!selectedUser) {
+        return uniqueValues(orders.map((o) => o.siteAddress));
+      }
+      const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
+      const siteRows = selectedSite
+        ? sameUserRows.filter((o) => String(o.siteName || '').trim() === selectedSite)
+        : [];
+      const preferred = siteRows.length > 0 ? siteRows : sameUserRows;
+      return uniqueValues(
+        preferred.map((r) => r.siteAddress)
+          .concat(sameUserRows.map((r) => r.siteAddress))
+          .concat(orders.map((o) => o.siteAddress))
+      );
+    }
+
+    function refreshFieldSelectorsAndLists() {
+      const userCandidates = getAllUserCandidates();
+      const siteCandidates = getFilteredSiteNames(userNameInput.value.trim(), getActiveContactValue());
+      const deliveryReqCandidates = uniqueValues(catalogState.deliveryRequests || []);
+      const orderSourceCandidates = uniqueValues(catalogState.orderSources || []);
+      const addressCandidates = getAllSiteAddressCandidates();
+
+      setDatalistOptions(document.getElementById('userList'), userCandidates);
+      setDatalistOptions(siteNameListEl, siteCandidates);
+      setDatalistOptions(deliveryReqListEl, deliveryReqCandidates);
+      setDatalistOptions(orderSourceListEl, orderSourceCandidates);
+      setDatalistOptions(document.getElementById('siteAddressList'), addressCandidates);
+
+      rebuildSelectorOptions(userSelect, userCandidates, userNameInput.value.trim(), '（ユーザー名を選択）');
+      rebuildSelectorOptions(siteSelect, siteCandidates, siteNameInput.value.trim(), '（現場名を選択）');
+      rebuildSelectorOptions(deliveryReqSelect, deliveryReqCandidates, deliveryRequestInput.value.trim(), '（配達依頼を選択）');
+      rebuildSelectorOptions(orderSourceSelect, orderSourceCandidates, orderSourceInput.value.trim(), '（発注先を選択）');
+      rebuildSelectorOptions(siteAddressSelect, addressCandidates, siteAddressInput.value.trim(), '（現場住所を選択）');
     }
 
     function applyPhoneIfAllowed(nextPhone) {
@@ -689,22 +810,7 @@
       );
       setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
 
-      const deliveryReqCandidates = uniqueValues(catalogState.deliveryRequests || []);
-      setDatalistOptions(deliveryReqListEl, deliveryReqCandidates);
-
-      const orderSourceCandidates = uniqueValues(catalogState.orderSources || []);
-      setDatalistOptions(orderSourceListEl, orderSourceCandidates);
-
-      const orders = catalogState.customerOrders || [];
-      const ranked = uniqueValues(catalogState.rankedUsers || []);
-      const masterUsers = uniqueValues(orders.map((o) => o.userName));
-      const userCandidates = ranked.length > 0
-        ? uniqueValues([...ranked, ...masterUsers])
-        : masterUsers;
-
-      setDatalistOptions(document.getElementById('userList'), userCandidates);
-      setDatalistOptions(siteNameListEl, getFilteredSiteNames(userNameInput.value.trim(), getActiveContactValue()));
-      setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
+      refreshFieldSelectorsAndLists();
       syncScopedPhoneList();
     }
 
@@ -825,12 +931,12 @@
     function applyCustomerHistoryAutofill() {
       const selectedUser = userNameInput.value.trim();
       const orders = catalogState.customerOrders || [];
+      syncSelectorFromInput(userSelect, userNameInput, getAllUserCandidates());
 
       if (!selectedUser) {
         rebuildContactSelectOptions([], false, '', false);
         setDatalistOptions(phoneListEl, []);
-        setDatalistOptions(siteNameListEl, uniqueValues(orders.map((o) => o.siteName)));
-        setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
+        refreshFieldSelectorsAndLists();
         return;
       }
 
@@ -845,7 +951,7 @@
 
       if (!latestOrder && contactInfo.names.length === 0 && !contactInfo.hasBlank) {
         setDatalistOptions(phoneListEl, []);
-        setDatalistOptions(siteNameListEl, []);
+        refreshFieldSelectorsAndLists();
         statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（手入力を選択可能）`;
         return;
       }
@@ -870,11 +976,7 @@
 
       const siteCandidates = getFilteredSiteNames(selectedUser, activeContact);
       syncScopedPhoneList();
-      setDatalistOptions(siteNameListEl, siteCandidates);
-      setDatalistOptions(
-        document.getElementById('siteAddressList'),
-        uniqueValues(basePool.map((r) => r.siteAddress).concat(sameUserRows.map((r) => r.siteAddress)).concat(orders.map((o) => o.siteAddress)))
-      );
+      refreshFieldSelectorsAndLists();
 
       if (siteCandidates.length > 0) {
         statusText.textContent = `「${selectedUser}」の現場名候補（${siteCandidates.length}件）から選択できます（現場名は未選択）`;
@@ -900,6 +1002,7 @@
 
       if (!selectedUser) {
         setDatalistOptions(phoneListEl, []);
+        refreshFieldSelectorsAndLists();
         if (selectedMode === '') {
           statusText.textContent = '担当者を空白に設定しました';
         } else if (selectedMode === CONTACT_CUSTOM_TOKEN) {
@@ -913,7 +1016,7 @@
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       if (sameUserRows.length === 0) {
         setDatalistOptions(phoneListEl, []);
-        setDatalistOptions(siteNameListEl, []);
+        refreshFieldSelectorsAndLists();
         return;
       }
 
@@ -936,14 +1039,7 @@
       }
 
       syncScopedPhoneList();
-      setDatalistOptions(
-        siteNameListEl,
-        getFilteredSiteNames(selectedUser, selectedContact)
-      );
-      setDatalistOptions(
-        document.getElementById('siteAddressList'),
-        uniqueValues(pool.map((r) => r.siteAddress).concat(sameUserRows.map((r) => r.siteAddress)).concat(orders.map((o) => o.siteAddress)))
-      );
+      refreshFieldSelectorsAndLists();
 
       if (selectedMode === '' && exactRows.length > 0) {
         statusText.textContent = `「${selectedUser} / 担当者空白」に一致する電話番号・現場住所を反映しました`;
@@ -962,7 +1058,15 @@
       const selectedUser = userNameInput.value.trim();
       const selectedContact = getActiveContactValue();
       const selectedSite = siteNameInput.value.trim();
-      if (!selectedUser) return;
+      syncSelectorFromInput(
+        siteSelect,
+        siteNameInput,
+        getFilteredSiteNames(selectedUser, selectedContact)
+      );
+      if (!selectedUser) {
+        refreshFieldSelectorsAndLists();
+        return;
+      }
 
       const orders = catalogState.customerOrders || [];
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
@@ -1005,10 +1109,7 @@
       }
 
       syncScopedPhoneList();
-      setDatalistOptions(
-        document.getElementById('siteAddressList'),
-        uniqueValues(pool.map((r) => r.siteAddress).concat(sameUserRows.map((r) => r.siteAddress)).concat(orders.map((o) => o.siteAddress)))
-      );
+      refreshFieldSelectorsAndLists();
 
       if (selectedSite && siteRows.length > 0) {
         statusText.textContent = `「${selectedUser} / ${selectedSite}」に紐づく現場住所・電話番号・届け先・配達依頼を反映しました`;
@@ -1436,6 +1537,19 @@
       }
     });
 
+    userSelect.addEventListener('change', () => {
+      const mode = userSelect.value;
+      if (mode === CONTACT_CUSTOM_TOKEN) {
+        userNameInput.focus();
+        statusText.textContent = 'ユーザー名を手入力できます';
+        return;
+      }
+      userNameInput.value = mode;
+      linkCancelled.phone = false;
+      linkCancelled.destination = false;
+      applyCustomerHistoryAutofill();
+    });
+
     userNameInput.addEventListener('change', () => {
       linkCancelled.phone = false;
       linkCancelled.destination = false;
@@ -1450,8 +1564,64 @@
       applyCustomerByContactAutofill();
     });
 
+    siteSelect.addEventListener('change', () => {
+      const mode = siteSelect.value;
+      if (mode === CONTACT_CUSTOM_TOKEN) {
+        siteNameInput.focus();
+        statusText.textContent = '現場名を手入力できます';
+        return;
+      }
+      siteNameInput.value = mode;
+      applyAddressBySiteAutofill();
+    });
+
     siteNameInput.addEventListener('change', () => {
       applyAddressBySiteAutofill();
+    });
+
+    deliveryReqSelect.addEventListener('change', () => {
+      const mode = deliveryReqSelect.value;
+      if (mode === CONTACT_CUSTOM_TOKEN) {
+        deliveryRequestInput.focus();
+        statusText.textContent = '配達依頼を手入力できます';
+        return;
+      }
+      deliveryRequestInput.value = mode;
+      statusText.textContent = mode ? `配達依頼に「${mode}」を反映しました` : '配達依頼をクリアしました';
+    });
+
+    deliveryRequestInput.addEventListener('change', () => {
+      syncSelectorFromInput(deliveryReqSelect, deliveryRequestInput, catalogState.deliveryRequests || []);
+    });
+
+    orderSourceSelect.addEventListener('change', () => {
+      const mode = orderSourceSelect.value;
+      if (mode === CONTACT_CUSTOM_TOKEN) {
+        orderSourceInput.focus();
+        statusText.textContent = '発注先を手入力できます';
+        return;
+      }
+      orderSourceInput.value = mode;
+      statusText.textContent = mode ? `発注先に「${mode}」を反映しました` : '発注先をクリアしました';
+    });
+
+    orderSourceInput.addEventListener('change', () => {
+      syncSelectorFromInput(orderSourceSelect, orderSourceInput, catalogState.orderSources || []);
+    });
+
+    siteAddressSelect.addEventListener('change', () => {
+      const mode = siteAddressSelect.value;
+      if (mode === CONTACT_CUSTOM_TOKEN) {
+        siteAddressInput.focus();
+        statusText.textContent = '現場住所を手入力できます';
+        return;
+      }
+      siteAddressInput.value = mode;
+      statusText.textContent = mode ? `現場住所に「${mode}」を反映しました` : '現場住所をクリアしました';
+    });
+
+    siteAddressInput.addEventListener('change', () => {
+      syncSelectorFromInput(siteAddressSelect, siteAddressInput, getAllSiteAddressCandidates());
     });
 
     document.querySelectorAll('.chip[data-preset]').forEach((chip) => {
