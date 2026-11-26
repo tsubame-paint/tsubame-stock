@@ -435,6 +435,7 @@
           latest: { maker: 'カンペ', gloss: '', color: '赤さび', size: '3kg', unit: '缶', detail: '' }
         }
       },
+      rankedUsers: ['㈲アベル', 'ケイスタイル㈱', '中澤塗装㈱', '川村塗装', '在庫'],
       customerOrders: [
         {
           userName: '㈲アベル',
@@ -496,6 +497,7 @@
       issuers: [...FALLBACK_DATA.issuers],
       productsByMaker: { ...FALLBACK_DATA.productsByMaker },
       historyByProduct: { ...FALLBACK_DATA.historyByProduct },
+      rankedUsers: [...FALLBACK_DATA.rankedUsers],
       customerOrders: [...FALLBACK_DATA.customerOrders],
       contactsByUser: { ...FALLBACK_DATA.contactsByUser }
     };
@@ -618,7 +620,14 @@
       setDatalistOptions(document.getElementById('makerList'), catalogState.makers);
 
       const orders = catalogState.customerOrders || [];
-      setDatalistOptions(document.getElementById('userList'), orders.map((o) => o.userName));
+      const ranked = uniqueValues(catalogState.rankedUsers || []);
+      const masterUsers = uniqueValues(orders.map((o) => o.userName));
+      // 「顧客ランキング」シートの並び順を優先し、未掲載の顧客マスター分を後ろに補完
+      const userCandidates = ranked.length > 0
+        ? uniqueValues([...ranked, ...masterUsers])
+        : masterUsers;
+
+      setDatalistOptions(document.getElementById('userList'), userCandidates);
       setDatalistOptions(document.getElementById('contactList'), []);
       setDatalistOptions(document.getElementById('phoneList'), orders.map((o) => o.phone));
       setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
@@ -857,6 +866,7 @@
           issuers: uniqueValues(data.issuers),
           productsByMaker: data.productsByMaker || {},
           historyByProduct: data.historyByProduct || {},
+          rankedUsers: Array.isArray(data.rankedUsers) ? uniqueValues(data.rankedUsers) : [],
           customerOrders: Array.isArray(data.customerOrders) ? data.customerOrders : [],
           contactsByUser: data.contactsByUser || {}
         };
@@ -878,7 +888,7 @@
         }
 
         if (showMessage) {
-          statusText.textContent = '商品マスターと顧客マスターを最新化しました';
+          statusText.textContent = '顧客ランキング・商品マスター・顧客マスターを最新化しました';
         }
       } catch (err) {
         if (showMessage) {
