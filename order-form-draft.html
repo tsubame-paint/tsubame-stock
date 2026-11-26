@@ -314,7 +314,7 @@
           <div class="field">
             <label for="orderSource">発注先</label>
             <div class="input-clear-wrap">
-              <input id="orderSource" name="発注先" type="text" list="makerList" placeholder="例：メーカー名・仕入先" />
+              <input id="orderSource" name="発注先" type="text" list="orderSourceList" placeholder="選択または入力" />
               <button type="button" class="field-clear-btn" data-clear-target="orderSource" data-label="発注先" title="発注先を削除">×</button>
             </div>
           </div>
@@ -374,6 +374,7 @@
   <datalist id="siteNameList"></datalist>
   <datalist id="siteAddressList"></datalist>
   <datalist id="deliveryReqList"></datalist>
+  <datalist id="orderSourceList"></datalist>
   <datalist id="makerList"></datalist>
   <datalist id="detailList">
     <option value="生ネタサンプル"></option>
@@ -411,6 +412,7 @@
       makers: ['エスケー', 'ニッペ', 'カンペ', 'キクスイ', '大塚', 'フジワラ', '大阪ガス'],
       issuers: ['今井', '佐々木'],
       deliveryRequests: [],
+      orderSources: [],
       productsByMaker: {
         'エスケー': ['プレミアムシリコン', 'クリーンマイルドウレタン', 'マイルドシーラーEPO'],
         'ニッペ': ['ケンエースGⅡ', '水性ケンエース', '1液ファインウレタンU100'],
@@ -511,6 +513,8 @@
       issuers: [...FALLBACK_DATA.issuers],
       deliveryRequests: [...FALLBACK_DATA.deliveryRequests],
       hasSheetDeliveryRequests: false,
+      orderSources: [...FALLBACK_DATA.orderSources],
+      hasSheetOrderSources: false,
       productsByMaker: { ...FALLBACK_DATA.productsByMaker },
       historyByProduct: { ...FALLBACK_DATA.historyByProduct },
       rankedUsers: [...FALLBACK_DATA.rankedUsers],
@@ -564,6 +568,8 @@
     const destinationSelect = document.getElementById('destination');
     const deliveryRequestInput = document.getElementById('deliveryRequest');
     const deliveryReqListEl = document.getElementById('deliveryReqList');
+    const orderSourceInput = document.getElementById('orderSource');
+    const orderSourceListEl = document.getElementById('orderSourceList');
 
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItemBtn');
@@ -685,6 +691,9 @@
 
       const deliveryReqCandidates = uniqueValues(catalogState.deliveryRequests || []);
       setDatalistOptions(deliveryReqListEl, deliveryReqCandidates);
+
+      const orderSourceCandidates = uniqueValues(catalogState.orderSources || []);
+      setDatalistOptions(orderSourceListEl, orderSourceCandidates);
 
       const orders = catalogState.customerOrders || [];
       const ranked = uniqueValues(catalogState.rankedUsers || []);
@@ -1029,11 +1038,18 @@
           : (Array.isArray(data.formAdminDeliveryRequests) ? data.formAdminDeliveryRequests : []);
         const cleanedDeliveryRequests = uniqueValues(rawDeliveryRequests);
 
+        const rawOrderSources = Array.isArray(data.orderSources)
+          ? data.orderSources
+          : (Array.isArray(data.combinedViewOrderSources) ? data.combinedViewOrderSources : []);
+        const cleanedOrderSources = uniqueValues(rawOrderSources);
+
         catalogState = {
           makers: uniqueValues(data.makers),
           issuers: uniqueValues(data.issuers),
           deliveryRequests: cleanedDeliveryRequests,
           hasSheetDeliveryRequests: cleanedDeliveryRequests.length > 0,
+          orderSources: cleanedOrderSources,
+          hasSheetOrderSources: cleanedOrderSources.length > 0,
           productsByMaker: data.productsByMaker || {},
           historyByProduct: data.historyByProduct || {},
           rankedUsers: Array.isArray(data.rankedUsers) ? uniqueValues(data.rankedUsers) : [],
@@ -1058,7 +1074,7 @@
         }
 
         if (showMessage) {
-          statusText.textContent = '顧客ランキング・商品マスター・顧客マスター・フォーム管理を最新化しました';
+          statusText.textContent = '顧客ランキング・商品マスター・顧客マスター・フォーム管理・受注履歴一覧を最新化しました';
         }
       } catch (err) {
         if (showMessage) {
