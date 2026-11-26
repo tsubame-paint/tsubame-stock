@@ -205,7 +205,7 @@
     <div class="topbar">
       <div>
         <h1>受注フォーム（GAS連動・v5）</h1>
-        <div class="sub">端末ごとの発行者記憶・発行者マスター自動保管・ユーザー名選択で直近履歴自動入力＆明細絞り込み</div>
+        <div class="sub">端末ごとの発行者記憶・発行者マスター自動保管・ユーザー名選択で顧客マスター連動＆明細絞り込み</div>
       </div>
     </div>
 
@@ -481,7 +481,14 @@
           destination: '貴社',
           deliveryRequest: ''
         }
-      ]
+      ],
+      contactsByUser: {
+        '㈲アベル': ['根岸'],
+        'ケイスタイル㈱': ['主任'],
+        '中澤塗装㈱': [],
+        '川村塗装': [],
+        '在庫': []
+      }
     };
 
     let catalogState = {
@@ -489,7 +496,8 @@
       issuers: [...FALLBACK_DATA.issuers],
       productsByMaker: { ...FALLBACK_DATA.productsByMaker },
       historyByProduct: { ...FALLBACK_DATA.historyByProduct },
-      customerOrders: [...FALLBACK_DATA.customerOrders]
+      customerOrders: [...FALLBACK_DATA.customerOrders],
+      contactsByUser: { ...FALLBACK_DATA.contactsByUser }
     };
 
     let lastSyncedIssuerKey = '';
@@ -611,10 +619,28 @@
 
       const orders = catalogState.customerOrders || [];
       setDatalistOptions(document.getElementById('userList'), orders.map((o) => o.userName));
-      setDatalistOptions(document.getElementById('contactList'), orders.map((o) => o.contactPerson));
+      setDatalistOptions(document.getElementById('contactList'), []);
       setDatalistOptions(document.getElementById('phoneList'), orders.map((o) => o.phone));
       setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
       setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
+    }
+
+    /**
+     * 「顧客マスター」のみから取得したユーザー別担当者一覧を返す
+     */
+    function getMasterContactsByUser(selectedUser) {
+      const user = String(selectedUser || '').trim();
+      if (!user) return [];
+
+      if (catalogState.contactsByUser && Object.prototype.hasOwnProperty.call(catalogState.contactsByUser, user)) {
+        const list = catalogState.contactsByUser[user];
+        return Array.isArray(list) ? uniqueValues(list) : [];
+      }
+
+      const sameUserRows = (catalogState.customerOrders || []).filter(
+        (o) => String(o.userName || '').trim() === user
+      );
+      return uniqueValues(sameUserRows.map((r) => r.contactPerson));
     }
 
     function getFilteredSiteNames(selectedUser, selectedContact = '') {
@@ -640,45 +666,45 @@
     function applyCustomerHistoryAutofill() {
       const selectedUser = userNameInput.value.trim();
       const orders = catalogState.customerOrders || [];
+      const contactListEl = document.getElementById('contactList');
+
       if (!selectedUser) {
-        setDatalistOptions(document.getElementById('contactList'), orders.map((o) => o.contactPerson));
+        setDatalistOptions(contactListEl, []);
         setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
         setDatalistOptions(document.getElementById('siteAddressList'), orders.map((o) => o.siteAddress));
         return;
       }
 
+      const userContacts = getMasterContactsByUser(selectedUser);
+      // 顧客マスター由来の担当者のみを候補に設定
+      setDatalistOptions(contactListEl, userContacts);
+
       const sameUserRows = orders.filter((o) => String(o.userName || '').trim() === selectedUser);
       const latestOrder = sameUserRows[0];
 
-      if (!latestOrder) {
-        setDatalistOptions(document.getElementById('contactList'), orders.map((o) => o.contactPerson));
-        setDatalistOptions(document.getElementById('siteNameList'), orders.map((o) => o.siteName));
-        statusText.textContent = `「${selectedUser}」の過去履歴が見つかりませんでした`;
+      if (!latestOrder && userContacts.length === 0) {
+        contactPersonInput.value = '';
+        statusText.textContent = `「${selectedUser}」の顧客マスターデータが見つかりませんでした`;
         return;
       }
 
-      const userContacts = uniqueValues(sameUserRows.map((r) => r.contactPerson));
-      setDatalistOptions(
-        document.getElementById('contactList'),
-        userContacts.length > 0 ? userContacts : orders.map((o) => o.contactPerson)
-      );
+      const nextContact = userContacts[0] || '';
+      contactPersonInput.value = nextContact;
 
-      const latestContact = latestOrder.contactPerson || userContacts[0] || '';
-      const contactRows = latestContact
-        ? sameUserRows.filter((r) => String(r.contactPerson || '').trim() === latestContact)
+      const contactRows = nextContact
+        ? sameUserRows.filter((r) => String(r.contactPerson || '').trim() === nextContact)
         : [];
       const basePool = contactRows.length > 0 ? contactRows : sameUserRows;
 
-      const latestPhone = latestOrder.phone || (basePool.find((r) => r.phone) || {}).phone || (sameUserRows.find((r) => r.phone) || {}).phone || '';
-      const latestSiteName = (basePool.find((r) => r.siteName) || {}).siteName || latestOrder.siteName || '';
-      const latestSiteAddress = (basePool.find((r) => r.siteAddress) || {}).siteAddress || latestOrder.siteAddress || '';
+      const latestPhone = ((latestOrder && latestOrder.phone) || (basePool.find((r) => r.phone) || {}).phone || (sameUserRows.find((r) => r.phone) || {}).phone || '');
+      const latestSiteName = ((basePool.find((r) => r.siteName) || {}).siteName || (latestOrder && latestOrder.siteName) || '');
+      const latestSiteAddress = ((basePool.find((r) => r.siteAddress) || {}).siteAddress || (latestOrder && latestOrder.siteAddress) || '');
 
-      contactPersonInput.value = latestContact;
       phoneInput.value = latestPhone;
       siteNameInput.value = latestSiteName;
       siteAddressInput.value = latestSiteAddress;
 
-      const targetForMeta = basePool[0] || latestOrder;
+      const targetForMeta = basePool[0] || latestOrder || {};
       if (targetForMeta.destination) {
         const hasOption = Array.from(destinationSelect.options).some((opt) => opt.value === targetForMeta.destination);
         if (hasOption) {
@@ -691,14 +717,14 @@
 
       setDatalistOptions(
         document.getElementById('siteNameList'),
-        getFilteredSiteNames(selectedUser, latestContact)
+        getFilteredSiteNames(selectedUser, nextContact)
       );
       setDatalistOptions(
         document.getElementById('siteAddressList'),
         uniqueValues(basePool.map((r) => r.siteAddress).concat(sameUserRows.map((r) => r.siteAddress)).concat(orders.map((o) => o.siteAddress)))
       );
 
-      statusText.textContent = `「${selectedUser}」の担当者・現場名候補と直近履歴を反映しました`;
+      statusText.textContent = `「${selectedUser}」の顧客マスター担当者（${userContacts.length}件）と連動情報を反映しました`;
     }
 
     function applyCustomerByContactAutofill() {
@@ -826,7 +852,8 @@
           issuers: uniqueValues(data.issuers),
           productsByMaker: data.productsByMaker || {},
           historyByProduct: data.historyByProduct || {},
-          customerOrders: Array.isArray(data.customerOrders) ? data.customerOrders : []
+          customerOrders: Array.isArray(data.customerOrders) ? data.customerOrders : [],
+          contactsByUser: data.contactsByUser || {}
         };
 
         refreshGlobalSuggestions();
@@ -846,7 +873,7 @@
         }
 
         if (showMessage) {
-          statusText.textContent = '商品マスターと受注履歴を最新化しました';
+          statusText.textContent = '商品マスターと顧客マスターを最新化しました';
         }
       } catch (err) {
         if (showMessage) {
