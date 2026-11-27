@@ -16,6 +16,8 @@
       --danger: #dc2626;
       --chip-bg: #f8fafc;
       --chip-border: #cbd5e1;
+      --edit-bg: #eff6ff;
+      --edit-border: #93c5fd;
     }
     * { box-sizing: border-box; }
     body {
@@ -51,6 +53,10 @@
       border-radius: 10px;
       padding: 16px 18px;
       margin-bottom: 14px;
+    }
+    .card.editing {
+      background: var(--edit-bg);
+      border-color: var(--edit-border);
     }
     .card-head {
       display: flex;
@@ -197,7 +203,8 @@
       align-items: center;
       gap: 10px;
     }
-    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .mode-status { font-weight: 700; color: var(--primary); }
   </style>
 </head>
 <body>
@@ -205,11 +212,33 @@
     <div class="topbar">
       <div>
         <h1>受注フォーム（GAS連動・v5）</h1>
-        <div class="sub">端末ごとの発行者記憶・発行者マスター自動保管・候補選択と自由入力を1欄に集約</div>
+        <div class="sub">端末ごとの発行者記憶・発行者マスター自動保管・送信後連続入力・履歴からの再編集対応</div>
       </div>
     </div>
 
     <form id="orderForm">
+      <!-- 送信済みデータの呼び出し・編集 -->
+      <div class="card" id="editHistoryCard">
+        <div class="card-head">
+          <h2 class="card-title">送信済みデータの呼び出し・編集</h2>
+          <div class="btn-group">
+            <button type="button" class="btn-ghost" id="exitEditModeBtn" style="display:none;">新規入力モードに戻す</button>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="recentOrderSelect">直近の送信履歴から選択（ID不要）</label>
+            <select id="recentOrderSelect">
+              <option value="">-- 選択するとフォームに読込 --</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>入力モード</label>
+            <div id="editModeBadge" class="sub mode-status" style="padding: 8px 0;">新規作成モード</div>
+          </div>
+        </div>
+      </div>
+
       <!-- 1. 基本・納品情報 -->
       <div class="card">
         <div class="card-head">
@@ -344,10 +373,14 @@
         <div id="itemsContainer"></div>
       </div>
 
-      <!-- 3. 送信 -->
+      <!-- 3. 送信・次の入力 -->
       <div class="card">
         <div class="footer-bar">
-          <button type="submit" class="btn-primary" id="submitBtn">フォーム送信</button>
+          <div class="btn-group">
+            <button type="submit" class="btn-primary" id="submitBtn">フォーム送信</button>
+            <button type="button" class="btn-secondary" id="nextOrderBtn">次の入力へ（発行者維持）</button>
+            <button type="button" class="btn-ghost" id="nextSameSiteBtn">同じ顧客・現場で明細だけ次へ</button>
+          </div>
           <span id="statusText" class="sub">準備完了</span>
         </div>
       </div>
@@ -394,6 +427,7 @@
     const STORAGE_KEY_GAS_URL = 'tsubame_order_gas_url_v1';
     const STORAGE_KEY_DEVICE_ISSUER = 'tsubame_device_issuer_v1';
     const STORAGE_KEY_DEVICE_ID = 'tsubame_device_id_v1';
+    const STORAGE_KEY_RECENT_ORDERS = 'tsubame_recent_orders_v1';
     const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbzm90lWQziIqNVPqeThucWMkRm84HJ-hZCbjDXOyR8hxIWueGwEJViiPR28qNLm9Q/exec';
 
     const FALLBACK_DATA = {
@@ -511,6 +545,7 @@
     };
 
     let lastSyncedIssuerKey = '';
+    let editingOrderId = '';
 
     const linkCancelled = {
       phone: false,
@@ -543,6 +578,14 @@
 
     const deviceId = getOrCreateDeviceId();
 
+    const editHistoryCard = document.getElementById('editHistoryCard');
+    const recentOrderSelect = document.getElementById('recentOrderSelect');
+    const editModeBadge = document.getElementById('editModeBadge');
+    const exitEditModeBtn = document.getElementById('exitEditModeBtn');
+    const nextOrderBtn = document.getElementById('nextOrderBtn');
+    const nextSameSiteBtn = document.getElementById('nextSameSiteBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
     const issuerInput = document.getElementById('issuer');
     const userNameInput = document.getElementById('userName');
     const contactListEl = document.getElementById('contactList');
@@ -564,6 +607,162 @@
     const clearBasicBtn = document.getElementById('clearBasicBtn');
     const statusText = document.getElementById('statusText');
     const orderForm = document.getElementById('orderForm');
+
+    function generateClientOrderId() {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const rand = Math.floor(100 + Math.random() * 900);
+      return `ORD-${stamp}-${rand}`;
+    }
+
+    function getRecentOrders() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_RECENT_ORDERS);
+        const list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveRecentOrder(payload) {
+      if (!payload || !payload.orderId) return;
+      const list = getRecentOrders().filter((item) => item.orderId !== payload.orderId);
+      list.unshift({
+        orderId: payload.orderId,
+        savedAt: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+        userName: payload['ユーザー名'] || '',
+        siteName: payload['現場名'] || '',
+        firstProduct: payload['品名1'] || '',
+        payload
+      });
+      try {
+        localStorage.setItem(STORAGE_KEY_RECENT_ORDERS, JSON.stringify(list.slice(0, 20)));
+      } catch (e) {}
+      renderRecentOrderSelect();
+    }
+
+    function renderRecentOrderSelect() {
+      const list = getRecentOrders();
+      const currentVal = recentOrderSelect.value;
+      recentOrderSelect.innerHTML = '<option value="">-- 選択するとフォームに読込 --</option>';
+      list.forEach((entry) => {
+        const opt = document.createElement('option');
+        opt.value = entry.orderId;
+        const summary = [entry.userName, entry.siteName, entry.firstProduct].filter(Boolean).join(' / ');
+        opt.textContent = `[${entry.savedAt}] ${summary || entry.orderId}`;
+        recentOrderSelect.appendChild(opt);
+      });
+      if (currentVal && Array.from(recentOrderSelect.options).some((o) => o.value === currentVal)) {
+        recentOrderSelect.value = currentVal;
+      }
+    }
+
+    function setEditMode(orderId = '') {
+      editingOrderId = orderId || '';
+      if (editingOrderId) {
+        editHistoryCard.classList.add('editing');
+        editModeBadge.textContent = `編集中（対象ID: ${editingOrderId}）— 送信で上書き更新`;
+        exitEditModeBtn.style.display = 'inline-block';
+        submitBtn.textContent = '変更を送信（上書き）';
+      } else {
+        editHistoryCard.classList.remove('editing');
+        editModeBadge.textContent = '新規作成モード';
+        exitEditModeBtn.style.display = 'none';
+        submitBtn.textContent = 'フォーム送信';
+        recentOrderSelect.value = '';
+      }
+    }
+
+    function populateFormFromPayload(p) {
+      if (!p) return;
+      linkCancelled.phone = true;
+      linkCancelled.destination = true;
+
+      if (p['発行者']) {
+        issuerInput.value = p['発行者'];
+      }
+      userNameInput.value = p['ユーザー名'] || '';
+      contactPersonInput.value = p['担当者'] || '';
+      phoneInput.value = p['電話番号'] || '';
+      siteNameInput.value = p['現場名'] || '';
+
+      const rawDate = String(p['希望納期'] || '').replace(/\//g, '-');
+      document.getElementById('deliveryDate').value = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : '';
+      document.getElementById('deliveryTime').value = p['納期時間帯'] || '';
+      destinationSelect.value = p['届け先'] || '貴社';
+      deliveryRequestInput.value = p['配達依頼'] || '';
+      orderSourceInput.value = p['発注先'] || '';
+      siteAddressInput.value = p['現場住所'] || '';
+      document.getElementById('etcNote').value = p['etc.'] || '';
+
+      const rows = [];
+      for (let i = 1; i <= MAX_ITEMS; i++) {
+        const rowObj = {};
+        let hasAny = false;
+        ITEM_FIELDS.forEach((field) => {
+          const val = p[`${field}${i}`] ?? '';
+          rowObj[field] = val;
+          if (String(val).trim() !== '' && !(field === '数量' && String(val) === '1')) {
+            hasAny = true;
+          }
+        });
+        if (i === 1 || hasAny || String(p[`品名${i}`] || '').trim() !== '') {
+          rows.push(rowObj);
+        }
+      }
+
+      itemsContainer.innerHTML = '';
+      (rows.length ? rows : [{ 数量: '1', 単位: '缶' }]).forEach((r, idx) => {
+        itemsContainer.appendChild(createItemCard(idx + 1, r));
+      });
+      renumberItems();
+      refreshGlobalSuggestions();
+    }
+
+    function resetForNextOrder({ keepCustomerAndSite = false, focusTarget = 'userName' } = {}) {
+      const savedIssuer = issuerInput.value;
+      const savedUser = userNameInput.value;
+      const savedContact = contactPersonInput.value;
+      const savedPhone = phoneInput.value;
+      const savedSite = siteNameInput.value;
+      const savedAddress = siteAddressInput.value;
+      const savedDest = destinationSelect.value;
+
+      setEditMode('');
+
+      if (!keepCustomerAndSite) {
+        linkCancelled.phone = false;
+        linkCancelled.destination = false;
+        ['userName', 'contactPerson', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
+          document.getElementById(id).value = '';
+        });
+        setDatalistOptions(phoneListEl, []);
+        document.getElementById('deliveryTime').value = '';
+        destinationSelect.value = '貴社';
+      } else {
+        userNameInput.value = savedUser;
+        contactPersonInput.value = savedContact;
+        phoneInput.value = savedPhone;
+        siteNameInput.value = savedSite;
+        siteAddressInput.value = savedAddress;
+        destinationSelect.value = savedDest || '貴社';
+        document.getElementById('etcNote').value = '';
+      }
+
+      issuerInput.value = savedIssuer;
+      itemsContainer.innerHTML = '';
+      addItemRow({ 数量: '1', 単位: '缶' });
+      refreshGlobalSuggestions();
+
+      if (focusTarget === 'maker1') {
+        const firstMaker = itemsContainer.querySelector('.item-card [data-field="メーカー"]');
+        firstMaker?.focus();
+      } else {
+        userNameInput.focus();
+      }
+    }
 
     function uniqueValues(arr) {
       return Array.from(new Set((arr || []).map((v) => String(v || '').trim()).filter(Boolean)));
@@ -776,9 +975,7 @@
           })
         });
         lastSyncedIssuerKey = syncKey;
-      } catch (e) {
-        // 自動保管の通信失敗時は次回操作時に再試行
-      }
+      } catch (e) {}
     }
 
     function applyCustomerHistoryAutofill() {
@@ -986,7 +1183,7 @@
         refreshGlobalSuggestions();
         restoreIssuerIfMissing(data);
 
-        if (userNameInput.value.trim()) {
+        if (userNameInput.value.trim() && !editingOrderId) {
           applyCustomerHistoryAutofill();
         }
 
@@ -1268,7 +1465,7 @@
       renumberItems();
     }
 
-    function buildPayload() {
+    function buildPayload(orderId, mode) {
       const payload = {};
       const formData = new FormData(orderForm);
       for (const [key, value] of formData.entries()) {
@@ -1279,6 +1476,8 @@
         payload['希望納期'] = payload['希望納期'].replace(/-/g, '/');
       }
       payload.deviceId = deviceId;
+      payload.orderId = orderId;
+      payload.mode = mode;
 
       const cards = Array.from(itemsContainer.querySelectorAll('.item-card'));
       for (let i = 1; i <= MAX_ITEMS; i++) {
@@ -1297,6 +1496,38 @@
       const d = String(dateObj.getDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
     }
+
+    recentOrderSelect.addEventListener('change', () => {
+      const selectedId = recentOrderSelect.value;
+      if (!selectedId) {
+        setEditMode('');
+        statusText.textContent = '新規作成モードに戻しました';
+        return;
+      }
+      const entry = getRecentOrders().find((item) => item.orderId === selectedId);
+      if (!entry || !entry.payload) {
+        statusText.textContent = '選択した履歴データが見つかりませんでした';
+        return;
+      }
+      populateFormFromPayload(entry.payload);
+      setEditMode(entry.orderId);
+      statusText.textContent = `履歴から呼び出しました（${entry.userName || ''} ${entry.siteName || ''}）— 修正して送信すると上書き更新されます`;
+    });
+
+    exitEditModeBtn.addEventListener('click', () => {
+      resetForNextOrder({ keepCustomerAndSite: false, focusTarget: 'userName' });
+      statusText.textContent = '新規作成モードに戻しました';
+    });
+
+    nextOrderBtn.addEventListener('click', () => {
+      resetForNextOrder({ keepCustomerAndSite: false, focusTarget: 'userName' });
+      statusText.textContent = '次の入力へ進みました（発行者設定は維持）';
+    });
+
+    nextSameSiteBtn.addEventListener('click', () => {
+      resetForNextOrder({ keepCustomerAndSite: true, focusTarget: 'maker1' });
+      statusText.textContent = '同じ顧客・現場のまま明細をリセットしました';
+    });
 
     document.querySelectorAll('.field-clear-btn[data-clear-target]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1420,14 +1651,20 @@
 
     orderForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const data = buildPayload();
       const gasUrl = getGasUrl();
       if (!gasUrl) {
         statusText.textContent = '送信先URLが設定されていません';
         return;
       }
 
-      statusText.textContent = '送信中...';
+      const isUpdate = Boolean(editingOrderId);
+      const targetOrderId = isUpdate ? editingOrderId : generateClientOrderId();
+      const mode = isUpdate ? 'update' : 'create';
+      const data = buildPayload(targetOrderId, mode);
+
+      statusText.textContent = isUpdate ? '変更を送信中...' : '送信中...';
+      submitBtn.disabled = true;
+
       try {
         await fetch(gasUrl, {
           method: 'POST',
@@ -1435,13 +1672,24 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(data)
         });
+
+        saveRecentOrder(data);
         lastSyncedIssuerKey = `${gasUrl}::${deviceId}::${issuerInput.value.trim()}`;
-        statusText.textContent = '送信リクエストを実行しました（シート反映を確認してください）';
+
+        // 送信後は次の新規入力へ進める状態にしつつ、発行者は維持
+        resetForNextOrder({ keepCustomerAndSite: false, focusTarget: 'userName' });
+        statusText.textContent = isUpdate
+          ? `更新送信を実行しました（${data['ユーザー名'] || ''} ${data['現場名'] || ''}）— 次の入力が可能です`
+          : `送信を実行しました（${data['ユーザー名'] || ''} ${data['現場名'] || ''}）— 次の入力が可能です`;
       } catch (err) {
         statusText.textContent = `送信エラー: ${err.message}`;
+      } finally {
+        submitBtn.disabled = false;
       }
     });
 
+    renderRecentOrderSelect();
+    setEditMode('');
     restoreIssuerIfMissing({});
     refreshGlobalSuggestions();
     addItemRow({ 数量: '1', 単位: '缶' });
