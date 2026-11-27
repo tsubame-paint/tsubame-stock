@@ -428,6 +428,7 @@
     const STORAGE_KEY_DEVICE_ISSUER = 'tsubame_device_issuer_v1';
     const STORAGE_KEY_DEVICE_ID = 'tsubame_device_id_v1';
     const STORAGE_KEY_RECENT_ORDERS = 'tsubame_recent_orders_v1';
+    const STORAGE_KEY_CATALOG_CACHE = 'tsubame_order_catalog_cache_v1';
     const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbzm90lWQziIqNVPqeThucWMkRm84HJ-hZCbjDXOyR8hxIWueGwEJViiPR28qNLm9Q/exec';
 
     const FALLBACK_DATA = {
@@ -551,6 +552,57 @@
       phone: false,
       destination: false
     };
+
+    function uniqueValues(arr) {
+      return Array.from(new Set((arr || []).map((v) => String(v || '').trim()).filter(Boolean)));
+    }
+
+    function applyCatalogData(data) {
+      const rawDeliveryRequests = Array.isArray(data.deliveryRequests)
+        ? data.deliveryRequests
+        : (Array.isArray(data.formAdminDeliveryRequests) ? data.formAdminDeliveryRequests : []);
+      const cleanedDeliveryRequests = uniqueValues(rawDeliveryRequests);
+
+      const rawOrderSources = Array.isArray(data.orderSources)
+        ? data.orderSources
+        : (Array.isArray(data.combinedViewOrderSources) ? data.combinedViewOrderSources : []);
+      const cleanedOrderSources = uniqueValues(rawOrderSources);
+
+      catalogState = {
+        makers: uniqueValues(data.makers),
+        issuers: uniqueValues(data.issuers),
+        deliveryRequests: cleanedDeliveryRequests,
+        orderSources: cleanedOrderSources,
+        productsByMaker: data.productsByMaker || {},
+        historyByProduct: data.historyByProduct || {},
+        rankedUsers: Array.isArray(data.rankedUsers) ? uniqueValues(data.rankedUsers) : [],
+        customerOrders: Array.isArray(data.customerOrders) ? data.customerOrders : [],
+        contactsByUser: data.contactsByUser || {}
+      };
+    }
+
+    function saveCatalogCache(data) {
+      try {
+        localStorage.setItem(STORAGE_KEY_CATALOG_CACHE, JSON.stringify({
+          savedAt: Date.now(),
+          data
+        }));
+      } catch (e) {}
+    }
+
+    function restoreCatalogCache() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_CATALOG_CACHE);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        const data = parsed && parsed.data ? parsed.data : null;
+        if (!data || !data.ok) return false;
+        applyCatalogData(data);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
 
     function getOrCreateDeviceId() {
       let id = '';
@@ -764,10 +816,6 @@
       } else {
         userNameInput.focus();
       }
-    }
-
-    function uniqueValues(arr) {
-      return Array.from(new Set((arr || []).map((v) => String(v || '').trim()).filter(Boolean)));
     }
 
     function setDatalistOptions(datalistEl, values) {
@@ -1155,6 +1203,11 @@
       const url = getGasUrl();
       if (!url) return;
 
+      const hasCachedUsers = getAllUserCandidates().length > FALLBACK_DATA.rankedUsers.length;
+      statusText.textContent = hasCachedUsers
+        ? 'キャッシュを表示中（最新マスターを同期中...）'
+        : '顧客・商品マスターを読込中...';
+
       try {
         const separator = url.includes('?') ? '&' : '?';
         const requestUrl = `${url}${separator}deviceId=${encodeURIComponent(deviceId)}`;
@@ -1167,28 +1220,8 @@
           throw new Error((data && data.error) || 'データの取得に失敗しました');
         }
 
-        const rawDeliveryRequests = Array.isArray(data.deliveryRequests)
-          ? data.deliveryRequests
-          : (Array.isArray(data.formAdminDeliveryRequests) ? data.formAdminDeliveryRequests : []);
-        const cleanedDeliveryRequests = uniqueValues(rawDeliveryRequests);
-
-        const rawOrderSources = Array.isArray(data.orderSources)
-          ? data.orderSources
-          : (Array.isArray(data.combinedViewOrderSources) ? data.combinedViewOrderSources : []);
-        const cleanedOrderSources = uniqueValues(rawOrderSources);
-
-        catalogState = {
-          makers: uniqueValues(data.makers),
-          issuers: uniqueValues(data.issuers),
-          deliveryRequests: cleanedDeliveryRequests,
-          orderSources: cleanedOrderSources,
-          productsByMaker: data.productsByMaker || {},
-          historyByProduct: data.historyByProduct || {},
-          rankedUsers: Array.isArray(data.rankedUsers) ? uniqueValues(data.rankedUsers) : [],
-          customerOrders: Array.isArray(data.customerOrders) ? data.customerOrders : [],
-          contactsByUser: data.contactsByUser || {}
-        };
-
+        applyCatalogData(data);
+        saveCatalogCache(data);
         refreshGlobalSuggestions();
         restoreIssuerIfMissing(data);
 
@@ -1205,13 +1238,15 @@
           syncIssuerToSheet(false);
         }
 
-        if (showMessage) {
-          statusText.textContent = '顧客ランキング・商品マスター・顧客マスター・フォーム管理・受注履歴一覧を最新化しました';
-        }
+        const userCount = getAllUserCandidates().length;
+        statusText.textContent = showMessage
+          ? `顧客ランキング・商品マスター・顧客マスター・フォーム管理・受注履歴一覧を最新化しました（ユーザー ${userCount}件）`
+          : `マスター読込完了（ユーザー ${userCount}件）`;
       } catch (err) {
-        if (showMessage) {
-          statusText.textContent = `読み込みエラー: ${err.message}`;
-        }
+        const userCount = getAllUserCandidates().length;
+        statusText.textContent = userCount > FALLBACK_DATA.rankedUsers.length
+          ? `キャッシュ表示中（ユーザー ${userCount}件 / 最新化エラー: ${err.message}）`
+          : `読み込みエラー: ${err.message}`;
       }
     }
 
@@ -1443,7 +1478,6 @@
       const candidates = getPrioritizedProductCandidates(maker);
       setDatalistOptions(nameList, candidates);
 
-      // メーカー選択時には品名を自動入力しない（候補リストの絞り込みのみ）
       void autoFillLatestProduct;
     }
 
@@ -1944,6 +1978,7 @@
     renderRecentOrderSelect();
     setEditMode('');
     restoreIssuerIfMissing({});
+    restoreCatalogCache();
     refreshGlobalSuggestions();
     addItemRow({ 数量: '1', 単位: '缶' });
     if (getGasUrl()) {
