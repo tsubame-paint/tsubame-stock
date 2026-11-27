@@ -145,6 +145,41 @@
       cursor: pointer;
     }
     .chip:hover { background: #eff6ff; border-color: #93c5fd; color: var(--primary); }
+    .history-lookup-box {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .history-lookup-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .history-lookup-list {
+      max-height: 220px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+    }
+    .history-lookup-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 12px;
+    }
+    .history-lookup-row:last-child {
+      border-bottom: none;
+    }
     .item-card {
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -370,6 +405,23 @@
             <button type="button" class="btn-secondary" id="addItemBtn">＋ 明細を追加</button>
           </div>
         </div>
+
+        <!-- 過去履歴からの確認・ワンクリック入力パネル -->
+        <div class="history-lookup-box" id="customerHistoryBox">
+          <div class="history-lookup-head">
+            <strong id="customerHistoryTitle" style="font-size: 13px;">過去の注文履歴（ユーザー・現場連動）</strong>
+            <input
+              type="text"
+              id="customerHistoryFilter"
+              placeholder="品名・色・艶・容量・日付などで絞り込み..."
+              style="max-width: 280px; padding: 5px 8px; font-size: 12px;"
+            />
+          </div>
+          <div id="customerHistoryList" class="sub" style="padding: 6px 2px;">
+            ユーザー名または現場名を選ぶと、過去の利用履歴（日付・品名・色・容量など）が表示されます。
+          </div>
+        </div>
+
         <div id="itemsContainer"></div>
       </div>
 
@@ -547,6 +599,7 @@
 
     let lastSyncedIssuerKey = '';
     let editingOrderId = '';
+    let activeItemCard = null;
 
     const linkCancelled = {
       phone: false,
@@ -654,11 +707,163 @@
     const orderSourceInput = document.getElementById('orderSource');
     const orderSourceListEl = document.getElementById('orderSourceList');
 
+    const customerHistoryTitleEl = document.getElementById('customerHistoryTitle');
+    const customerHistoryFilterEl = document.getElementById('customerHistoryFilter');
+    const customerHistoryListEl = document.getElementById('customerHistoryList');
+
     const itemsContainer = document.getElementById('itemsContainer');
     const addItemBtn = document.getElementById('addItemBtn');
     const clearBasicBtn = document.getElementById('clearBasicBtn');
     const statusText = document.getElementById('statusText');
     const orderForm = document.getElementById('orderForm');
+
+    itemsContainer.addEventListener('focusin', (e) => {
+      const card = e.target.closest('.item-card');
+      if (card) activeItemCard = card;
+    });
+
+    function getTargetItemCardForAutofill() {
+      if (activeItemCard && itemsContainer.contains(activeItemCard)) {
+        return activeItemCard;
+      }
+      return itemsContainer.querySelector('.item-card');
+    }
+
+    function collectMatchingOrderHistory(userName, siteName, keyword = '') {
+      const u = String(userName || '').trim();
+      const s = String(siteName || '').trim();
+      const kw = String(keyword || '').trim().toLowerCase();
+      const items = [];
+
+      const histMap = catalogState.historyByProduct || {};
+      Object.entries(histMap).forEach(([prodName, hist]) => {
+        if (!hist || typeof hist !== 'object') return;
+        const entries = Array.isArray(hist.recentEntries) ? hist.recentEntries : [];
+
+        entries.forEach((entry) => {
+          if (!entry || typeof entry !== 'object') return;
+          const eUser = String(entry.userName || '').trim();
+          const eSite = String(entry.siteName || '').trim();
+
+          const userMatch = !u || eUser === u;
+          const siteMatch = !s || eSite === s;
+          if (!userMatch || !siteMatch) return;
+
+          const record = {
+            timestamp: String(entry.timestamp || '').trim(),
+            userName: eUser,
+            siteName: eSite,
+            maker: String(entry.maker || (hist.latest && hist.latest.maker) || '').trim(),
+            name: String(entry.name || prodName || '').trim(),
+            detail: String(entry.detail || '').trim(),
+            gloss: String(entry.gloss || '').trim(),
+            color: String(entry.color || '').trim(),
+            size: String(entry.size || '').trim(),
+            unit: String(entry.unit || hist.defaultUnit || '缶').trim()
+          };
+
+          if (kw) {
+            const hay = [
+              record.timestamp,
+              record.userName,
+              record.siteName,
+              record.maker,
+              record.name,
+              record.color,
+              record.gloss,
+              record.size
+            ].join(' ').toLowerCase();
+            if (!hay.includes(kw)) return;
+          }
+
+          items.push(record);
+        });
+      });
+
+      items.sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+      return items.slice(0, 30);
+    }
+
+    function applyHistoryRecordToCard(card, rec) {
+      if (!card || !rec) return;
+      const setField = (fieldName, val) => {
+        const el = card.querySelector(`[data-field="${fieldName}"]`);
+        if (el) el.value = val || '';
+      };
+
+      setField('メーカー', rec.maker);
+      setField('品名', rec.name);
+      setField('詳細', rec.detail);
+      setField('艶', rec.gloss);
+      setField('色', rec.color);
+      setField('容量', rec.size);
+      if (rec.unit) setField('単位', rec.unit);
+
+      const qtyEl = card.querySelector('[data-field="数量"]');
+      if (qtyEl && !String(qtyEl.value || '').trim()) {
+        qtyEl.value = '1';
+      }
+
+      applyMakerFilter(card, false);
+      applyProductHistoryFilter(card, false);
+      statusText.textContent = `明細${card.dataset.index}に履歴を反映しました（${rec.timestamp || '日付不明'} / ${rec.name} / ${rec.color || '色なし'}）`;
+    }
+
+    function renderCustomerHistoryLookup() {
+      if (!customerHistoryTitleEl || !customerHistoryListEl) return;
+
+      const u = userNameInput.value.trim();
+      const s = siteNameInput.value.trim();
+      const kw = customerHistoryFilterEl ? customerHistoryFilterEl.value.trim() : '';
+
+      if (!u && !s && !kw) {
+        customerHistoryTitleEl.textContent = '過去の注文履歴（ユーザー・現場連動）';
+        customerHistoryListEl.className = 'sub';
+        customerHistoryListEl.style.padding = '6px 2px';
+        customerHistoryListEl.textContent = 'ユーザー名または現場名を選ぶと、過去の利用履歴（日付・品名・色・容量など）が表示されます。';
+        return;
+      }
+
+      const scopeLabel = [u || '全ユーザー', s || '全現場'].join(' / ');
+      const matches = collectMatchingOrderHistory(u, s, kw);
+      customerHistoryTitleEl.textContent = `過去の注文履歴：${scopeLabel}（${matches.length}件表示）`;
+      customerHistoryListEl.className = 'history-lookup-list';
+      customerHistoryListEl.style.padding = '0';
+
+      if (matches.length === 0) {
+        customerHistoryListEl.innerHTML = '<div class="history-lookup-row"><span class="sub">一致する過去履歴が見つかりませんでした。</span></div>';
+        return;
+      }
+
+      customerHistoryListEl.innerHTML = '';
+      matches.forEach((rec) => {
+        const row = document.createElement('div');
+        row.className = 'history-lookup-row';
+
+        const info = document.createElement('div');
+        const specText = [
+          rec.maker,
+          rec.gloss && `艶:${rec.gloss}`,
+          rec.color && `色:${rec.color}`,
+          rec.size && `容量:${rec.size}`
+        ].filter(Boolean).join(' / ');
+
+        info.innerHTML = `<strong>${rec.timestamp || '日付不明'}</strong> — <strong>${rec.name}</strong>${specText ? ` <span class="sub">(${specText})</span>` : ''}${!s && rec.siteName ? ` <span class="sub">[${rec.siteName}]</span>` : ''}`;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-ghost';
+        btn.textContent = '明細へ反映';
+        btn.addEventListener('click', () => {
+          const targetCard = getTargetItemCardForAutofill();
+          applyHistoryRecordToCard(targetCard, rec);
+        });
+
+        row.appendChild(info);
+        row.appendChild(btn);
+        customerHistoryListEl.appendChild(row);
+      });
+    }
 
     function generateClientOrderId() {
       const now = new Date();
@@ -772,6 +977,7 @@
       renumberItems();
       refreshGlobalSuggestions();
       refreshAllItemProductLists();
+      renderCustomerHistoryLookup();
     }
 
     function resetForNextOrder({ keepCustomerAndSite = false, focusTarget = 'userName' } = {}) {
@@ -809,6 +1015,7 @@
       addItemRow({ 数量: '1', 単位: '缶' });
       refreshGlobalSuggestions();
       refreshAllItemProductLists();
+      renderCustomerHistoryLookup();
 
       if (focusTarget === 'maker1') {
         const firstMaker = itemsContainer.querySelector('.item-card [data-field="メーカー"]');
@@ -1039,6 +1246,7 @@
         setDatalistOptions(phoneListEl, []);
         refreshGlobalSuggestions();
         refreshAllItemProductLists();
+        renderCustomerHistoryLookup();
         return;
       }
 
@@ -1056,6 +1264,7 @@
         setDatalistOptions(phoneListEl, []);
         refreshGlobalSuggestions();
         refreshAllItemProductLists();
+        renderCustomerHistoryLookup();
         statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（手入力可）`;
         return;
       }
@@ -1079,6 +1288,7 @@
       syncScopedPhoneList();
       refreshGlobalSuggestions();
       refreshAllItemProductLists();
+      renderCustomerHistoryLookup();
 
       if (siteCandidates.length > 0) {
         statusText.textContent = `「${selectedUser}」の現場名候補（${siteCandidates.length}件）から選択または入力できます（現場住所は現場名選択時に反映）`;
@@ -1139,6 +1349,7 @@
       if (!selectedUser) {
         refreshGlobalSuggestions();
         refreshAllItemProductLists();
+        renderCustomerHistoryLookup();
         return;
       }
 
@@ -1150,6 +1361,7 @@
         syncScopedPhoneList();
         refreshGlobalSuggestions();
         refreshAllItemProductLists();
+        renderCustomerHistoryLookup();
         return;
       }
 
@@ -1189,6 +1401,7 @@
       syncScopedPhoneList();
       refreshGlobalSuggestions();
       refreshAllItemProductLists();
+      renderCustomerHistoryLookup();
 
       if (siteRows.length > 0 && nextAddress) {
         statusText.textContent = `「${selectedUser} / ${selectedSite}」に紐づく現場住所を反映しました`;
@@ -1227,6 +1440,8 @@
 
         if (userNameInput.value.trim() && !editingOrderId) {
           applyCustomerHistoryAutofill();
+        } else {
+          renderCustomerHistoryLookup();
         }
 
         Array.from(itemsContainer.querySelectorAll('.item-card')).forEach((card) => {
@@ -1748,7 +1963,9 @@
     function addItemRow(initial = {}) {
       const currentCards = itemsContainer.querySelectorAll('.item-card').length;
       if (currentCards >= MAX_ITEMS) return;
-      itemsContainer.appendChild(createItemCard(currentCards + 1, initial));
+      const card = createItemCard(currentCards + 1, initial);
+      itemsContainer.appendChild(card);
+      if (!activeItemCard) activeItemCard = card;
       renumberItems();
     }
 
@@ -1887,6 +2104,12 @@
       applyAddressBySiteAutofill();
     });
 
+    if (customerHistoryFilterEl) {
+      customerHistoryFilterEl.addEventListener('input', () => {
+        renderCustomerHistoryLookup();
+      });
+    }
+
     document.querySelectorAll('.chip[data-preset]').forEach((chip) => {
       chip.addEventListener('click', () => {
         const preset = chip.dataset.preset;
@@ -1925,11 +2148,15 @@
       ['userName', 'contactPerson', 'phone', 'siteName', 'deliveryDate', 'deliveryRequest', 'orderSource', 'siteAddress', 'etcNote'].forEach((id) => {
         document.getElementById(id).value = '';
       });
+      if (customerHistoryFilterEl) {
+        customerHistoryFilterEl.value = '';
+      }
       setDatalistOptions(phoneListEl, []);
       document.getElementById('deliveryTime').value = '';
       destinationSelect.value = '貴社';
       refreshGlobalSuggestions();
       refreshAllItemProductLists();
+      renderCustomerHistoryLookup();
       statusText.textContent = '基本情報をクリアしました（端末の発行者設定は維持）';
     });
 
@@ -1981,6 +2208,7 @@
     restoreCatalogCache();
     refreshGlobalSuggestions();
     addItemRow({ 数量: '1', 単位: '缶' });
+    renderCustomerHistoryLookup();
     if (getGasUrl()) {
       loadCatalogFromGas(false);
     }
