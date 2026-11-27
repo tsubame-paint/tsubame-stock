@@ -719,6 +719,7 @@
       });
       renumberItems();
       refreshGlobalSuggestions();
+      refreshAllItemProductLists();
     }
 
     function resetForNextOrder({ keepCustomerAndSite = false, focusTarget = 'userName' } = {}) {
@@ -755,6 +756,7 @@
       itemsContainer.innerHTML = '';
       addItemRow({ 数量: '1', 単位: '缶' });
       refreshGlobalSuggestions();
+      refreshAllItemProductLists();
 
       if (focusTarget === 'maker1') {
         const firstMaker = itemsContainer.querySelector('.item-card [data-field="メーカー"]');
@@ -988,6 +990,7 @@
         siteAddressInput.value = '';
         setDatalistOptions(phoneListEl, []);
         refreshGlobalSuggestions();
+        refreshAllItemProductLists();
         return;
       }
 
@@ -1004,6 +1007,7 @@
       if (!latestOrder && contactInfo.names.length === 0 && !contactInfo.hasBlank) {
         setDatalistOptions(phoneListEl, []);
         refreshGlobalSuggestions();
+        refreshAllItemProductLists();
         statusText.textContent = `「${selectedUser}」は顧客マスターに担当者が登録されていません（手入力可）`;
         return;
       }
@@ -1026,6 +1030,7 @@
       const siteCandidates = getFilteredSiteNames(selectedUser, activeContact);
       syncScopedPhoneList();
       refreshGlobalSuggestions();
+      refreshAllItemProductLists();
 
       if (siteCandidates.length > 0) {
         statusText.textContent = `「${selectedUser}」の現場名候補（${siteCandidates.length}件）から選択または入力できます（現場住所は現場名選択時に反映）`;
@@ -1085,6 +1090,7 @@
       const selectedSite = siteNameInput.value.trim();
       if (!selectedUser) {
         refreshGlobalSuggestions();
+        refreshAllItemProductLists();
         return;
       }
 
@@ -1095,6 +1101,7 @@
       if (!selectedSite) {
         syncScopedPhoneList();
         refreshGlobalSuggestions();
+        refreshAllItemProductLists();
         return;
       }
 
@@ -1133,6 +1140,7 @@
 
       syncScopedPhoneList();
       refreshGlobalSuggestions();
+      refreshAllItemProductLists();
 
       if (siteRows.length > 0 && nextAddress) {
         statusText.textContent = `「${selectedUser} / ${selectedSite}」に紐づく現場住所を反映しました`;
@@ -1231,16 +1239,108 @@
       return '';
     }
 
+    function getUserHistoryRankMap(selectedUser = '', selectedSite = '') {
+      const user = String(selectedUser || '').trim();
+      const site = String(selectedSite || '').trim();
+      const rankMap = new Map();
+
+      if (!user && !site) return rankMap;
+
+      const historyMap = catalogState.historyByProduct || {};
+      Object.entries(historyMap).forEach(([prodName, hist]) => {
+        const cleanName = String(prodName || '').trim();
+        if (!cleanName || !hist || typeof hist !== 'object') return;
+
+        let score = 0;
+        const users = Array.isArray(hist.users) ? hist.users.map((u) => String(u || '').trim()) : [];
+        const sites = Array.isArray(hist.sites) ? hist.sites.map((s) => String(s || '').trim()) : [];
+        const latestUser = hist.latest && hist.latest.userName ? String(hist.latest.userName).trim() : '';
+        const latestSite = hist.latest && hist.latest.siteName ? String(hist.latest.siteName).trim() : '';
+
+        if (user && (users.includes(user) || latestUser === user)) {
+          score += 100;
+        }
+        if (site && (sites.includes(site) || latestSite === site)) {
+          score += 30;
+        }
+        if (typeof hist.count === 'number' && score > 0) {
+          score += Math.min(hist.count, 20);
+        }
+
+        if (score > 0) {
+          rankMap.set(cleanName, Math.max(rankMap.get(cleanName) || 0, score));
+        }
+      });
+
+      (catalogState.customerOrders || []).forEach((order) => {
+        if (!order || typeof order !== 'object') return;
+        const oUser = String(order.userName || '').trim();
+        const oSite = String(order.siteName || '').trim();
+        const isUserMatch = user && oUser === user;
+        const isSiteMatch = site && oSite === site;
+        if (!isUserMatch && !isSiteMatch) return;
+
+        const baseScore = (isUserMatch ? 100 : 0) + (isSiteMatch ? 30 : 0);
+        const orderProducts = [];
+        if (Array.isArray(order.products)) {
+          orderProducts.push(...order.products);
+        }
+        if (order.productName) {
+          orderProducts.push(order.productName);
+        }
+        orderProducts.forEach((rawProd) => {
+          const p = String(rawProd || '').trim();
+          if (!p) return;
+          rankMap.set(p, Math.max(rankMap.get(p) || 0, baseScore));
+        });
+      });
+
+      return rankMap;
+    }
+
+    function getPrioritizedProductCandidates(maker = '') {
+      const targetMaker = String(maker || '').trim();
+      const byMaker = catalogState.productsByMaker || {};
+      const selectedUser = userNameInput.value.trim();
+      const selectedSite = siteNameInput.value.trim();
+
+      const rawCandidates = targetMaker
+        ? (Array.isArray(byMaker[targetMaker]) ? byMaker[targetMaker] : [])
+        : Object.values(byMaker).flat();
+
+      const uniqueList = uniqueValues(rawCandidates);
+      const rankMap = getUserHistoryRankMap(selectedUser, selectedSite);
+
+      if (rankMap.size === 0) {
+        return uniqueList;
+      }
+
+      return uniqueList
+        .map((name, index) => ({
+          name,
+          index,
+          score: rankMap.get(name) || 0
+        }))
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return a.index - b.index;
+        })
+        .map((item) => item.name);
+    }
+
+    function refreshAllItemProductLists() {
+      Array.from(itemsContainer.querySelectorAll('.item-card')).forEach((card) => {
+        applyMakerFilter(card, false);
+      });
+    }
+
     function applyMakerFilter(card, autoFillLatestProduct = false) {
       const idx = card.dataset.index;
       const makerInput = card.querySelector('[data-field="メーカー"]');
       const nameList = card.querySelector(`#itemNameList-${idx}`);
       const maker = makerInput.value.trim();
 
-      const candidates = maker
-        ? (catalogState.productsByMaker[maker] || [])
-        : Object.values(catalogState.productsByMaker).flat();
-
+      const candidates = getPrioritizedProductCandidates(maker);
       setDatalistOptions(nameList, candidates);
 
       // メーカー選択時には品名を自動入力しない（候補リストの絞り込みのみ）
@@ -1668,6 +1768,7 @@
       document.getElementById('deliveryTime').value = '';
       destinationSelect.value = '貴社';
       refreshGlobalSuggestions();
+      refreshAllItemProductLists();
       statusText.textContent = '基本情報をクリアしました（端末の発行者設定は維持）';
     });
 
