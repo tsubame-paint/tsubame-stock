@@ -1207,10 +1207,33 @@
       }
     }
 
-    function applyMakerFilter(card, autoFillLatestProduct = true) {
+    function resolveMakerForProduct(productName) {
+      const name = String(productName || '').trim();
+      if (!name) return '';
+
+      const hist = catalogState.historyByProduct && catalogState.historyByProduct[name];
+      if (hist) {
+        if (hist.latest && hist.latest.maker) {
+          return String(hist.latest.maker).trim();
+        }
+        if (Array.isArray(hist.makers) && hist.makers.length > 0) {
+          return String(hist.makers[0] || '').trim();
+        }
+      }
+
+      const byMaker = catalogState.productsByMaker || {};
+      for (const [makerName, products] of Object.entries(byMaker)) {
+        if (Array.isArray(products) && products.map((p) => String(p || '').trim()).includes(name)) {
+          return String(makerName || '').trim();
+        }
+      }
+
+      return '';
+    }
+
+    function applyMakerFilter(card, autoFillLatestProduct = false) {
       const idx = card.dataset.index;
       const makerInput = card.querySelector('[data-field="メーカー"]');
-      const nameInput = card.querySelector('[data-field="品名"]');
       const nameList = card.querySelector(`#itemNameList-${idx}`);
       const maker = makerInput.value.trim();
 
@@ -1220,22 +1243,13 @@
 
       setDatalistOptions(nameList, candidates);
 
-      if (autoFillLatestProduct && maker) {
-        const productCandidates = uniqueValues(candidates);
-        const historyMatch = productCandidates.find((prodName) => {
-          const hist = catalogState.historyByProduct[prodName];
-          return hist && hist.latest && (!hist.latest.maker || hist.latest.maker === maker);
-        });
-        const nextName = historyMatch || productCandidates[0] || '';
-        if (nextName) {
-          nameInput.value = nextName;
-          applyProductHistoryFilter(card, true);
-        }
-      }
+      // メーカー選択時には品名を自動入力しない（候補リストの絞り込みのみ）
+      void autoFillLatestProduct;
     }
 
     function applyProductHistoryFilter(card, autoFillLatestSpecs = true) {
       const idx = card.dataset.index;
+      const makerInput = card.querySelector('[data-field="メーカー"]');
       const nameInput = card.querySelector('[data-field="品名"]');
       const glossInput = card.querySelector('[data-field="艶"]');
       const colorInput = card.querySelector('[data-field="色"]');
@@ -1248,6 +1262,14 @@
 
       const productName = nameInput.value.trim();
       const hist = productName ? catalogState.historyByProduct[productName] : null;
+
+      if (productName) {
+        const matchedMaker = resolveMakerForProduct(productName);
+        if (matchedMaker && makerInput.value.trim() !== matchedMaker) {
+          makerInput.value = matchedMaker;
+          applyMakerFilter(card, false);
+        }
+      }
 
       if (hist && hist.options) {
         setDatalistOptions(glossList, hist.options.gloss || []);
@@ -1385,13 +1407,16 @@
       applyProductHistoryFilter(card, false);
 
       makerInput.addEventListener('change', () => {
-        applyMakerFilter(card, true);
-        statusText.textContent = `明細${card.dataset.index}：メーカーに合わせて商品マスターを絞り込みました`;
+        applyMakerFilter(card, false);
+        statusText.textContent = `明細${card.dataset.index}：メーカーに合わせて品名候補を絞り込みました（品名は選択・手入力可）`;
       });
 
       nameInput.addEventListener('change', () => {
         applyProductHistoryFilter(card, true);
-        statusText.textContent = `明細${card.dataset.index}：履歴から艶・色・容量を絞り込み、前回値を反映しました`;
+        const autoMaker = makerInput.value.trim();
+        statusText.textContent = autoMaker
+          ? `明細${card.dataset.index}：「${autoMaker}」を反映し、履歴から艶・色・容量を補完しました`
+          : `明細${card.dataset.index}：履歴から艶・色・容量を絞り込み、前回値を反映しました`;
       });
 
       card.querySelector('.copy-item-btn').addEventListener('click', () => {
