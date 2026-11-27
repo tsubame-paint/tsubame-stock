@@ -1298,6 +1298,105 @@
       return rankMap;
     }
 
+    function getPrioritizedSpecCandidates(hist, specKey, selectedUser = '', selectedSite = '') {
+      if (!hist || typeof hist !== 'object') return [];
+
+      const optionKeyMap = {
+        gloss: 'gloss',
+        color: 'color',
+        size: 'size',
+        unit: 'unit'
+      };
+      const optKey = optionKeyMap[specKey] || specKey;
+      const allOptions = uniqueValues((hist.options && hist.options[optKey]) || []);
+
+      const user = String(selectedUser || '').trim();
+      const site = String(selectedSite || '').trim();
+      const prioritized = [];
+
+      const userScoped = hist.byUser && user ? hist.byUser[user] : null;
+      const siteScoped = hist.bySite && site ? hist.bySite[site] : null;
+
+      if (siteScoped && siteScoped.latest && siteScoped.latest[specKey]) {
+        prioritized.push(String(siteScoped.latest[specKey]).trim());
+      }
+      if (userScoped && userScoped.latest && userScoped.latest[specKey]) {
+        prioritized.push(String(userScoped.latest[specKey]).trim());
+      }
+      if (siteScoped && siteScoped.options && Array.isArray(siteScoped.options[optKey])) {
+        prioritized.push(...siteScoped.options[optKey]);
+      }
+      if (userScoped && userScoped.options && Array.isArray(userScoped.options[optKey])) {
+        prioritized.push(...userScoped.options[optKey]);
+      }
+
+      if (Array.isArray(hist.recentEntries)) {
+        hist.recentEntries.forEach((entry) => {
+          if (!entry || typeof entry !== 'object') return;
+          const eUser = String(entry.userName || '').trim();
+          const eSite = String(entry.siteName || '').trim();
+          const val = String(entry[specKey] || '').trim();
+          if (!val) return;
+          if ((site && eSite === site) || (user && eUser === user)) {
+            prioritized.push(val);
+          }
+        });
+      }
+
+      return uniqueValues([...prioritized, ...allOptions]);
+    }
+
+    function getPreferredProductSpec(hist, selectedUser = '', selectedSite = '') {
+      if (!hist || typeof hist !== 'object') {
+        return { gloss: '', color: '', size: '', unit: '', matchedScope: '' };
+      }
+
+      const user = String(selectedUser || '').trim();
+      const site = String(selectedSite || '').trim();
+
+      const userScoped = hist.byUser && user ? hist.byUser[user] : null;
+      const siteScoped = hist.bySite && site ? hist.bySite[site] : null;
+
+      let matchedEntry = null;
+      let matchedScope = '';
+
+      if (site && user && Array.isArray(hist.recentEntries)) {
+        matchedEntry = hist.recentEntries.find(
+          (e) => String(e.userName || '').trim() === user && String(e.siteName || '').trim() === site
+        ) || null;
+        if (matchedEntry) matchedScope = 'user+site';
+      }
+
+      if (!matchedEntry && siteScoped && siteScoped.latest) {
+        matchedEntry = siteScoped.latest;
+        matchedScope = 'site';
+      }
+
+      if (!matchedEntry && userScoped && userScoped.latest) {
+        matchedEntry = userScoped.latest;
+        matchedScope = 'user';
+      }
+
+      const fallbackLatest = hist.latest || {};
+      if (!matchedEntry && Object.keys(fallbackLatest).length > 0) {
+        matchedEntry = fallbackLatest;
+        matchedScope = 'global';
+      }
+
+      const gloss = (matchedEntry && matchedEntry.gloss) || (userScoped && userScoped.latest && userScoped.latest.gloss) || fallbackLatest.gloss || '';
+      const color = (matchedEntry && matchedEntry.color) || (userScoped && userScoped.latest && userScoped.latest.color) || fallbackLatest.color || '';
+      const size = (matchedEntry && matchedEntry.size) || (userScoped && userScoped.latest && userScoped.latest.size) || fallbackLatest.size || '';
+      const unit = (matchedEntry && matchedEntry.unit) || (userScoped && userScoped.latest && userScoped.latest.unit) || fallbackLatest.unit || hist.defaultUnit || '';
+
+      return {
+        gloss: String(gloss || '').trim(),
+        color: String(color || '').trim(),
+        size: String(size || '').trim(),
+        unit: String(unit || '').trim(),
+        matchedScope
+      };
+    }
+
     function getPrioritizedProductCandidates(maker = '') {
       const targetMaker = String(maker || '').trim();
       const byMaker = catalogState.productsByMaker || {};
@@ -1331,6 +1430,7 @@
     function refreshAllItemProductLists() {
       Array.from(itemsContainer.querySelectorAll('.item-card')).forEach((card) => {
         applyMakerFilter(card, false);
+        applyProductHistoryFilter(card, false);
       });
     }
 
@@ -1362,6 +1462,8 @@
 
       const productName = nameInput.value.trim();
       const hist = productName ? catalogState.historyByProduct[productName] : null;
+      const selectedUser = userNameInput.value.trim();
+      const selectedSite = siteNameInput.value.trim();
 
       if (productName) {
         const matchedMaker = resolveMakerForProduct(productName);
@@ -1371,22 +1473,23 @@
         }
       }
 
-      if (hist && hist.options) {
-        setDatalistOptions(glossList, hist.options.gloss || []);
-        setDatalistOptions(colorList, hist.options.color || []);
-        setDatalistOptions(sizeList, hist.options.size || []);
+      if (hist) {
+        setDatalistOptions(glossList, getPrioritizedSpecCandidates(hist, 'gloss', selectedUser, selectedSite));
+        setDatalistOptions(colorList, getPrioritizedSpecCandidates(hist, 'color', selectedUser, selectedSite));
+        setDatalistOptions(sizeList, getPrioritizedSpecCandidates(hist, 'size', selectedUser, selectedSite));
       } else {
         setDatalistOptions(glossList, []);
         setDatalistOptions(colorList, []);
         setDatalistOptions(sizeList, []);
       }
 
-      if (autoFillLatestSpecs && hist && hist.latest) {
-        glossInput.value = hist.latest.gloss || '';
-        colorInput.value = hist.latest.color || '';
-        sizeInput.value = hist.latest.size || '';
-        if (hist.latest.unit || hist.defaultUnit) {
-          unitInput.value = hist.latest.unit || hist.defaultUnit;
+      if (autoFillLatestSpecs && hist) {
+        const spec = getPreferredProductSpec(hist, selectedUser, selectedSite);
+        glossInput.value = spec.gloss || '';
+        colorInput.value = spec.color || '';
+        sizeInput.value = spec.size || '';
+        if (spec.unit) {
+          unitInput.value = spec.unit;
         }
       }
     }
@@ -1514,8 +1617,9 @@
       nameInput.addEventListener('change', () => {
         applyProductHistoryFilter(card, true);
         const autoMaker = makerInput.value.trim();
-        statusText.textContent = autoMaker
-          ? `明細${card.dataset.index}：「${autoMaker}」を反映し、履歴から艶・色・容量を補完しました`
+        const activeUser = userNameInput.value.trim();
+        statusText.textContent = activeUser
+          ? `明細${card.dataset.index}：「${activeUser}」の履歴を優先して艶・色・容量を反映しました${autoMaker ? `（${autoMaker}）` : ''}`
           : `明細${card.dataset.index}：履歴から艶・色・容量を絞り込み、前回値を反映しました`;
       });
 
