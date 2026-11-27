@@ -18,6 +18,8 @@
       --chip-border: #cbd5e1;
       --edit-bg: #eff6ff;
       --edit-border: #93c5fd;
+      --active-item-bg: #eff6ff;
+      --active-item-border: #2563eb;
     }
     * { box-sizing: border-box; }
     body {
@@ -160,6 +162,18 @@
       gap: 8px;
       margin-bottom: 8px;
     }
+    .history-target-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
     .history-lookup-list {
       max-height: 220px;
       overflow-y: auto;
@@ -186,6 +200,12 @@
       padding: 12px;
       margin-bottom: 10px;
       background: #f8fafc;
+      transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .item-card.is-active {
+      background: var(--active-item-bg);
+      border-color: var(--active-item-border);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.16);
     }
     .item-top {
       display: flex;
@@ -194,7 +214,24 @@
       margin-bottom: 10px;
       gap: 8px;
     }
+    .item-badge-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
     .item-badge { font-weight: 700; font-size: 13px; color: #0f172a; }
+    .item-active-tag {
+      display: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 8px;
+      border-radius: 999px;
+    }
+    .item-card.is-active .item-active-tag {
+      display: inline-block;
+    }
     .item-actions { display: flex; gap: 6px; align-items: center; }
     .item-row-upper {
       display: grid;
@@ -409,7 +446,10 @@
         <!-- 過去履歴からの確認・ワンクリック入力パネル -->
         <div class="history-lookup-box" id="customerHistoryBox">
           <div class="history-lookup-head">
-            <strong id="customerHistoryTitle" style="font-size: 13px;">過去の注文履歴（ユーザー・現場連動）</strong>
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+              <strong id="customerHistoryTitle" style="font-size: 13px;">過去の注文履歴（ユーザー・現場連動）</strong>
+              <span class="history-target-pill" id="activeDetailTargetBadge">反映先：明細1</span>
+            </div>
             <input
               type="text"
               id="customerHistoryFilter"
@@ -708,6 +748,7 @@
     const orderSourceListEl = document.getElementById('orderSourceList');
 
     const customerHistoryTitleEl = document.getElementById('customerHistoryTitle');
+    const activeDetailTargetBadgeEl = document.getElementById('activeDetailTargetBadge');
     const customerHistoryFilterEl = document.getElementById('customerHistoryFilter');
     const customerHistoryListEl = document.getElementById('customerHistoryList');
 
@@ -717,12 +758,49 @@
     const statusText = document.getElementById('statusText');
     const orderForm = document.getElementById('orderForm');
 
+    function syncActiveDetailUI() {
+      const cards = Array.from(itemsContainer.querySelectorAll('.item-card'));
+      if (!activeItemCard || !itemsContainer.contains(activeItemCard)) {
+        activeItemCard = cards[cards.length - 1] || null;
+      }
+
+      cards.forEach((card) => {
+        const isCurrent = card === activeItemCard;
+        card.classList.toggle('is-active', isCurrent);
+      });
+
+      if (activeDetailTargetBadgeEl) {
+        const idx = activeItemCard ? activeItemCard.dataset.index : '1';
+        activeDetailTargetBadgeEl.textContent = `反映先：明細${idx}`;
+      }
+    }
+
+    function setActiveItemCard(card, { scrollIntoView = false } = {}) {
+      if (!card || !itemsContainer.contains(card)) return;
+      activeItemCard = card;
+      syncActiveDetailUI();
+      if (scrollIntoView) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
     itemsContainer.addEventListener('focusin', (e) => {
       const card = e.target.closest('.item-card');
-      if (card) activeItemCard = card;
+      if (card) {
+        setActiveItemCard(card, { scrollIntoView: false });
+      }
+    });
+
+    itemsContainer.addEventListener('click', (e) => {
+      if (e.target.closest('.remove-item-btn')) return;
+      const card = e.target.closest('.item-card');
+      if (card) {
+        setActiveItemCard(card, { scrollIntoView: false });
+      }
     });
 
     function getTargetItemCardForAutofill() {
+      syncActiveDetailUI();
       if (activeItemCard && itemsContainer.contains(activeItemCard)) {
         return activeItemCard;
       }
@@ -786,6 +864,8 @@
 
     function applyHistoryRecordToCard(card, rec) {
       if (!card || !rec) return;
+      setActiveItemCard(card, { scrollIntoView: false });
+
       const setField = (fieldName, val) => {
         const el = card.querySelector(`[data-field="${fieldName}"]`);
         if (el) el.value = val || '';
@@ -971,10 +1051,14 @@
       }
 
       itemsContainer.innerHTML = '';
+      activeItemCard = null;
       (rows.length ? rows : [{ 数量: '1', 単位: '缶' }]).forEach((r, idx) => {
-        itemsContainer.appendChild(createItemCard(idx + 1, r));
+        const card = createItemCard(idx + 1, r);
+        itemsContainer.appendChild(card);
+        if (idx === 0) activeItemCard = card;
       });
       renumberItems();
+      syncActiveDetailUI();
       refreshGlobalSuggestions();
       refreshAllItemProductLists();
       renderCustomerHistoryLookup();
@@ -1012,7 +1096,8 @@
 
       issuerInput.value = savedIssuer;
       itemsContainer.innerHTML = '';
-      addItemRow({ 数量: '1', 単位: '缶' });
+      activeItemCard = null;
+      addItemRow({ 数量: '1', 単位: '缶' }, { setActive: true, scrollIntoView: false });
       refreshGlobalSuggestions();
       refreshAllItemProductLists();
       renderCustomerHistoryLookup();
@@ -1758,6 +1843,7 @@
       });
       applyMakerFilter(card, false);
       applyProductHistoryFilter(card, false);
+      setActiveItemCard(card, { scrollIntoView: false });
       statusText.textContent = `明細${card.dataset.index}をクリアしました`;
     }
 
@@ -1768,7 +1854,10 @@
 
       card.innerHTML = `
         <div class="item-top">
-          <span class="item-badge">明細 ${index}</span>
+          <div class="item-badge-wrap">
+            <span class="item-badge">明細 ${index}</span>
+            <span class="item-active-tag">反映先</span>
+          </div>
           <div class="item-actions">
             <button type="button" class="btn-ghost copy-item-btn">複製</button>
             <button type="button" class="btn-ghost clear-item-btn">クリア</button>
@@ -1866,6 +1955,7 @@
       card.querySelectorAll('.field-clear-btn[data-clear-field]').forEach((btn) => {
         const fieldName = btn.dataset.clearField;
         btn.addEventListener('click', () => {
+          setActiveItemCard(card, { scrollIntoView: false });
           const targetInput = card.querySelector(`[data-field="${fieldName}"]`);
           if (!targetInput) return;
           targetInput.value = '';
@@ -1901,8 +1991,11 @@
         ITEM_FIELDS.forEach((field) => {
           values[field] = card.querySelector(`[data-field="${field}"]`).value;
         });
-        itemsContainer.appendChild(createItemCard(currentCards + 1, values));
+        const newCard = createItemCard(currentCards + 1, values);
+        itemsContainer.appendChild(newCard);
         renumberItems();
+        setActiveItemCard(newCard, { scrollIntoView: true });
+        statusText.textContent = `明細${card.dataset.index}を複製し、反映先を明細${newCard.dataset.index}に切り替えました`;
       });
 
       card.querySelector('.clear-item-btn').addEventListener('click', () => {
@@ -1912,8 +2005,14 @@
       const removeBtn = card.querySelector('.remove-item-btn');
       if (removeBtn) {
         removeBtn.addEventListener('click', () => {
+          const wasActive = card === activeItemCard;
           card.remove();
           renumberItems();
+          if (wasActive) {
+            const remaining = Array.from(itemsContainer.querySelectorAll('.item-card'));
+            activeItemCard = remaining[remaining.length - 1] || null;
+          }
+          syncActiveDetailUI();
         });
       }
 
@@ -1949,8 +2048,14 @@
           btn.className = 'btn-danger remove-item-btn';
           btn.textContent = '削除';
           btn.addEventListener('click', () => {
+            const wasActive = card === activeItemCard;
             card.remove();
             renumberItems();
+            if (wasActive) {
+              const remaining = Array.from(itemsContainer.querySelectorAll('.item-card'));
+              activeItemCard = remaining[remaining.length - 1] || null;
+            }
+            syncActiveDetailUI();
           });
           actions.appendChild(btn);
         } else if (num === 1 && hasRemove) {
@@ -1958,15 +2063,19 @@
         }
       });
       addItemBtn.disabled = cards.length >= MAX_ITEMS;
+      syncActiveDetailUI();
     }
 
-    function addItemRow(initial = {}) {
+    function addItemRow(initial = {}, { setActive = true, scrollIntoView = true } = {}) {
       const currentCards = itemsContainer.querySelectorAll('.item-card').length;
       if (currentCards >= MAX_ITEMS) return;
       const card = createItemCard(currentCards + 1, initial);
       itemsContainer.appendChild(card);
-      if (!activeItemCard) activeItemCard = card;
       renumberItems();
+      if (setActive || !activeItemCard) {
+        setActiveItemCard(card, { scrollIntoView });
+        statusText.textContent = `明細${card.dataset.index}を追加し、反映先を明細${card.dataset.index}に切り替えました`;
+      }
     }
 
     function buildPayload(orderId, mode) {
@@ -2161,7 +2270,7 @@
     });
 
     addItemBtn.addEventListener('click', () => {
-      addItemRow({ 数量: '1', 単位: '缶' });
+      addItemRow({ 数量: '1', 単位: '缶' }, { setActive: true, scrollIntoView: true });
     });
 
     orderForm.addEventListener('submit', async (e) => {
@@ -2207,7 +2316,7 @@
     restoreIssuerIfMissing({});
     restoreCatalogCache();
     refreshGlobalSuggestions();
-    addItemRow({ 数量: '1', 単位: '缶' });
+    addItemRow({ 数量: '1', 単位: '缶' }, { setActive: true, scrollIntoView: false });
     renderCustomerHistoryLookup();
     if (getGasUrl()) {
       loadCatalogFromGas(false);
