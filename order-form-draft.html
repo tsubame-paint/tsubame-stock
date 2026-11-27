@@ -1494,6 +1494,24 @@
       }
     }
 
+    function clearItemCard(card) {
+      if (!card) return;
+      ITEM_FIELDS.forEach((field) => {
+        const input = card.querySelector(`[data-field="${field}"]`);
+        if (!input) return;
+        if (field === '数量') {
+          input.value = '1';
+        } else if (field === '単位') {
+          input.value = '缶';
+        } else {
+          input.value = '';
+        }
+      });
+      applyMakerFilter(card, false);
+      applyProductHistoryFilter(card, false);
+      statusText.textContent = `明細${card.dataset.index}をクリアしました`;
+    }
+
     function createItemCard(index, initial = {}) {
       const card = document.createElement('div');
       card.className = 'item-card';
@@ -1504,6 +1522,7 @@
           <span class="item-badge">明細 ${index}</span>
           <div class="item-actions">
             <button type="button" class="btn-ghost copy-item-btn">複製</button>
+            <button type="button" class="btn-ghost clear-item-btn">クリア</button>
             ${index > 1 ? `<button type="button" class="btn-danger remove-item-btn">削除</button>` : ''}
           </div>
         </div>
@@ -1635,6 +1654,10 @@
         });
         itemsContainer.appendChild(createItemCard(currentCards + 1, values));
         renumberItems();
+      });
+
+      card.querySelector('.clear-item-btn').addEventListener('click', () => {
+        clearItemCard(card);
       });
 
       const removeBtn = card.querySelector('.remove-item-btn');
