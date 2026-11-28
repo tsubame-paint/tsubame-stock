@@ -690,13 +690,19 @@
     const normalizedQuery = normalizeStr(rawQuery);
     const keywords = normalizedQuery ? normalizedQuery.split(/\s+/).filter(k => k.length > 0) : [];
 
-    const filtered = allItems.filter(item => {
-      const stockNum = Number(item.stock) || 0;
-      if (stockNum <= 0) return false;
+    const filtered = allItems
+      .filter(item => {
+        const stockNum = Number(item.stock) || 0;
+        if (stockNum <= 0) return false;
 
-      const searchTarget = normalizeStr(`${item.maker || ''} ${item.name || ''} ${item.colorEtc || ''} ${item.capacityEtc || ''} ${item.code || item.id || ''}`);
-      return keywords.every(kw => searchTarget.includes(kw));
-    });
+        const searchTarget = normalizeStr(`${item.maker || ''} ${item.name || ''} ${item.colorEtc || ''} ${item.capacityEtc || ''} ${item.code || item.id || ''}`);
+        return keywords.every(kw => searchTarget.includes(kw));
+      })
+      .sort((a, b) => {
+        const nameA = normalizeStr(a.name || '');
+        const nameB = normalizeStr(b.name || '');
+        return nameA.localeCompare(nameB, 'ja', { numeric: true });
+      });
 
     renderList(filtered, false);
   }
