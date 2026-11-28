@@ -218,6 +218,21 @@
       margin-top: 6px;
     }
 
+    .history-filter-wrap {
+      margin-top: 8px;
+      display: none;
+    }
+
+    .history-filter-input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+    }
+
     .order-history-list {
       margin-top: 10px;
       display: flex;
@@ -714,6 +729,14 @@
           <div class="history-lookup-note">
             ※「貴社名・お名前」と「電話番号」の両方が一致する過去のWEB注文履歴を表示します。
           </div>
+          <div id="historyFilterWrap" class="history-filter-wrap">
+            <input
+              type="text"
+              id="orderHistoryKeyword"
+              class="history-filter-input"
+              placeholder="履歴内をキーワード絞り込み（例：セラミ、ND-172、現場）"
+            />
+          </div>
           <div id="orderHistoryResult" class="order-history-list"></div>
         </div>
 
@@ -774,6 +797,8 @@
     const statusBanner = document.getElementById("statusBanner");
 
     const fetchOrderHistoryBtn = document.getElementById("fetchOrderHistoryBtn");
+    const historyFilterWrap = document.getElementById("historyFilterWrap");
+    const orderHistoryKeyword = document.getElementById("orderHistoryKeyword");
     const orderHistoryResult = document.getElementById("orderHistoryResult");
 
     const locTabEls = document.querySelectorAll(".loc-tab");
@@ -798,6 +823,7 @@
       "その他": []
     };
     let pendingPayload = null;
+    let loadedHistoryOrders = [];
 
     function escapeHtml(str) {
       return String(str ?? "")
@@ -1235,13 +1261,43 @@
       itemsContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
-    function renderOrderHistoryCards(orders) {
+    function orderMatchesKeyword(ord, rawKeyword) {
+      const kw = String(rawKeyword || "").trim().toLowerCase();
+      if (!kw) return true;
+
+      const itemTexts = (ord.items || []).map((it) =>
+        [it.name, it.color, it.gloss, it.unit, it.qty].filter(Boolean).join(" ")
+      );
+
+      const haystack = [
+        ord.submittedAt,
+        ord.locationType,
+        ord.address,
+        ord.notes,
+        ...itemTexts
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(kw);
+    }
+
+    function refreshFilteredOrderHistory() {
+      const kw = orderHistoryKeyword ? orderHistoryKeyword.value : "";
+      const filtered = loadedHistoryOrders.filter((ord) => orderMatchesKeyword(ord, kw));
+      renderOrderHistoryCards(filtered, Boolean(kw.trim()));
+    }
+
+    function renderOrderHistoryCards(orders, isFiltered = false) {
       orderHistoryResult.innerHTML = "";
 
       if (!Array.isArray(orders) || orders.length === 0) {
         const emptyDiv = document.createElement("div");
         emptyDiv.className = "order-history-card";
-        emptyDiv.textContent = "一致する過去の注文履歴が見つかりませんでした。";
+        emptyDiv.textContent = isFiltered
+          ? "キーワードに一致する過去の注文履歴がありません。"
+          : "一致する過去の注文履歴が見つかりませんでした。";
         orderHistoryResult.appendChild(emptyDiv);
         return;
       }
@@ -1280,6 +1336,10 @@
       });
     }
 
+    orderHistoryKeyword.addEventListener("input", () => {
+      refreshFilteredOrderHistory();
+    });
+
     fetchOrderHistoryBtn.addEventListener("click", async () => {
       hideBanner();
 
@@ -1300,6 +1360,9 @@
       fetchOrderHistoryBtn.disabled = true;
       fetchOrderHistoryBtn.textContent = "検索中...";
       orderHistoryResult.innerHTML = "";
+      loadedHistoryOrders = [];
+      if (orderHistoryKeyword) orderHistoryKeyword.value = "";
+      if (historyFilterWrap) historyFilterWrap.style.display = "none";
 
       try {
         const url = new URL(GAS_ENDPOINT_URL);
@@ -1314,7 +1377,11 @@
           throw new Error(data && data.message ? data.message : "履歴取得に失敗しました");
         }
 
-        renderOrderHistoryCards(data.orders || []);
+        loadedHistoryOrders = Array.isArray(data.orders) ? data.orders : [];
+        if (loadedHistoryOrders.length > 0 && historyFilterWrap) {
+          historyFilterWrap.style.display = "block";
+        }
+        renderOrderHistoryCards(loadedHistoryOrders, false);
       } catch (err) {
         showBanner("error", "履歴の取得中にエラーが発生しました。GAS側の履歴検索対応をご確認ください。");
       } finally {
@@ -1497,11 +1564,14 @@
         localStorage.removeItem(DRAFT_KEY);
       } catch (e) {}
       historyByType = { "貴社": [], "現場": [], "倉庫": [], "その他": [] };
+      loadedHistoryOrders = [];
       document.getElementById("company").value = "";
       document.getElementById("tel").value = "";
       singleAddressInput.value = "";
       otherDescInput.value = "";
       otherAddressInput.value = "";
+      if (orderHistoryKeyword) orderHistoryKeyword.value = "";
+      if (historyFilterWrap) historyFilterWrap.style.display = "none";
       orderHistoryResult.innerHTML = "";
       updateLocationUI("貴社", false);
       showBanner("success", "前回入力・納品場所履歴をクリアしました。");
