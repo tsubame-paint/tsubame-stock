@@ -203,11 +203,6 @@
       gap: 8px;
     }
 
-    .row-actions {
-      display: flex;
-      gap: 6px;
-    }
-
     .item-top-grid {
       display: grid;
       grid-template-columns: 1.7fr 1.1fr;
@@ -221,6 +216,30 @@
       gap: 8px;
       align-items: start;
       margin-top: 8px;
+    }
+
+    /* カード下部：複製ボタンエリア */
+    .item-row-footer {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed #d8dee4;
+    }
+
+    .btn-duplicate-bottom {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      background: #fff;
+      border: 1px solid #9ec5e5;
+      border-radius: 6px;
+      touch-action: manipulation;
+    }
+
+    .btn-duplicate-bottom:hover {
+      background: var(--primary-soft);
     }
 
     /* 艶タブ */
@@ -355,20 +374,14 @@
       background: var(--primary-hover);
     }
 
-    .btn-duplicate {
-      padding: 4px 10px;
-      font-size: 12px;
-      color: var(--primary);
-      border-color: #b6d0e8;
-      background: #fff;
-    }
-
     .btn-remove {
-      padding: 4px 10px;
+      padding: 5px 10px;
+      min-height: 32px;
       font-size: 12px;
       color: var(--danger);
       border-color: #f3b7bd;
       background: #fff;
+      touch-action: manipulation;
     }
 
     .btn-link-sm {
@@ -839,10 +852,7 @@
       row.innerHTML = `
         <div class="item-row-header">
           <span class="row-label">商品</span>
-          <div class="row-actions">
-            <button type="button" class="btn btn-duplicate" aria-label="この行を複製">複製</button>
-            <button type="button" class="btn btn-remove" aria-label="この行を削除">削除</button>
-          </div>
+          <button type="button" class="btn btn-remove" aria-label="この行を削除">削除</button>
         </div>
         <div class="item-top-grid">
           <div>
@@ -878,6 +888,9 @@
             </div>
           </div>
         </div>
+        <div class="item-row-footer">
+          <button type="button" class="btn btn-duplicate-bottom" aria-label="この商品を複製">＋ この商品を複製</button>
+        </div>
       `;
 
       const nameEl = row.querySelector(".item-name");
@@ -887,7 +900,7 @@
       const qtyEl = row.querySelector(".item-qty");
       const minusBtn = row.querySelector(".qty-minus");
       const plusBtn = row.querySelector(".qty-plus");
-      const dupBtn = row.querySelector(".btn-duplicate");
+      const dupBtn = row.querySelector(".btn-duplicate-bottom");
       const removeBtn = row.querySelector(".btn-remove");
       const glossTabEls = row.querySelectorAll(".gloss-tab");
 
@@ -935,7 +948,8 @@
         });
         row.insertAdjacentElement("afterend", copiedRow);
         refreshRowNumbers();
-        copiedRow.querySelector(".item-name").focus();
+        copiedRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        copiedRow.querySelector(".item-name").focus({ preventScroll: true });
       });
 
       removeBtn.addEventListener("click", () => {
