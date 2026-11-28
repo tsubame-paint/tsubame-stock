@@ -58,13 +58,6 @@
       display: flex; justify-content: space-between; align-items: center; gap: 8px;
       font-size: 0.82rem; color: #5f6368; padding: 4px 6px 0 6px; font-weight: 500; background-color: #f0f2f5;
     }
-    .status-right {
-      display: flex; align-items: center; gap: 8px;
-    }
-    .sort-select {
-      padding: 4px 8px; font-size: 0.78rem; font-weight: 600; color: #1c1e21;
-      background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; outline: none; cursor: pointer;
-    }
 
     .item-card {
       background: #ffffff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
@@ -276,14 +269,7 @@
 
     <div class="status-bar">
       <span id="update-time">--:--</span>
-      <div class="status-right">
-        <select id="sort-select" class="sort-select" onchange="onSortChange()" aria-label="並び替え">
-          <option value="default">並び順: 初期順</option>
-          <option value="name-asc">商品名: 昇順 (あ→ん)</option>
-          <option value="name-desc">商品名: 降順 (ん→あ)</option>
-        </select>
-        <span id="item-count">0 件</span>
-      </div>
+      <span id="item-count">0 件</span>
     </div>
   </div>
 
@@ -542,50 +528,30 @@
     modal.classList.remove('active');
   }
 
-  function sortItemsByName(items) {
-    const sortSelect = document.getElementById('sort-select');
-    const sortOrder = sortSelect ? sortSelect.value : 'default';
-    if (sortOrder === 'default') return items;
-
-    const dir = sortOrder === 'name-desc' ? -1 : 1;
-    return [...items].sort((a, b) => {
-      const nameA = normalizeStr(a.name || '');
-      const nameB = normalizeStr(b.name || '');
-      return nameA.localeCompare(nameB, 'ja', { numeric: true }) * dir;
-    });
-  }
-
-  function onSortChange() {
-    currentDisplayCount = displayLimit;
-    filterItems();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   function renderList(items, isAppend = false) {
     const listContainer = document.getElementById('item-list');
     const noResult = document.getElementById('no-result');
     const countDisp = document.getElementById('item-count');
 
-    const sortedItems = sortItemsByName(items);
-    currentFilteredItems = sortedItems;
+    currentFilteredItems = items;
 
     if (!isAppend) {
       listContainer.innerHTML = '';
       currentDisplayCount = displayLimit;
     }
 
-    if (sortedItems.length === 0) {
+    if (items.length === 0) {
       countDisp.innerText = `表示中: 0 件`;
       noResult.style.display = 'block';
       return;
     }
     noResult.style.display = 'none';
 
-    const endIdx = Math.min(currentDisplayCount, sortedItems.length);
-    const renderItems = sortedItems.slice(0, endIdx);
-    countDisp.innerText = `表示中: ${renderItems.length} / ${sortedItems.length} 件`;
+    const endIdx = Math.min(currentDisplayCount, items.length);
+    const renderItems = items.slice(0, endIdx);
+    countDisp.innerText = `表示中: ${renderItems.length} / ${items.length} 件`;
 
-    const targetItems = isAppend ? sortedItems.slice(currentDisplayCount - displayLimit, endIdx) : renderItems;
+    const targetItems = isAppend ? items.slice(currentDisplayCount - displayLimit, endIdx) : renderItems;
     const fragment = document.createDocumentFragment();
 
     targetItems.forEach(item => {
