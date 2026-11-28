@@ -184,6 +184,89 @@
       margin-bottom: 4px;
     }
 
+    /* 過去のWEB注文履歴検索エリア */
+    .history-lookup-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #f8fafc;
+    }
+
+    .history-lookup-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .history-lookup-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .btn-history-search {
+      padding: 6px 12px;
+      font-size: 12px;
+      min-height: 34px;
+    }
+
+    .history-lookup-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .order-history-list {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .order-history-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fff;
+      font-size: 13px;
+    }
+
+    .order-history-meta {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .order-history-items {
+      margin: 4px 0 8px;
+      padding-left: 18px;
+      font-size: 12px;
+    }
+
+    .order-history-items li {
+      margin-bottom: 2px;
+    }
+
+    .btn-apply-history {
+      padding: 7px 12px;
+      min-height: 36px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border: 1px solid #9ec5e5;
+      border-radius: 6px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .btn-apply-history:hover {
+      background: #d6e7f5;
+    }
+
     .item-row {
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -623,6 +706,17 @@
           <span>ご注文商品</span>
         </div>
 
+        <div class="history-lookup-box">
+          <div class="history-lookup-head">
+            <span class="history-lookup-title">過去のWEB注文履歴</span>
+            <button type="button" id="fetchOrderHistoryBtn" class="btn btn-history-search">履歴を検索する</button>
+          </div>
+          <div class="history-lookup-note">
+            ※「貴社名・お名前」と「電話番号」の両方が一致する過去のWEB注文履歴を表示します。
+          </div>
+          <div id="orderHistoryResult" class="order-history-list"></div>
+        </div>
+
         <div id="itemsContainer"></div>
 
         <div class="item-actions-bar">
@@ -679,6 +773,9 @@
     const clearSavedBtn = document.getElementById("clearSavedBtn");
     const statusBanner = document.getElementById("statusBanner");
 
+    const fetchOrderHistoryBtn = document.getElementById("fetchOrderHistoryBtn");
+    const orderHistoryResult = document.getElementById("orderHistoryResult");
+
     const locTabEls = document.querySelectorAll(".loc-tab");
     const locationHistorySelect = document.getElementById("locationHistorySelect");
     const singleAddressWrap = document.getElementById("singleAddressWrap");
@@ -709,6 +806,10 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
+    }
+
+    function normalizeTel(tel) {
+      return String(tel || "").replace(/[^0-9]/g, "");
     }
 
     function showBanner(type, message, receiptText = "", showLineReturn = false) {
@@ -1103,6 +1204,125 @@
       return `${item.name}${colorPart}${glossPart} ／ ${item.unit} × ${item.qty}`;
     }
 
+    function applyHistoryOrderToRows(orderRecord) {
+      const list = Array.isArray(orderRecord.items) ? orderRecord.items : [];
+      if (list.length === 0) return;
+
+      itemsContainer.innerHTML = "";
+      list.forEach((it) => {
+        const mapped = mapUnitToFields(it.unit);
+        createItemRow({
+          name: it.name || "",
+          color: it.color || "",
+          gloss: GLOSS_OPTIONS.includes(it.gloss) ? it.gloss : "指定なし",
+          unitSelect: mapped.unitSelect,
+          unitCustom: mapped.unitCustom,
+          qty: Number.isFinite(Number(it.qty)) && Number(it.qty) > 0 ? Number(it.qty) : 1
+        });
+      });
+
+      if (orderRecord.locationType && LOCATION_TYPES.includes(orderRecord.locationType)) {
+        updateLocationUI(orderRecord.locationType, false);
+        if (orderRecord.locationType === "その他") {
+          if (orderRecord.locationDescription) otherDescInput.value = orderRecord.locationDescription;
+          if (orderRecord.rawAddress) otherAddressInput.value = orderRecord.rawAddress;
+        } else if (orderRecord.rawAddress || orderRecord.address) {
+          singleAddressInput.value = orderRecord.rawAddress || orderRecord.address || "";
+        }
+      }
+
+      showBanner("success", "過去の注文内容を商品行に反映しました。数量や色・艶をご確認ください。");
+      itemsContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function renderOrderHistoryCards(orders) {
+      orderHistoryResult.innerHTML = "";
+
+      if (!Array.isArray(orders) || orders.length === 0) {
+        const emptyDiv = document.createElement("div");
+        emptyDiv.className = "order-history-card";
+        emptyDiv.textContent = "一致する過去の注文履歴が見つかりませんでした。";
+        orderHistoryResult.appendChild(emptyDiv);
+        return;
+      }
+
+      orders.slice(0, 15).forEach((ord) => {
+        const card = document.createElement("div");
+        card.className = "order-history-card";
+
+        const dateLabel = ord.submittedAt
+          ? String(ord.submittedAt).replace("T", " ").slice(0, 16)
+          : "日時不明";
+        const locLabel = ord.address ? ` ／ 納品：${ord.address}` : "";
+
+        const metaDiv = document.createElement("div");
+        metaDiv.className = "order-history-meta";
+        metaDiv.textContent = `${dateLabel}${locLabel}`;
+        card.appendChild(metaDiv);
+
+        const ul = document.createElement("ul");
+        ul.className = "order-history-items";
+        (ord.items || []).forEach((it) => {
+          const li = document.createElement("li");
+          li.textContent = formatItemLabel(it);
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+
+        const applyBtn = document.createElement("button");
+        applyBtn.type = "button";
+        applyBtn.className = "btn-apply-history";
+        applyBtn.textContent = "この注文内容を行に反映";
+        applyBtn.addEventListener("click", () => applyHistoryOrderToRows(ord));
+        card.appendChild(applyBtn);
+
+        orderHistoryResult.appendChild(card);
+      });
+    }
+
+    fetchOrderHistoryBtn.addEventListener("click", async () => {
+      hideBanner();
+
+      const company = document.getElementById("company").value.trim();
+      const tel = document.getElementById("tel").value.trim();
+      const telDigits = normalizeTel(tel);
+
+      if (!company || !telDigits) {
+        showBanner("error", "履歴を検索するには、「貴社名・お名前」と「電話番号」の両方を入力してください。");
+        return;
+      }
+
+      if (!GAS_ENDPOINT_URL) {
+        showBanner("error", "GAS_ENDPOINT_URL が設定されていません。");
+        return;
+      }
+
+      fetchOrderHistoryBtn.disabled = true;
+      fetchOrderHistoryBtn.textContent = "検索中...";
+      orderHistoryResult.innerHTML = "";
+
+      try {
+        const url = new URL(GAS_ENDPOINT_URL);
+        url.searchParams.set("action", "history");
+        url.searchParams.set("company", company);
+        url.searchParams.set("tel", telDigits);
+
+        const res = await fetch(url.toString(), { method: "GET" });
+        const data = await res.json();
+
+        if (!data || data.ok === false) {
+          throw new Error(data && data.message ? data.message : "履歴取得に失敗しました");
+        }
+
+        renderOrderHistoryCards(data.orders || []);
+      } catch (err) {
+        showBanner("error", "履歴の取得中にエラーが発生しました。GAS側の履歴検索対応をご確認ください。");
+      } finally {
+        fetchOrderHistoryBtn.disabled = false;
+        fetchOrderHistoryBtn.textContent = "履歴を検索する";
+      }
+    });
+
     function buildReceiptText(payload) {
       const lines = [
         `【WEB注文控え】`,
@@ -1282,6 +1502,7 @@
       singleAddressInput.value = "";
       otherDescInput.value = "";
       otherAddressInput.value = "";
+      orderHistoryResult.innerHTML = "";
       updateLocationUI("貴社", false);
       showBanner("success", "前回入力・納品場所履歴をクリアしました。");
     });
