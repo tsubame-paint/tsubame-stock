@@ -433,6 +433,33 @@
       white-space: pre-wrap;
     }
 
+    /* 送信完了控えの下：LINE公式アカウントへ戻るボタン */
+    .line-return-wrap {
+      margin-top: 12px;
+    }
+
+    .line-return-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      background: #06c755;
+      border: 1px solid #05b34c;
+      border-radius: 8px;
+      text-decoration: none;
+      touch-action: manipulation;
+    }
+
+    .line-return-btn:hover {
+      background: #05b34c;
+    }
+
     /* 確認モーダル */
     .modal-backdrop {
       display: none;
@@ -635,6 +662,7 @@
   <script>
     const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbzuHLwm-bGvfXNuAWy-JX3HyIHYS23Z1dbIM5eE7xy4SeKQBqUUpK3Zemrgq5CQVW36/exec";
     const STOCK_LIST_URL = "https://tsubame-paint.github.io/tsubame-stock/order-sheet-v2.html";
+    const LINE_OFFICIAL_URL = "https://line.me/R/ti/p/@956rknyi";
     const STORAGE_KEY = "tsubame_web_order_customer_v4";
     const DRAFT_KEY = "tsubame_web_order_draft_v1";
     const SELECTED_STOCK_KEY = "tsubame_selected_stock_items_v1";
@@ -683,7 +711,7 @@
         .replace(/'/g, "&#39;");
     }
 
-    function showBanner(type, message, receiptText = "") {
+    function showBanner(type, message, receiptText = "", showLineReturn = false) {
       statusBanner.className = "status-banner " + (type === "success" ? "status-success" : "status-error");
       statusBanner.innerHTML = "";
 
@@ -696,6 +724,20 @@
         pre.className = "receipt-box";
         pre.textContent = receiptText;
         statusBanner.appendChild(pre);
+      }
+
+      if (type === "success" && showLineReturn && LINE_OFFICIAL_URL) {
+        const lineWrap = document.createElement("div");
+        lineWrap.className = "line-return-wrap";
+
+        const lineLink = document.createElement("a");
+        lineLink.className = "line-return-btn";
+        lineLink.href = LINE_OFFICIAL_URL;
+        lineLink.rel = "noopener noreferrer";
+        lineLink.textContent = "LINE公式アカウントへ戻る";
+
+        lineWrap.appendChild(lineLink);
+        statusBanner.appendChild(lineWrap);
       }
 
       statusBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -906,14 +948,12 @@
 
       let selectedGloss = initGloss;
 
-      // 数量欄にフォーカスしたときに数字を全選択してすぐ打ち換えられるようにする
       qtyEl.addEventListener("focus", () => {
         setTimeout(() => {
           qtyEl.select();
         }, 0);
       });
 
-      // 入力途中で空欄や1未満になった場合は1に補正する
       qtyEl.addEventListener("blur", () => {
         const val = parseInt(qtyEl.value, 10);
         if (!Number.isFinite(val) || val < 1) {
@@ -1369,7 +1409,8 @@
           GAS_ENDPOINT_URL
             ? "ご注文を送信しました。ありがとうございました。"
             : "確認処理が完了しました（GAS_ENDPOINT_URL を設定すると実送信されます）。",
-          receiptText
+          receiptText,
+          true
         );
 
         itemsContainer.innerHTML = "";
