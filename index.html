@@ -906,6 +906,21 @@
 
       let selectedGloss = initGloss;
 
+      // 数量欄にフォーカスしたときに数字を全選択してすぐ打ち換えられるようにする
+      qtyEl.addEventListener("focus", () => {
+        setTimeout(() => {
+          qtyEl.select();
+        }, 0);
+      });
+
+      // 入力途中で空欄や1未満になった場合は1に補正する
+      qtyEl.addEventListener("blur", () => {
+        const val = parseInt(qtyEl.value, 10);
+        if (!Number.isFinite(val) || val < 1) {
+          qtyEl.value = "1";
+        }
+      });
+
       glossTabEls.forEach((tabBtn) => {
         tabBtn.addEventListener("click", () => {
           selectedGloss = tabBtn.dataset.gloss || "指定なし";
