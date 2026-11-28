@@ -536,6 +536,14 @@
       margin-top: 12px;
     }
 
+    .line-return-guide {
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-align: center;
+    }
+
     .line-return-btn {
       display: inline-flex;
       align-items: center;
@@ -856,6 +864,11 @@
       if (type === "success" && showLineReturn && LINE_OFFICIAL_URL) {
         const lineWrap = document.createElement("div");
         lineWrap.className = "line-return-wrap";
+
+        const guideDiv = document.createElement("div");
+        guideDiv.className = "line-return-guide";
+        guideDiv.textContent = "納期連絡、その他問い合わせはLINEで";
+        lineWrap.appendChild(guideDiv);
 
         const lineLink = document.createElement("a");
         lineLink.className = "line-return-btn";
